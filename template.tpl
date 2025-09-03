@@ -474,6 +474,42 @@ ___TEMPLATE_PARAMETERS___
                 "defaultValue": true
               },
               {
+                "type": "SELECT",
+                "name": "eventSource",
+                "displayName": "Event Source",
+                "macrosInSelect": true,
+                "selectItems": [
+                  {
+                    "value": "WEB",
+                    "displayValue": "WEB"
+                  },
+                  {
+                    "value": "APP",
+                    "displayValue": "APP"
+                  },
+                  {
+                    "value": "IN_STORE",
+                    "displayValue": "IN_STORE"
+                  },
+                  {
+                    "value": "PHONE",
+                    "displayValue": "PHONE"
+                  },
+                  {
+                    "value": "OTHER",
+                    "displayValue": "OTHER"
+                  }
+                ],
+                "simpleValueType": true,
+                "help": "\u003cb\u003eRequired.\u003c/b\u003e\n\u003cbr/\u003e\u003cbr/\u003e\nA signal for where the event happened originally (web, app, in-store, etc.).",
+                "notSetText": "(not set)",
+                "valueValidators": [
+                  {
+                    "type": "NON_EMPTY"
+                  }
+                ]
+              },
+              {
                 "type": "TEXT",
                 "name": "transactionId",
                 "displayName": "Transaction/Order ID",
@@ -507,37 +543,6 @@ ___TEMPLATE_PARAMETERS___
                 "displayName": "Conversion Value",
                 "simpleValueType": true,
                 "help": "The conversion value associated with the event, for value-based conversions."
-              },
-              {
-                "type": "SELECT",
-                "name": "eventSource",
-                "displayName": "Event Source",
-                "macrosInSelect": true,
-                "selectItems": [
-                  {
-                    "value": "WEB",
-                    "displayValue": "WEB"
-                  },
-                  {
-                    "value": "APP",
-                    "displayValue": "APP"
-                  },
-                  {
-                    "value": "IN_STORE",
-                    "displayValue": "IN_STORE"
-                  },
-                  {
-                    "value": "PHONE",
-                    "displayValue": "PHONE"
-                  },
-                  {
-                    "value": "OTHER",
-                    "displayValue": "OTHER"
-                  }
-                ],
-                "simpleValueType": true,
-                "help": "A signal for where the event happened originally (web, app, in-store, etc.).",
-                "notSetText": "(not set)"
               }
             ]
           },
