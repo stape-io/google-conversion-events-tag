@@ -1,5 +1,5 @@
 homepage: 'https://stape.io/'
 documentation: 'https://github.com/stape-io/google-conversion-events-tag'
 versions:
-  - sha: 9f88d8c9e35a4f5ac12750534fec037897543ccf
+  - sha: 8a701eea1f157a9e313aaf9d2eae3be386c350d0
     changeNotes: Initial release.
