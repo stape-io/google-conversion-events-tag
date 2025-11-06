@@ -544,7 +544,7 @@ ___TEMPLATE_PARAMETERS___
             "name": "transactionId",
             "displayName": "Transaction/Order ID",
             "simpleValueType": true,
-            "help": "\u003cb\u003eRequired.\u003c/b\u003e\n\u003cbr/\u003e\u003cbr/\u003e\nThe unique identifier for this event."
+            "help": "\u003cb\u003eOptional\u003c/b\u003e when sending offline conversion or enhanced conversion for leads.\n\u003cbr/\u003e\n\u003cb\u003eRequired\u003c/b\u003e when sending offline conversion as an additional data source to boost performance and data strength of an online conversion.\n\u003cbr/\u003e\n\u003ca href\u003d\"https://developers.google.com/data-manager/api/devguides/events\"\u003eLearn more.\u003c/a\u003e\n\u003cbr/\u003e\u003cbr/\u003e\nThe unique identifier for this event."
           },
           {
             "type": "TEXT",
@@ -726,14 +726,14 @@ ___TEMPLATE_PARAMETERS___
             "name": "adIdentifiersLandingPageDeviceInfoIpAddress",
             "displayName": "Landing Page IP Address",
             "simpleValueType": true,
-            "help": "Information gathered about the device\u0027s IP address being used (if any) at the time of landing onto the advertiser’s site after interacting with the ad."
+            "help": "Information gathered about the device\u0027s IP address being used (if any) at the time of landing onto the advertiser’s site after interacting with the ad.\n\u003cbr/\u003e\u003cbr/\u003e\n\u003cb\u003eNote:\u003c/b\u003e Google Ads does not support IP address matching for end users in the European Economic Area (EEA), United Kingdom (UK), or Switzerland (CH). Add logic to conditionally exclude sharing IP addresses from users from these regions and ensure that you provide users with clear and comprehensive information about the data you collect on your sites, apps, and other properties and get consent where required by law or any applicable Google policies. See the \u003ca href\u003d\"https://support.google.com/google-ads/answer/2998031\"\u003eAbout offline conversion imports page\u003c/a\u003e for more details."
           },
           {
             "type": "TEXT",
             "name": "adIdentifiersSessionAttributes",
-            "displayName": "Session Attributes",
+            "displayName": "Session Attributes String",
             "simpleValueType": true,
-            "help": "Session attributes for event attribution and modeling."
+            "help": "Session attributes string for event attribution and modeling.\n\u003cbr/\u003e\nLearn more: \u003ca href\u003d\"https://support.google.com/google-ads/answer/16194756\"\u003e[1]\u003c/a\u003e and \u003ca href\u003d\"https://ads-developers.googleblog.com/2025/08/maximize-performance-of-your-google-ads.html\"\u003e[2]\u003c/a\u003e."
           }
         ]
       },
@@ -774,7 +774,7 @@ ___TEMPLATE_PARAMETERS___
             "name": "eventDeviceInfoIpAddress",
             "displayName": "IP Address",
             "simpleValueType": true,
-            "help": "Information gathered about the device\u0027s IP address being used (if any) when the event happened."
+            "help": "Information gathered about the device\u0027s IP address being used (if any) when the event happened.\n\u003cbr/\u003e\u003cbr/\u003e\n\u003cb\u003eNote:\u003c/b\u003e Google Ads does not support IP address matching for end users in the European Economic Area (EEA), United Kingdom (UK), or Switzerland (CH). Add logic to conditionally exclude sharing IP addresses from users from these regions and ensure that you provide users with clear and comprehensive information about the data you collect on your sites, apps, and other properties and get consent where required by law or any applicable Google policies. See the \u003ca href\u003d\"https://support.google.com/google-ads/answer/2998031\"\u003eAbout offline conversion imports page\u003c/a\u003e for more details."
           }
         ]
       },
@@ -1015,6 +1015,28 @@ ___TEMPLATE_PARAMETERS___
   },
   {
     "type": "GROUP",
+    "name": "ownConnectionSettings",
+    "displayName": "Own Connection Settings",
+    "groupStyle": "ZIPPY_CLOSED",
+    "subParams": [
+      {
+        "type": "TEXT",
+        "name": "xGoogUserProject",
+        "displayName": "X-Goog-User-Project header",
+        "simpleValueType": true,
+        "help": "A request header that specifies the GCP project to bill for access charges associated with the request.\n\u003ca href\u003d\"https://docs.cloud.google.com/storage/docs/json_api/v1/parameters#xgooguserproject\"\u003eLearn more.\u003c/a\u003e"
+      }
+    ],
+    "enablingConditions": [
+      {
+        "paramName": "authFlow",
+        "paramValue": "own",
+        "type": "EQUALS"
+      }
+    ]
+  },
+  {
+    "type": "GROUP",
     "name": "tagExecutionConsentSettingsGroup",
     "displayName": "Tag Execution Consent Settings",
     "groupStyle": "ZIPPY_CLOSED",
@@ -1162,7 +1184,7 @@ const sha256Sync = require('sha256Sync');
 /*==============================================================================
 ==============================================================================*/
 
-const traceId = getRequestHeader('trace-id');
+const apiVersion = 'v1';
 const eventData = getAllEventData();
 const useOptimisticScenario = isUIFieldTrue(data.useOptimisticScenario);
 
@@ -1176,7 +1198,7 @@ if (url && url.lastIndexOf('https://gtm-msr.appspot.com/', 0) === 0) {
 }
 
 const mappedData = getDataForConversionEventsUpload(data, eventData);
-sendRequest(data, mappedData);
+sendRequest(data, mappedData, apiVersion);
 
 if (useOptimisticScenario) {
   return data.gtmOnSuccess();
@@ -1197,21 +1219,21 @@ function addDestinationsData(data, mappedData) {
       reference: productDestinationId,
       productDestinationId: productDestinationId,
       operatingAccount: {
-        product: row.product,
+        accountType: row.product,
         accountId: makeString(row.operatingAccountId)
       }
     };
 
     if (data.authFlow === 'stape' && row.linkedAccountId) {
       destination.linkedAccount = {
-        product: row.product,
+        accountType: row.product,
         accountId: makeString(row.linkedAccountId)
       };
     }
 
     if (data.authFlow === 'own' && row.loginAccountId) {
       destination.loginAccount = {
-        product: row.product,
+        accountType: row.product,
         accountId: makeString(row.loginAccountId)
       };
     }
@@ -1707,10 +1729,9 @@ function hashDataIfNeeded(mappedData) {
   return mappedData;
 }
 
-function generateRequestUrl(data) {
+function generateRequestUrl(data, apiVersion) {
   if (data.authFlow === 'own') {
-    const apiVersion = '1';
-    return 'https://datamanager.googleapis.com/v' + apiVersion + '/events:ingest';
+    return 'https://datamanager.googleapis.com/' + apiVersion + '/events:ingest';
   }
 
   const containerIdentifier = getRequestHeader('x-gtm-identifier');
@@ -1727,7 +1748,7 @@ function generateRequestUrl(data) {
   );
 }
 
-function generateRequestOptions(data) {
+function generateRequestOptions(data, apiVersion) {
   const options = {
     method: 'POST',
     headers: {
@@ -1741,6 +1762,8 @@ function generateRequestOptions(data) {
     });
     options.authorization = auth;
     if (data.xGoogUserProject) options.headers['x-goog-user-project'] = data.xGoogUserProject;
+  } else if (data.authFlow === 'stape') {
+    options.headers['x-datamanager-api-version'] = apiVersion;
   }
 
   return options;
@@ -1763,15 +1786,14 @@ function getDataForConversionEventsUpload(data, eventData) {
   return mappedData;
 }
 
-function sendRequest(data, mappedData) {
-  const requestUrl = generateRequestUrl(data);
-  const requestOptions = generateRequestOptions(data);
+function sendRequest(data, mappedData, apiVersion) {
+  const requestUrl = generateRequestUrl(data, apiVersion);
+  const requestOptions = generateRequestOptions(data, apiVersion);
   const requestBody = mappedData;
 
   log({
     Name: 'GoogleConversionEvent',
     Type: 'Request',
-    TraceId: traceId,
     EventName: 'ConversionEvent',
     RequestMethod: 'POST',
     RequestUrl: requestUrl,
@@ -1784,7 +1806,6 @@ function sendRequest(data, mappedData) {
       log({
         Name: 'GoogleConversionEvent',
         Type: 'Response',
-        TraceId: traceId,
         EventName: 'ConversionEvent',
         ResponseStatusCode: result.statusCode,
         ResponseHeaders: result.headers,
@@ -1803,7 +1824,6 @@ function sendRequest(data, mappedData) {
       log({
         Name: 'GoogleConversionEvent',
         Type: 'Message',
-        TraceId: traceId,
         EventName: 'ConversionEvent',
         Message: 'Request failed or timed out.',
         Reason: JSON.stringify(result)
@@ -1822,7 +1842,7 @@ function enc(data) {
 }
 
 function hasProps(obj) {
-  return Object.keys(obj).length > 0;
+  return getType(obj) === 'object' && Object.keys(obj).length > 0;
 }
 
 function isSHA256Base64Hashed(value) {
@@ -1967,6 +1987,8 @@ function log(rawDataToLog) {
   const logDestinationsHandlers = {};
   if (determinateIsLoggingEnabled()) logDestinationsHandlers.console = logConsole;
   if (determinateIsLoggingEnabledForBigQuery()) logDestinationsHandlers.bigQuery = logToBigQuery;
+
+  rawDataToLog.TraceId = getRequestHeader('trace-id');
 
   const keyMappings = {
     // No transformation for Console is needed.
@@ -2386,7 +2408,7 @@ scenarios:
     setAllMockDataByAuthMethod('own');
 
     mock('sendHttpRequest', (requestUrl, requestOptions, requestBody) => {
-      assertThat(requestUrl).isEqualTo('https://datamanager.googleapis.com/v1/events:ingest');
+      assertThat(requestUrl).isEqualTo('https://datamanager.googleapis.com/' + expectedDataManagerApiVersion + '/events:ingest');
       return Promise.create((resolve, reject) => {
         resolve({ statusCode: 200 });
       });
@@ -2401,11 +2423,11 @@ scenarios:
 - name: '[Stape Connection] Request Options are successfully built and sent'
   code: "setAllMockDataByAuthMethod('stape');\n\nmock('sendHttpRequest', (requestUrl,\
     \ requestOptions, requestBody) => {\n  assertThat(requestOptions).isEqualTo({\n\
-    \    method: 'POST',\n    headers: {\n      'Content-Type': 'application/json'\n\
-    \    }\n  });\n\n  return Promise.create((resolve, reject) => {\n    resolve({\
-    \ statusCode: 200 });\n  });  \n});\n\nrunCode(mockData);\n\ncallLater(() => {\n\
-    \  assertApi('gtmOnSuccess').wasCalled();\n  assertApi('gtmOnFailure').wasNotCalled();\n\
-    });"
+    \    method: 'POST',\n    headers: {\n      'Content-Type': 'application/json',\n\
+    \      'x-datamanager-api-version': expectedDataManagerApiVersion\n    }\n  });\n\
+    \n  return Promise.create((resolve, reject) => {\n    resolve({ statusCode: 200\
+    \ });\n  });  \n});\n\nrunCode(mockData);\n\ncallLater(() => {\n  assertApi('gtmOnSuccess').wasCalled();\n\
+    \  assertApi('gtmOnFailure').wasNotCalled();\n});"
 - name: '[Own Connection] Request Options are successfully built and sent'
   code: "setAllMockDataByAuthMethod('own');\n\nmock('sendHttpRequest', (requestUrl,\
     \ requestOptions, requestBody) => {\n  assertThat(requestOptions).isEqualTo({\n\
@@ -2427,19 +2449,20 @@ scenarios:
     \ requestOptions, requestBody) => {\n  const parsedRequestBody = JSON.parse(requestBody);\n\
     \  assertThat(parsedRequestBody).isEqualTo({\n    validateOnly: false,\n    destinations:\
     \ [\n      {\n        reference: 'productDestinationId',\n        productDestinationId:\
-    \ 'productDestinationId',\n        operatingAccount: {\n          product: 'GOOGLE_ADS',\n\
-    \          accountId: 'operatingAccountId'\n        },\n        linkedAccount:\
-    \ { product: 'GOOGLE_ADS', accountId: 'linkedAccountId' }\n      },\n      {\n\
-    \        reference: 'productDestinationId1',\n        productDestinationId: 'productDestinationId1',\n\
-    \        operatingAccount: {\n          product: 'GOOGLE_ADS',\n          accountId:\
-    \ 'operatingAccountId1'\n        },\n        linkedAccount: { product: 'GOOGLE_ADS',\
-    \ accountId: 'linkedAccountId1' }\n      }\n    ],\n    consent: {\n      adUserData:\
-    \ 'CONSENT_GRANTED',\n      adPersonalization: 'CONSENT_DENIED'\n    },\n    events:\
-    \ [\n      {\n        transactionId: 'transaction_id',\n        currency: 'BRL',\n\
-    \        conversionValue: 123.45,\n        eventTimestamp: '2014-10-02T15:01:23Z',\n\
-    \        lastUpdatedTimestamp: '2014-10-02T15:01:23Z',\n        eventSource: 'WEB',\n\
-    \        userData: {\n          userIdentifiers: [\n            {\n          \
-    \    emailAddress:\n                'ddffdce54594d729a13068951750239a1943c295a5f89349b5cf69744d4a1ba2'\n\
+    \ 'productDestinationId',\n        operatingAccount: {\n          accountType:\
+    \ 'GOOGLE_ADS',\n          accountId: 'operatingAccountId'\n        },\n     \
+    \   linkedAccount: { accountType: 'GOOGLE_ADS', accountId: 'linkedAccountId' }\n\
+    \      },\n      {\n        reference: 'productDestinationId1',\n        productDestinationId:\
+    \ 'productDestinationId1',\n        operatingAccount: {\n          accountType:\
+    \ 'GOOGLE_ADS',\n          accountId: 'operatingAccountId1'\n        },\n    \
+    \    linkedAccount: { accountType: 'GOOGLE_ADS', accountId: 'linkedAccountId1'\
+    \ }\n      }\n    ],\n    consent: {\n      adUserData: 'CONSENT_GRANTED',\n \
+    \     adPersonalization: 'CONSENT_DENIED'\n    },\n    events: [\n      {\n  \
+    \      transactionId: 'transaction_id',\n        currency: 'BRL',\n        conversionValue:\
+    \ 123.45,\n        eventTimestamp: '2014-10-02T15:01:23Z',\n        lastUpdatedTimestamp:\
+    \ '2014-10-02T15:01:23Z',\n        eventSource: 'WEB',\n        userData: {\n\
+    \          userIdentifiers: [\n            {\n              emailAddress:\n  \
+    \              'ddffdce54594d729a13068951750239a1943c295a5f89349b5cf69744d4a1ba2'\n\
     \            },\n            {\n              emailAddress:\n                'afea90f78a2e604dc6cc5d7826ffdd2bfbab612a0c1222acf8df173319b7e809'\n\
     \            },\n            {\n              phoneNumber:\n                'c698c0b85d32cbcf5033ada58f34de87d4f7415efaf5a8d1c1e9e63393dcc85e'\n\
     \            },\n            {\n              address: {\n                givenName:\n\
@@ -2476,18 +2499,19 @@ scenarios:
     \  const parsedRequestBody = JSON.parse(requestBody);\n    assertThat(parsedRequestBody).isEqualTo({\n\
     \    validateOnly: false,\n    destinations: [\n      {\n        reference: 'productDestinationId',\n\
     \        productDestinationId: 'productDestinationId',\n        operatingAccount:\
-    \ {\n          product: 'GOOGLE_ADS',\n          accountId: 'operatingAccountId'\n\
-    \        },\n        linkedAccount: { product: 'GOOGLE_ADS', accountId: 'linkedAccountId'\
+    \ {\n          accountType: 'GOOGLE_ADS',\n          accountId: 'operatingAccountId'\n\
+    \        },\n        linkedAccount: { accountType: 'GOOGLE_ADS', accountId: 'linkedAccountId'\
     \ }\n      },\n      {\n        reference: 'productDestinationId1',\n        productDestinationId:\
-    \ 'productDestinationId1',\n        operatingAccount: {\n          product: 'GOOGLE_ADS',\n\
-    \          accountId: 'operatingAccountId1'\n        },\n        linkedAccount:\
-    \ { product: 'GOOGLE_ADS', accountId: 'linkedAccountId1' }\n      }\n    ],\n\
-    \    consent: {\n      adUserData: 'CONSENT_GRANTED',\n      adPersonalization:\
-    \ 'CONSENT_DENIED'\n    },\n    events: [\n      {\n        transactionId: 'Transaction\
-    \ ID',\n        eventTimestamp: '2014-10-02T15:01:23Z',\n        lastUpdatedTimestamp:\
-    \ '2014-10-02T15:01:23Z',\n        currency: 'BRL',\n        conversionValue:\
-    \ 123.45,\n        eventSource: 'WEB',\n        userData: {\n          userIdentifiers:\
-    \ [\n            {\n              emailAddress:\n                '74790a65960d58724ba244c376e2bb6cbdd39f6c67d122760b319d51d11813a9'\n\
+    \ 'productDestinationId1',\n        operatingAccount: {\n          accountType:\
+    \ 'GOOGLE_ADS',\n          accountId: 'operatingAccountId1'\n        },\n    \
+    \    linkedAccount: { accountType: 'GOOGLE_ADS', accountId: 'linkedAccountId1'\
+    \ }\n      }\n    ],\n    consent: {\n      adUserData: 'CONSENT_GRANTED',\n \
+    \     adPersonalization: 'CONSENT_DENIED'\n    },\n    events: [\n      {\n  \
+    \      transactionId: 'Transaction ID',\n        eventTimestamp: '2014-10-02T15:01:23Z',\n\
+    \        lastUpdatedTimestamp: '2014-10-02T15:01:23Z',\n        currency: 'BRL',\n\
+    \        conversionValue: 123.45,\n        eventSource: 'WEB',\n        userData:\
+    \ {\n          userIdentifiers: [\n            {\n              emailAddress:\n\
+    \                '74790a65960d58724ba244c376e2bb6cbdd39f6c67d122760b319d51d11813a9'\n\
     \            },\n            {\n              phoneNumber:\n                '92effd108fc091e55b0239ffc94d867e649d45c28c3de6918ec1edcb0723602c'\n\
     \            },\n            {\n              address: {\n                givenName:\n\
     \                  '9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08',\n\
@@ -2581,19 +2605,20 @@ scenarios:
     \ requestBody) => {\n  const parsedRequestBody = JSON.parse(requestBody);\n  assertThat(parsedRequestBody).isEqualTo({\n\
     \    validateOnly: false,\n    destinations: [\n      {\n        reference: 'productDestinationId',\n\
     \        productDestinationId: 'productDestinationId',\n        operatingAccount:\
-    \ {\n          product: 'GOOGLE_ADS',\n          accountId: 'operatingAccountId'\n\
-    \        },\n        linkedAccount: { product: 'GOOGLE_ADS', accountId: 'linkedAccountId'\
+    \ {\n          accountType: 'GOOGLE_ADS',\n          accountId: 'operatingAccountId'\n\
+    \        },\n        linkedAccount: { accountType: 'GOOGLE_ADS', accountId: 'linkedAccountId'\
     \ }\n      },\n      {\n        reference: 'productDestinationId1',\n        productDestinationId:\
-    \ 'productDestinationId1',\n        operatingAccount: {\n          product: 'GOOGLE_ADS',\n\
-    \          accountId: 'operatingAccountId1'\n        },\n        linkedAccount:\
-    \ { product: 'GOOGLE_ADS', accountId: 'linkedAccountId1' }\n      }\n    ],\n\
-    \    consent: {\n      adUserData: 'CONSENT_GRANTED',\n      adPersonalization:\
-    \ 'CONSENT_DENIED'\n    },\n    events: [\n      {\n        destionationReference:\
-    \ 'productDestinationId1',\n        transactionId: 'Transaction ID 1',\n     \
-    \   eventTimestamp: '2014-10-02T15:01:23Z',\n        lastUpdatedTimestamp: '2014-10-02T15:01:23Z',\n\
-    \        currency: 'BRL',\n        conversionValue: 123.45,\n        eventSource:\
-    \ 'WEB',\n        userData: {\n          userIdentifiers: [\n            {\n \
-    \             emailAddress:\n                'ddffdce54594d729a13068951750239a1943c295a5f89349b5cf69744d4a1ba2'\n\
+    \ 'productDestinationId1',\n        operatingAccount: {\n          accountType:\
+    \ 'GOOGLE_ADS',\n          accountId: 'operatingAccountId1'\n        },\n    \
+    \    linkedAccount: { accountType: 'GOOGLE_ADS', accountId: 'linkedAccountId1'\
+    \ }\n      }\n    ],\n    consent: {\n      adUserData: 'CONSENT_GRANTED',\n \
+    \     adPersonalization: 'CONSENT_DENIED'\n    },\n    events: [\n      {\n  \
+    \      destionationReference: 'productDestinationId1',\n        transactionId:\
+    \ 'Transaction ID 1',\n        eventTimestamp: '2014-10-02T15:01:23Z',\n     \
+    \   lastUpdatedTimestamp: '2014-10-02T15:01:23Z',\n        currency: 'BRL',\n\
+    \        conversionValue: 123.45,\n        eventSource: 'WEB',\n        userData:\
+    \ {\n          userIdentifiers: [\n            {\n              emailAddress:\n\
+    \                'ddffdce54594d729a13068951750239a1943c295a5f89349b5cf69744d4a1ba2'\n\
     \            },\n            {\n              phoneNumber:\n                'eec8f1a54d50ef04594e0fcc0414a49c186b31e3f820bfa2eb20dcc1ae9fcb67'\n\
     \            },\n            {\n              address: {\n                givenName:\n\
     \                  '9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08',\n\
@@ -2742,12 +2767,12 @@ setup: "const Promise = require('Promise');\nconst JSON = require('JSON');\ncons
   \ makeInteger = require('makeInteger');\nconst Object = require('Object');\nconst\
   \ callLater = require('callLater');\n\nconst mergeObj = (target, source) => {\n\
   \  for (const key in source) {\n    if (source.hasOwnProperty(key)) target[key]\
-  \ = source[key];\n  }\n  return target;\n};\n\nconst expectedBigQuerySettings =\
-  \ {\n  logBigQueryProjectId: 'logBigQueryProjectId',\n  logBigQueryDatasetId: 'logBigQueryDatasetId',\n\
-  \  logBigQueryTableId: 'logBigQueryTableId'\n};\n\nconst requiredConsoleKeys = ['Type',\
-  \ 'TraceId', 'Name'];\nconst requiredBqKeys = ['timestamp', 'type', 'trace_id',\
-  \ 'tag_name'];\nconst expectedBqOptions = { ignoreUnknownValues: true };\n\nconst\
-  \ mockData = {\n  logBigQueryProjectId: expectedBigQuerySettings.logBigQueryProjectId,\n\
+  \ = source[key];\n  }\n  return target;\n};\n\nconst expectedDataManagerApiVersion\
+  \ = 'v1';\n\nconst expectedBigQuerySettings = {\n  logBigQueryProjectId: 'logBigQueryProjectId',\n\
+  \  logBigQueryDatasetId: 'logBigQueryDatasetId',\n  logBigQueryTableId: 'logBigQueryTableId'\n\
+  };\n\nconst requiredConsoleKeys = ['Type', 'TraceId', 'Name'];\nconst requiredBqKeys\
+  \ = ['timestamp', 'type', 'trace_id', 'tag_name'];\nconst expectedBqOptions = {\
+  \ ignoreUnknownValues: true };\n\nconst mockData = {\n  logBigQueryProjectId: expectedBigQuerySettings.logBigQueryProjectId,\n\
   \  logBigQueryDatasetId: expectedBigQuerySettings.logBigQueryDatasetId,\n  logBigQueryTableId:\
   \ expectedBigQuerySettings.logBigQueryTableId\n};\n\nconst setAllMockDataByAuthMethod\
   \ = (type, objToBeMerged) => {\n  const base = {\n    validateOnly: false,\n   \

@@ -21,7 +21,7 @@ const sha256Sync = require('sha256Sync');
 /*==============================================================================
 ==============================================================================*/
 
-const traceId = getRequestHeader('trace-id');
+const apiVersion = 'v1';
 const eventData = getAllEventData();
 const useOptimisticScenario = isUIFieldTrue(data.useOptimisticScenario);
 
@@ -35,7 +35,7 @@ if (url && url.lastIndexOf('https://gtm-msr.appspot.com/', 0) === 0) {
 }
 
 const mappedData = getDataForConversionEventsUpload(data, eventData);
-sendRequest(data, mappedData);
+sendRequest(data, mappedData, apiVersion);
 
 if (useOptimisticScenario) {
   return data.gtmOnSuccess();
@@ -56,21 +56,21 @@ function addDestinationsData(data, mappedData) {
       reference: productDestinationId,
       productDestinationId: productDestinationId,
       operatingAccount: {
-        product: row.product,
+        accountType: row.product,
         accountId: makeString(row.operatingAccountId)
       }
     };
 
     if (data.authFlow === 'stape' && row.linkedAccountId) {
       destination.linkedAccount = {
-        product: row.product,
+        accountType: row.product,
         accountId: makeString(row.linkedAccountId)
       };
     }
 
     if (data.authFlow === 'own' && row.loginAccountId) {
       destination.loginAccount = {
-        product: row.product,
+        accountType: row.product,
         accountId: makeString(row.loginAccountId)
       };
     }
@@ -566,10 +566,9 @@ function hashDataIfNeeded(mappedData) {
   return mappedData;
 }
 
-function generateRequestUrl(data) {
+function generateRequestUrl(data, apiVersion) {
   if (data.authFlow === 'own') {
-    const apiVersion = '1';
-    return 'https://datamanager.googleapis.com/v' + apiVersion + '/events:ingest';
+    return 'https://datamanager.googleapis.com/' + apiVersion + '/events:ingest';
   }
 
   const containerIdentifier = getRequestHeader('x-gtm-identifier');
@@ -586,7 +585,7 @@ function generateRequestUrl(data) {
   );
 }
 
-function generateRequestOptions(data) {
+function generateRequestOptions(data, apiVersion) {
   const options = {
     method: 'POST',
     headers: {
@@ -600,6 +599,8 @@ function generateRequestOptions(data) {
     });
     options.authorization = auth;
     if (data.xGoogUserProject) options.headers['x-goog-user-project'] = data.xGoogUserProject;
+  } else if (data.authFlow === 'stape') {
+    options.headers['x-datamanager-api-version'] = apiVersion;
   }
 
   return options;
@@ -622,15 +623,14 @@ function getDataForConversionEventsUpload(data, eventData) {
   return mappedData;
 }
 
-function sendRequest(data, mappedData) {
-  const requestUrl = generateRequestUrl(data);
-  const requestOptions = generateRequestOptions(data);
+function sendRequest(data, mappedData, apiVersion) {
+  const requestUrl = generateRequestUrl(data, apiVersion);
+  const requestOptions = generateRequestOptions(data, apiVersion);
   const requestBody = mappedData;
 
   log({
     Name: 'GoogleConversionEvent',
     Type: 'Request',
-    TraceId: traceId,
     EventName: 'ConversionEvent',
     RequestMethod: 'POST',
     RequestUrl: requestUrl,
@@ -643,7 +643,6 @@ function sendRequest(data, mappedData) {
       log({
         Name: 'GoogleConversionEvent',
         Type: 'Response',
-        TraceId: traceId,
         EventName: 'ConversionEvent',
         ResponseStatusCode: result.statusCode,
         ResponseHeaders: result.headers,
@@ -662,7 +661,6 @@ function sendRequest(data, mappedData) {
       log({
         Name: 'GoogleConversionEvent',
         Type: 'Message',
-        TraceId: traceId,
         EventName: 'ConversionEvent',
         Message: 'Request failed or timed out.',
         Reason: JSON.stringify(result)
@@ -681,7 +679,7 @@ function enc(data) {
 }
 
 function hasProps(obj) {
-  return Object.keys(obj).length > 0;
+  return getType(obj) === 'object' && Object.keys(obj).length > 0;
 }
 
 function isSHA256Base64Hashed(value) {
@@ -826,6 +824,8 @@ function log(rawDataToLog) {
   const logDestinationsHandlers = {};
   if (determinateIsLoggingEnabled()) logDestinationsHandlers.console = logConsole;
   if (determinateIsLoggingEnabledForBigQuery()) logDestinationsHandlers.bigQuery = logToBigQuery;
+
+  rawDataToLog.TraceId = getRequestHeader('trace-id');
 
   const keyMappings = {
     // No transformation for Console is needed.
