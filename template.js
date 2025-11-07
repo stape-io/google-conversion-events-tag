@@ -21,7 +21,7 @@ const sha256Sync = require('sha256Sync');
 /*==============================================================================
 ==============================================================================*/
 
-const apiVersion = 'v1';
+const apiVersion = '1';
 const eventData = getAllEventData();
 const useOptimisticScenario = isUIFieldTrue(data.useOptimisticScenario);
 
@@ -568,7 +568,7 @@ function hashDataIfNeeded(mappedData) {
 
 function generateRequestUrl(data, apiVersion) {
   if (data.authFlow === 'own') {
-    return 'https://datamanager.googleapis.com/' + apiVersion + '/events:ingest';
+    return 'https://datamanager.googleapis.com/v' + apiVersion + '/events:ingest';
   }
 
   const containerIdentifier = getRequestHeader('x-gtm-identifier');

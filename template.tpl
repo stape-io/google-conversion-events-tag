@@ -1184,7 +1184,7 @@ const sha256Sync = require('sha256Sync');
 /*==============================================================================
 ==============================================================================*/
 
-const apiVersion = 'v1';
+const apiVersion = '1';
 const eventData = getAllEventData();
 const useOptimisticScenario = isUIFieldTrue(data.useOptimisticScenario);
 
@@ -1731,7 +1731,7 @@ function hashDataIfNeeded(mappedData) {
 
 function generateRequestUrl(data, apiVersion) {
   if (data.authFlow === 'own') {
-    return 'https://datamanager.googleapis.com/' + apiVersion + '/events:ingest';
+    return 'https://datamanager.googleapis.com/v' + apiVersion + '/events:ingest';
   }
 
   const containerIdentifier = getRequestHeader('x-gtm-identifier');
@@ -2408,7 +2408,7 @@ scenarios:
     setAllMockDataByAuthMethod('own');
 
     mock('sendHttpRequest', (requestUrl, requestOptions, requestBody) => {
-      assertThat(requestUrl).isEqualTo('https://datamanager.googleapis.com/' + expectedDataManagerApiVersion + '/events:ingest');
+      assertThat(requestUrl).isEqualTo('https://datamanager.googleapis.com/v' + expectedDataManagerApiVersion + '/events:ingest');
       return Promise.create((resolve, reject) => {
         resolve({ statusCode: 200 });
       });
@@ -2768,7 +2768,7 @@ setup: "const Promise = require('Promise');\nconst JSON = require('JSON');\ncons
   \ callLater = require('callLater');\n\nconst mergeObj = (target, source) => {\n\
   \  for (const key in source) {\n    if (source.hasOwnProperty(key)) target[key]\
   \ = source[key];\n  }\n  return target;\n};\n\nconst expectedDataManagerApiVersion\
-  \ = 'v1';\n\nconst expectedBigQuerySettings = {\n  logBigQueryProjectId: 'logBigQueryProjectId',\n\
+  \ = '1';\n\nconst expectedBigQuerySettings = {\n  logBigQueryProjectId: 'logBigQueryProjectId',\n\
   \  logBigQueryDatasetId: 'logBigQueryDatasetId',\n  logBigQueryTableId: 'logBigQueryTableId'\n\
   };\n\nconst requiredConsoleKeys = ['Type', 'TraceId', 'Name'];\nconst requiredBqKeys\
   \ = ['timestamp', 'type', 'trace_id', 'tag_name'];\nconst expectedBqOptions = {\
