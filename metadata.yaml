@@ -1,6 +1,8 @@
 homepage: 'https://stape.io/'
 documentation: 'https://github.com/stape-io/google-conversion-events-tag'
 versions:
+  - sha: 5498313e86b3f4a44099d89ad929656aeee8545d
+    changeNotes: Added support for using Own Google Credentials as an authentication method.
   - sha: d1b29c8f0809db25356f500db42e453f8c1373db
     changeNotes: Updated header format on Stape Connection.
   - sha: ba7df31ddd5ff3acd5bf6866e422b388ded4a065

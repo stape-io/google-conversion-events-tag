@@ -46,6 +46,11 @@ ___TEMPLATE_PARAMETERS___
         "displayValue": "Stape Google Connection",
         "help": "You can enable it on the Stape container settings, in the \u003ca href\u003d\"https://app.stape.io/container/\" target\u003d\"_blank\"\u003eConnections\u003c/a\u003e section.\n\u003c/br\u003e\u003c/br\u003e\n\u003ca href\u003d\"https://stape.io/solutions/data-manager-api-connection\" target\u003d\"_blank\"\u003eLearn more here.\u003c/a\u003e",
         "subParams": []
+      },
+      {
+        "value": "own",
+        "displayValue": "Own Google Credentials",
+        "help": "This type of auth is more complicated. Only choose it if you know what you are doing and do not want to use the Stape Google Connection authentication.\n\u003cbr/\u003e\u003cbr/\u003e\nIt uses the \u003ca href\u003d\"https://cloud.google.com/docs/authentication/application-default-credentials\"\u003eGCP Application Default Credentials\u003c/a\u003e to automatically find credentials from the server environment.\n\u003cbr/\u003e\u003cbr/\u003e\nA \u003ca href\u003d\"https://developers.google.com/data-manager/api/devguides/quickstart/set-up-access?credential_type\u003dservice_account\"\u003eService Account impersonation\u003c/a\u003e is the simplest way to handle the authentication. If hosting on Stape, you can use the \u003ca href\u003d\"https://stape.io/helpdesk/documentation/google-service-account-power-up\"\u003eGoogle Service Account Power Up\u003c/a\u003e.\n\u003cbr/\u003e\nRemember to add the Service Account to the product you\u0027re interacting with (Google Ads, DV360 etc.)."
       }
     ],
     "simpleValueType": true,
@@ -1160,8 +1165,6 @@ ___TEMPLATE_PARAMETERS___
 
 
 ___SANDBOXED_JS_FOR_SERVER___
-
-/// <reference path="./server-gtm-sandboxed-apis.d.ts" />
 
 const BigQuery = require('BigQuery');
 const encodeUriComponent = require('encodeUriComponent');

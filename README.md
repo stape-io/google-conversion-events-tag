@@ -6,7 +6,9 @@ The tag is designed to handle both single and multiple conversion event uploads 
 
 ## How to use the Google Conversion Events Tag
 
-1.  Sign in to the Data Manager API Connection via the Stape admin. [How-to](https://stape.io/solutions/data-manager-api-connection).
+1.  Choose the authentication method:
+    *  Stape Google Connection (recommended): sign in to the Data Manager API Connection via the Stape admin. [How-to](https://stape.io/solutions/data-manager-api-connection).
+    *  Own Google Credentials: a [Service Account impersonation](https://developers.google.com/data-manager/api/devguides/quickstart/set-up-access?credential_type=service_account) is the simplest way to handle the authentication. If hosting on Stape, you can use the [Google Service Account Power Up](https://stape.io/helpdesk/documentation/google-service-account-power-up). Remember to add the Service Account to the product you're interacting with (Google Ads, DV360 etc.).
 2.  Add the **Google Conversion Events Tag** to your server container in GTM from the [GTM Template Gallery](https://tagmanager.google.com/gallery/#/owners/stape-io/templates/google-conversion-events-tag).
 3.  Set up your **Destination Accounts and Conversion Events**, specifying the Advertising Accounts Customer IDs and the corresponding Conversion Event IDs you want to send data to.
 4.  Choose your **Conversion Event Mode**: `Single` to configure one event's data through the UI, or `Multiple` to manually provide a pre-formatted array of events.
