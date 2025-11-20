@@ -7,8 +7,19 @@ The tag is designed to handle both single and multiple conversion event uploads 
 ## How to use the Google Conversion Events Tag
 
 1.  Choose the authentication method:
-    *  Stape Google Connection (recommended): sign in to the Data Manager API Connection via the Stape admin. [How-to](https://stape.io/solutions/data-manager-api-connection).
-    *  Own Google Credentials: a [Service Account impersonation](https://developers.google.com/data-manager/api/devguides/quickstart/set-up-access?credential_type=service_account) is the simplest way to handle the authentication. If hosting on Stape, you can use the [Google Service Account Power Up](https://stape.io/helpdesk/documentation/google-service-account-power-up). Remember to add the Service Account to the product you're interacting with (Google Ads, DV360 etc.).
+    *  **Stape Google Connection (recommended)**: sign in to the Data Manager API Connection via the Stape admin. This is the easiest way to set up the authentication. [How-to](https://stape.io/solutions/data-manager-api-connection).
+    *  **Own Google Credentials**: a [Service Account impersonation](https://developers.google.com/data-manager/api/devguides/quickstart/set-up-access?credential_type=service_account) is the simplest way to handle the authentication when using the **Own Google Credentials** method.
+
+        To configure it correctly, you must:
+       1) Enable the Data Manager API in a GCP Project.
+       2) Create a Service Account in this GCP Project.
+       3) Add the `Service Account Token Creator IAM` role (`roles/iam.serviceAccountTokenCreator`) to the Service Account.
+       4) Generate a `JSON Key` from this Service Account ([how-to](https://docs.cloud.google.com/iam/docs/keys-create-delete#creating)) and download it.
+       5) Connect the Service Account to the container using the `JSON Key` file:
+          - If hosting on Stape, [use the **Service Account power-up**](https://stape.io/blog/how-to-connect-google-service-account-to-stape).
+          - If NOT hosting on Stape, follow [these instructions](https://developers.google.com/tag-platform/tag-manager/server-side/manual-setup-guide#optional_include_google_cloud_credentials).
+       6) Grant the Service Account access to the product you're interacting with (Google Ads, DV360 etc.).
+
 2.  Add the **Google Conversion Events Tag** to your server container in GTM from the [GTM Template Gallery](https://tagmanager.google.com/gallery/#/owners/stape-io/templates/google-conversion-events-tag).
 3.  Set up your **Destination Accounts and Conversion Events**, specifying the Advertising Accounts Customer IDs and the corresponding Conversion Event IDs you want to send data to.
 4.  Choose your **Conversion Event Mode**: `Single` to configure one event's data through the UI, or `Multiple` to manually provide a pre-formatted array of events.
