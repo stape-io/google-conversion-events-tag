@@ -1767,6 +1767,7 @@ function generateRequestOptions(data, apiVersion) {
     if (data.xGoogUserProject) options.headers['x-goog-user-project'] = data.xGoogUserProject;
   } else if (data.authFlow === 'stape') {
     options.headers['x-datamanager-api-version'] = apiVersion;
+    options.timeout = 20000;
   }
 
   return options;
@@ -2427,10 +2428,11 @@ scenarios:
   code: "setAllMockDataByAuthMethod('stape');\n\nmock('sendHttpRequest', (requestUrl,\
     \ requestOptions, requestBody) => {\n  assertThat(requestOptions).isEqualTo({\n\
     \    method: 'POST',\n    headers: {\n      'Content-Type': 'application/json',\n\
-    \      'x-datamanager-api-version': expectedDataManagerApiVersion\n    }\n  });\n\
-    \n  return Promise.create((resolve, reject) => {\n    resolve({ statusCode: 200\
-    \ });\n  });  \n});\n\nrunCode(mockData);\n\ncallLater(() => {\n  assertApi('gtmOnSuccess').wasCalled();\n\
-    \  assertApi('gtmOnFailure').wasNotCalled();\n});"
+    \      'x-datamanager-api-version': expectedDataManagerApiVersion\n    },\n  \
+    \  timeout: 20000\n  });\n\n  return Promise.create((resolve, reject) => {\n \
+    \   resolve({ statusCode: 200 });\n  });  \n});\n\nrunCode(mockData);\n\ncallLater(()\
+    \ => {\n  assertApi('gtmOnSuccess').wasCalled();\n  assertApi('gtmOnFailure').wasNotCalled();\n\
+    });"
 - name: '[Own Connection] Request Options are successfully built and sent'
   code: "setAllMockDataByAuthMethod('own');\n\nmock('sendHttpRequest', (requestUrl,\
     \ requestOptions, requestBody) => {\n  assertThat(requestOptions).isEqualTo({\n\
