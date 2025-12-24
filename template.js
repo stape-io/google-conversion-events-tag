@@ -23,16 +23,25 @@ const apiVersion = '1';
 const eventData = getAllEventData();
 const useOptimisticScenario = isUIFieldTrue(data.useOptimisticScenario);
 
-if (!isConsentGivenOrNotRequired(data, eventData)) {
-  return data.gtmOnSuccess();
-}
-
-const url = eventData.page_location || getRequestHeader('referer');
-if (url && url.lastIndexOf('https://gtm-msr.appspot.com/', 0) === 0) {
+if (shouldExitEarly(data, eventData)) {
   return data.gtmOnSuccess();
 }
 
 const mappedData = getDataForConversionEventsUpload(data, eventData);
+
+const invalidFields = validateMappedData(mappedData);
+if (invalidFields) {
+  log({
+    Name: 'GoogleConversionEvent',
+    Type: 'Message',
+    EventName: 'ConversionEvent',
+    Message: 'Request was not sent.',
+    Reason: invalidFields
+  });
+
+  return data.gtmOnFailure();
+}
+
 sendRequest(data, mappedData, apiVersion);
 
 if (useOptimisticScenario) {
@@ -42,6 +51,55 @@ if (useOptimisticScenario) {
 /*==============================================================================
   Vendor related functions
 ==============================================================================*/
+
+function validateMappedData(mappedData) {
+  const conversionEvents = mappedData.events;
+
+  if (getType(conversionEvents) !== 'array' || conversionEvents.length === 0) {
+    return 'At least 1 Conversion Event must be specified.';
+  }
+
+  const doesNotHaveUserData = conversionEvents.some((e) => {
+    return (
+      getType(e.userData) !== 'object' ||
+      getType(e.userData.userIdentifiers) !== 'array' ||
+      e.userData.userIdentifiers.length === 0 ||
+      e.userData.userIdentifiers.some((i) => {
+        const userIdentifierIsObject = getType(i) === 'object';
+        const userIdentifierKey = userIdentifierIsObject ? Object.keys(i)[0] : undefined;
+        const userIdentifierValue = userIdentifierIsObject ? Object.values(i)[0] : undefined;
+        return (
+          !hasProps(i) ||
+          !userIdentifierValue ||
+          (userIdentifierKey === 'address' &&
+            (!hasProps(userIdentifierValue) || Object.values(userIdentifierValue).some((v) => !v)))
+        );
+      })
+    );
+  });
+
+  const doesNotHaveAdIdentifiers = conversionEvents.some((e) => {
+    const adIdentifierEntries =
+      getType(e.adIdentifiers) === 'object' ? Object.entries(e.adIdentifiers) : undefined;
+    return (
+      getType(e.adIdentifiers) !== 'object' ||
+      !hasProps(e.adIdentifiers) ||
+      adIdentifierEntries.every((keyValue) => {
+        const key = keyValue[0];
+        const value = keyValue[1];
+        return (
+          !value ||
+          (key === 'landingPageDeviceInfo' &&
+            (!hasProps(value) || Object.values(value).every((v) => !v)))
+        );
+      })
+    );
+  });
+
+  if (doesNotHaveUserData && doesNotHaveAdIdentifiers) {
+    return 'At least 1 Ad Identifier or User Data must be specified.';
+  }
+}
 
 function addDestinationsData(data, mappedData) {
   const destinations = [];
@@ -526,6 +584,8 @@ function hashDataIfNeeded(mappedData) {
       if (key === 'emailAddress' || key === 'phoneNumber') {
         let value = userIdentifier[key];
 
+        if (!value) return;
+
         if (isSHA256HexHashed(value)) {
           mappedData.encoding = 'HEX';
           return;
@@ -540,8 +600,9 @@ function hashDataIfNeeded(mappedData) {
         userIdentifier[key] = hashData(value);
         mappedData.encoding = 'HEX';
       } else if (key === 'address') {
-        const addressKeysToHash = ['givenName', 'familyName'];
+        if (getType(userIdentifier.address) !== 'object') return;
 
+        const addressKeysToHash = ['givenName', 'familyName'];
         addressKeysToHash.forEach((nameKey) => {
           const value = userIdentifier.address[nameKey];
           if (!value) return;
@@ -672,6 +733,15 @@ function sendRequest(data, mappedData, apiVersion) {
 /*==============================================================================
   Helpers
 ==============================================================================*/
+
+function shouldExitEarly(data, eventData) {
+  if (!isConsentGivenOrNotRequired(data, eventData)) return true;
+
+  const url = eventData.page_location || getRequestHeader('referer');
+  if (url && url.lastIndexOf('https://gtm-msr.appspot.com/', 0) === 0) return true;
+
+  return false;
+}
 
 function enc(data) {
   return encodeUriComponent(makeString(data || ''));

@@ -1191,16 +1191,25 @@ const apiVersion = '1';
 const eventData = getAllEventData();
 const useOptimisticScenario = isUIFieldTrue(data.useOptimisticScenario);
 
-if (!isConsentGivenOrNotRequired(data, eventData)) {
-  return data.gtmOnSuccess();
-}
-
-const url = eventData.page_location || getRequestHeader('referer');
-if (url && url.lastIndexOf('https://gtm-msr.appspot.com/', 0) === 0) {
+if (shouldExitEarly(data, eventData)) {
   return data.gtmOnSuccess();
 }
 
 const mappedData = getDataForConversionEventsUpload(data, eventData);
+
+const invalidFields = validateMappedData(mappedData);
+if (invalidFields) {
+  log({
+    Name: 'GoogleConversionEvent',
+    Type: 'Message',
+    EventName: 'ConversionEvent',
+    Message: 'Request was not sent.',
+    Reason: invalidFields
+  });
+
+  return data.gtmOnFailure();
+}
+
 sendRequest(data, mappedData, apiVersion);
 
 if (useOptimisticScenario) {
@@ -1210,6 +1219,55 @@ if (useOptimisticScenario) {
 /*==============================================================================
   Vendor related functions
 ==============================================================================*/
+
+function validateMappedData(mappedData) {
+  const conversionEvents = mappedData.events;
+
+  if (getType(conversionEvents) !== 'array' || conversionEvents.length === 0) {
+    return 'At least 1 Conversion Event must be specified.';
+  }
+
+  const doesNotHaveUserData = conversionEvents.some((e) => {
+    return (
+      getType(e.userData) !== 'object' ||
+      getType(e.userData.userIdentifiers) !== 'array' ||
+      e.userData.userIdentifiers.length === 0 ||
+      e.userData.userIdentifiers.some((i) => {
+        const userIdentifierIsObject = getType(i) === 'object';
+        const userIdentifierKey = userIdentifierIsObject ? Object.keys(i)[0] : undefined;
+        const userIdentifierValue = userIdentifierIsObject ? Object.values(i)[0] : undefined;
+        return (
+          !hasProps(i) ||
+          !userIdentifierValue ||
+          (userIdentifierKey === 'address' &&
+            (!hasProps(userIdentifierValue) || Object.values(userIdentifierValue).some((v) => !v)))
+        );
+      })
+    );
+  });
+
+  const doesNotHaveAdIdentifiers = conversionEvents.some((e) => {
+    const adIdentifierEntries =
+      getType(e.adIdentifiers) === 'object' ? Object.entries(e.adIdentifiers) : undefined;
+    return (
+      getType(e.adIdentifiers) !== 'object' ||
+      !hasProps(e.adIdentifiers) ||
+      adIdentifierEntries.every((keyValue) => {
+        const key = keyValue[0];
+        const value = keyValue[1];
+        return (
+          !value ||
+          (key === 'landingPageDeviceInfo' &&
+            (!hasProps(value) || Object.values(value).every((v) => !v)))
+        );
+      })
+    );
+  });
+
+  if (doesNotHaveUserData && doesNotHaveAdIdentifiers) {
+    return 'At least 1 Ad Identifier or User Data must be specified.';
+  }
+}
 
 function addDestinationsData(data, mappedData) {
   const destinations = [];
@@ -1694,6 +1752,8 @@ function hashDataIfNeeded(mappedData) {
       if (key === 'emailAddress' || key === 'phoneNumber') {
         let value = userIdentifier[key];
 
+        if (!value) return;
+
         if (isSHA256HexHashed(value)) {
           mappedData.encoding = 'HEX';
           return;
@@ -1708,8 +1768,9 @@ function hashDataIfNeeded(mappedData) {
         userIdentifier[key] = hashData(value);
         mappedData.encoding = 'HEX';
       } else if (key === 'address') {
-        const addressKeysToHash = ['givenName', 'familyName'];
+        if (getType(userIdentifier.address) !== 'object') return;
 
+        const addressKeysToHash = ['givenName', 'familyName'];
         addressKeysToHash.forEach((nameKey) => {
           const value = userIdentifier.address[nameKey];
           if (!value) return;
@@ -1840,6 +1901,15 @@ function sendRequest(data, mappedData, apiVersion) {
 /*==============================================================================
   Helpers
 ==============================================================================*/
+
+function shouldExitEarly(data, eventData) {
+  if (!isConsentGivenOrNotRequired(data, eventData)) return true;
+
+  const url = eventData.page_location || getRequestHeader('referer');
+  if (url && url.lastIndexOf('https://gtm-msr.appspot.com/', 0) === 0) return true;
+
+  return false;
+}
 
 function enc(data) {
   return encodeUriComponent(makeString(data || ''));
@@ -2390,74 +2460,120 @@ ___SERVER_PERMISSIONS___
 ___TESTS___
 
 scenarios:
-- name: '[Stape Connection] Request URL is successfully built and sent'
-  code: |-
-    setAllMockDataByAuthMethod('stape');
-
-    mock('sendHttpRequest', (requestUrl, requestOptions, requestBody) => {
-      assertThat(requestUrl).isEqualTo('https://expectedXGtmIdentifier.expectedXGtmDefaultDomain/stape-api/expectedXGtmApiKey/v2/data-manager/events/ingest');
-      return Promise.create((resolve, reject) => {
-        resolve({ statusCode: 200 });
-      });
-    });
-
-    runCode(mockData);
-
-    callLater(() => {
-      assertApi('gtmOnSuccess').wasCalled();
-      assertApi('gtmOnFailure').wasNotCalled();
-    });
-- name: '[Own Connection] Request URL is successfully built and sent'
-  code: |-
-    setAllMockDataByAuthMethod('own');
-
-    mock('sendHttpRequest', (requestUrl, requestOptions, requestBody) => {
-      assertThat(requestUrl).isEqualTo('https://datamanager.googleapis.com/v' + expectedDataManagerApiVersion + '/events:ingest');
-      return Promise.create((resolve, reject) => {
-        resolve({ statusCode: 200 });
-      });
-    });
-
-    runCode(mockData);
-
-    callLater(() => {
-      assertApi('gtmOnSuccess').wasCalled();
-      assertApi('gtmOnFailure').wasNotCalled();
-    });
-- name: '[Stape Connection] Request Options are successfully built and sent'
-  code: "setAllMockDataByAuthMethod('stape');\n\nmock('sendHttpRequest', (requestUrl,\
-    \ requestOptions, requestBody) => {\n  assertThat(requestOptions).isEqualTo({\n\
-    \    method: 'POST',\n    headers: {\n      'Content-Type': 'application/json',\n\
-    \      'x-datamanager-api-version': expectedDataManagerApiVersion\n    },\n  \
-    \  timeout: 20000\n  });\n\n  return Promise.create((resolve, reject) => {\n \
-    \   resolve({ statusCode: 200 });\n  });  \n});\n\nrunCode(mockData);\n\ncallLater(()\
-    \ => {\n  assertApi('gtmOnSuccess').wasCalled();\n  assertApi('gtmOnFailure').wasNotCalled();\n\
+- name: Request must not be sent if Conversions Events, or Ad Identifiers and User
+    Data are missing
+  code: "const conversionEventBaseMock = JSON.parse(JSON.stringify(multipleConversionEventsMock[0]));\n\
+    \n[\n  {\n    description: 'No conversion event is specified - undefined',\n \
+    \   mockData: {\n      conversionEventMode: 'multiple',\n      conversionEvents:\
+    \ undefined\n    }\n  },\n  {\n    description: 'No conversion event is specified\
+    \ - empty array',\n    mockData: {\n      conversionEventMode: 'multiple',\n \
+    \     conversionEvents: []\n    }\n  },\n  {\n    description: 'No Ad Identifiers\
+    \ and User Data',\n    mockData: {\n      conversionEventMode: 'multiple',\n \
+    \     conversionEvents: [\n        assign({}, conversionEventBaseMock, {\n   \
+    \       userData: undefined,\n          adIdentifiers: undefined\n        })\n\
+    \      ]\n    }\n  },\n  {\n    description: 'No Ad Identifiers and User Data',\n\
+    \    mockData: {\n      conversionEventMode: 'multiple',\n      conversionEvents:\
+    \ [\n        assign({}, conversionEventBaseMock, {\n          userData: {},\n\
+    \          adIdentifiers: undefined\n        })\n      ]\n    }\n  },\n  {\n \
+    \   description: 'No Ad Identifiers and User Data',\n    mockData: {\n      conversionEventMode:\
+    \ 'multiple',\n      conversionEvents: [\n        assign({}, conversionEventBaseMock,\
+    \ {\n          userData: { userIdentifiers: undefined },\n          adIdentifiers:\
+    \ undefined\n        })\n      ]\n    }\n  },\n  {\n    description: 'No Ad Identifiers\
+    \ and User Data',\n    mockData: {\n      conversionEventMode: 'multiple',\n \
+    \     conversionEvents: [\n        assign({}, conversionEventBaseMock, {\n   \
+    \       userData: { userIdentifiers: [] },\n          adIdentifiers: undefined\n\
+    \        })\n      ]\n    }\n  },\n  {\n    description: 'No Ad Identifiers and\
+    \ User Data',\n    mockData: {\n      conversionEventMode: 'multiple',\n     \
+    \ conversionEvents: [\n        assign({}, conversionEventBaseMock, {\n       \
+    \   userData: { userIdentifiers: ['test'] },\n          adIdentifiers: undefined\n\
+    \        })\n      ]\n    }\n  },\n  {\n    description: 'No Ad Identifiers and\
+    \ User Data',\n    mockData: {\n      conversionEventMode: 'multiple',\n     \
+    \ conversionEvents: [\n        assign({}, conversionEventBaseMock, {\n       \
+    \   userData: { userIdentifiers: [{}] },\n          adIdentifiers: undefined\n\
+    \        })\n      ]\n    }\n  },\n  {\n    description: 'No Ad Identifiers and\
+    \ User Data',\n    mockData: {\n      conversionEventMode: 'multiple',\n     \
+    \ conversionEvents: [\n        assign({}, conversionEventBaseMock, {\n       \
+    \   userData: { userIdentifiers: [{ emailAddress: undefined }] },\n          adIdentifiers:\
+    \ undefined\n        })\n      ]\n    }\n  },\n  {\n    description: 'No Ad Identifiers\
+    \ and User Data',\n    mockData: {\n      conversionEventMode: 'multiple',\n \
+    \     conversionEvents: [\n        assign({}, conversionEventBaseMock, {\n   \
+    \       userData: { userIdentifiers: [{ address: undefined }] },\n          adIdentifiers:\
+    \ undefined\n        })\n      ]\n    }\n  },\n  {\n    description: 'No Ad Identifiers\
+    \ and User Data',\n    mockData: {\n      conversionEventMode: 'multiple',\n \
+    \     conversionEvents: [\n        assign({}, conversionEventBaseMock, {\n   \
+    \       userData: { userIdentifiers: [{ address: {} }] },\n          adIdentifiers:\
+    \ undefined\n        })\n      ]\n    }\n  },\n  {\n    description: 'No Ad Identifiers\
+    \ and User Data',\n    mockData: {\n      conversionEventMode: 'multiple',\n \
+    \     conversionEvents: [\n        assign({}, conversionEventBaseMock, {\n   \
+    \       userData: { userIdentifiers: [{ address: { givenName: undefined } }] },\n\
+    \          adIdentifiers: undefined\n        })\n      ]\n    }\n  },\n  {\n \
+    \   description: 'No Ad Identifiers and User Data',\n    mockData: {\n      conversionEventMode:\
+    \ 'multiple',\n      conversionEvents: [\n        assign({}, conversionEventBaseMock,\
+    \ {\n          userData: undefined,\n          adIdentifiers: {}\n        })\n\
+    \      ]\n    }\n  },\n  {\n    description: 'No Ad Identifiers and User Data',\n\
+    \    mockData: {\n      conversionEventMode: 'multiple',\n      conversionEvents:\
+    \ [\n        assign({}, conversionEventBaseMock, {\n          userData: undefined,\n\
+    \          adIdentifiers: {\n             gclid: undefined,\n             gbraid:\
+    \ undefined,\n             wbraid: undefined,\n             sessionAttributes:\
+    \ undefined,\n             landingPageDeviceInfo: undefined\n           }\n  \
+    \      })\n      ]\n    }\n  },\n  {\n    description: 'No Ad Identifiers and\
+    \ User Data',\n    mockData: {\n      conversionEventMode: 'multiple',\n     \
+    \ conversionEvents: [\n        assign({}, conversionEventBaseMock, {\n       \
+    \   userData: undefined,\n          adIdentifiers: {\n             gclid: undefined,\n\
+    \             gbraid: undefined,\n             wbraid: undefined,\n          \
+    \   sessionAttributes: undefined,\n             landingPageDeviceInfo: {}\n  \
+    \         }\n        })\n      ]\n    }\n  },\n  {\n    description: 'No Ad Identifiers\
+    \ and User Data',\n    mockData: {\n      conversionEventMode: 'multiple',\n \
+    \     conversionEvents: [\n        assign({}, conversionEventBaseMock, {\n   \
+    \       userData: undefined,\n          adIdentifiers: {\n             gclid:\
+    \ undefined,\n             gbraid: undefined,\n             wbraid: undefined,\n\
+    \             sessionAttributes: undefined,\n             landingPageDeviceInfo:\
+    \ {\n               userAgent: undefined,\n               ipAddress: undefined\n\
+    \             }\n           }\n        })\n      ]\n    }\n  }\n].forEach((scenario,\
+    \ i) => {\n  const copyMockData = setAllMockDataByAuthMethod('stape', scenario.mockData);\n\
+    \  \n  runCode(copyMockData);\n\n  assertApi('sendHttpRequest').wasNotCalled();\n\
+    \  assertApi('gtmOnSuccess').wasNotCalled();\n  assertApi('gtmOnFailure').wasCalled();\n\
     });"
-- name: '[Own Connection] Request Options are successfully built and sent'
-  code: "setAllMockDataByAuthMethod('own');\n\nmock('sendHttpRequest', (requestUrl,\
-    \ requestOptions, requestBody) => {\n  assertThat(requestOptions).isEqualTo({\n\
-    \    method: 'POST',\n    headers: {\n      'Content-Type': 'application/json'\n\
-    \    },\n    authorization: 'googleAuthToken'\n  });\n\n  return Promise.create((resolve,\
-    \ reject) => {\n    resolve({ statusCode: 200 });\n  });  \n});\n\nrunCode(mockData);\n\
-    \ncallLater(() => {\n  assertApi('getGoogleAuth').wasCalledWith({\n    scopes:\
-    \ ['https://www.googleapis.com/auth/datamanager']\n  });\n  assertApi('gtmOnSuccess').wasCalled();\n\
-    \  assertApi('gtmOnFailure').wasNotCalled();\n});"
+- name: Request URL is successfully built and sent
+  code: "[\n  {\n    authMethod: 'stape',\n    expectedRequestUrl: 'https://expectedXGtmIdentifier.expectedXGtmDefaultDomain/stape-api/expectedXGtmApiKey/v2/data-manager/events/ingest'\n\
+    \  },\n  {\n    authMethod: 'own',\n    expectedRequestUrl: 'https://datamanager.googleapis.com/v'\
+    \ + expectedDataManagerApiVersion + '/events:ingest'\n  }\n].forEach((scenario)\
+    \ => {\n  const copyMockData = setAllMockDataByAuthMethod(scenario.authMethod);\n\
+    \  \n  mock('sendHttpRequest', (requestUrl, requestOptions, requestBody) => {\n\
+    \    assertThat(requestUrl).isEqualTo(scenario.expectedRequestUrl);\n    return\
+    \ Promise.create((resolve, reject) => {\n      resolve({ statusCode: 200 });\n\
+    \    });\n  });\n  \n  runCode(copyMockData);\n\n  callLater(() => {\n    assertApi('gtmOnSuccess').wasCalled();\n\
+    \    assertApi('gtmOnFailure').wasNotCalled();\n  });\n});\n\n\n"
+- name: Request Options are successfully built and sent
+  code: "[\n  {\n    authMethod: 'stape',\n    expectedRequestOptions: {\n      method:\
+    \ 'POST',\n      headers: {\n        'Content-Type': 'application/json',\n   \
+    \     'x-datamanager-api-version': expectedDataManagerApiVersion\n      },\n \
+    \     timeout: 20000\n    }\n  },\n  {\n    authMethod: 'own',\n    expectedRequestOptions:\
+    \ {\n      method: 'POST',\n      headers: {\n        'Content-Type': 'application/json'\n\
+    \      },\n      authorization: 'googleAuthToken'\n    }\n  }\n].forEach((scenario)\
+    \ => {\n  const copyMockData = setAllMockDataByAuthMethod(scenario.authMethod);\n\
+    \  \n  mock('sendHttpRequest', (requestUrl, requestOptions, requestBody) => {\n\
+    \    assertThat(requestOptions).isEqualTo(scenario.expectedRequestOptions);\n\
+    \    return Promise.create((resolve, reject) => {\n      resolve({ statusCode:\
+    \ 200 });\n    });\n  });\n  \n  runCode(copyMockData);\n\n  callLater(() => {\n\
+    \    assertApi('gtmOnSuccess').wasCalled();\n    assertApi('gtmOnFailure').wasNotCalled();\n\
+    \  });\n});"
 - name: '[Single Event] [Data from auto-mapping] Request is successfully built and
     sent'
-  code: "setGetAllEventData();\n\nsetAllMockDataByAuthMethod('stape', {\n  conversionEventMode:\
-    \ 'single',\n  autoMapConversionInformation: true,\n  autoMapUserData: true,\n\
-    \  autoMapEventDeviceInfo: true,\n  autoMapCartData: true\n});\n\n[\n  'transactionId',\n\
-    \  'currency',\n  'conversionValue',\n  'userDataEmailAddresses',\n  'userDataPhoneNumbers',\n\
-    \  'addressGivenName',\n  'addressFamilyName',\n  'addressRegion',\n  'addressPostalCode',\n\
-    \  'eventDeviceInfoUserAgent',\n  'eventDeviceInfoIpAddress',\n  'cartDataItems'\n\
-    ].forEach((key) => Object.delete(mockData, key));\n\nmock('sendHttpRequest', (requestUrl,\
-    \ requestOptions, requestBody) => {\n  const parsedRequestBody = JSON.parse(requestBody);\n\
-    \  assertThat(parsedRequestBody).isEqualTo({\n    validateOnly: false,\n    destinations:\
-    \ [\n      {\n        reference: 'productDestinationId',\n        productDestinationId:\
-    \ 'productDestinationId',\n        operatingAccount: {\n          accountType:\
-    \ 'GOOGLE_ADS',\n          accountId: 'operatingAccountId'\n        },\n     \
-    \   linkedAccount: { accountType: 'GOOGLE_ADS', accountId: 'linkedAccountId' }\n\
-    \      },\n      {\n        reference: 'productDestinationId1',\n        productDestinationId:\
+  code: "setGetAllEventData();\n\nconst copyMockData = setAllMockDataByAuthMethod('stape',\
+    \ {\n  conversionEventMode: 'single',\n  autoMapConversionInformation: true,\n\
+    \  autoMapUserData: true,\n  autoMapEventDeviceInfo: true,\n  autoMapCartData:\
+    \ true\n});\n\n[\n  'transactionId',\n  'currency',\n  'conversionValue',\n  'userDataEmailAddresses',\n\
+    \  'userDataPhoneNumbers',\n  'addressGivenName',\n  'addressFamilyName',\n  'addressRegion',\n\
+    \  'addressPostalCode',\n  'eventDeviceInfoUserAgent',\n  'eventDeviceInfoIpAddress',\n\
+    \  'cartDataItems'\n].forEach((key) => Object.delete(copyMockData, key));\n\n\
+    mock('sendHttpRequest', (requestUrl, requestOptions, requestBody) => {\n  const\
+    \ parsedRequestBody = JSON.parse(requestBody);\n  assertThat(parsedRequestBody).isEqualTo({\n\
+    \    validateOnly: false,\n    destinations: [\n      {\n        reference: 'productDestinationId',\n\
+    \        productDestinationId: 'productDestinationId',\n        operatingAccount:\
+    \ {\n          accountType: 'GOOGLE_ADS',\n          accountId: 'operatingAccountId'\n\
+    \        },\n        linkedAccount: { accountType: 'GOOGLE_ADS', accountId: 'linkedAccountId'\
+    \ }\n      },\n      {\n        reference: 'productDestinationId1',\n        productDestinationId:\
     \ 'productDestinationId1',\n        operatingAccount: {\n          accountType:\
     \ 'GOOGLE_ADS',\n          accountId: 'operatingAccountId1'\n        },\n    \
     \    linkedAccount: { accountType: 'GOOGLE_ADS', accountId: 'linkedAccountId1'\
@@ -2495,13 +2611,13 @@ scenarios:
     \    encryptionInfo: {\n      gcpWrappedKeyInfo: {\n        keyType: 'XCHACHA20_POLY1305',\n\
     \        wipProvider: '123',\n        kekUri: '123',\n        encryptedDek: '123'\n\
     \      }\n    }\n  });\n\n  return Promise.create((resolve, reject) => {\n   \
-    \ resolve({ statusCode: 200 });\n  });  \n});\n\nrunCode(mockData);\n\ncallLater(()\
+    \ resolve({ statusCode: 200 });\n  });  \n});\n\nrunCode(copyMockData);\n\ncallLater(()\
     \ => {\n  assertApi('gtmOnSuccess').wasCalled();\n  assertApi('gtmOnFailure').wasNotCalled();\n\
     });"
 - name: '[Single Event] [Data from UI fields] Request is successfully built and sent'
-  code: "setAllMockDataByAuthMethod('stape', {\n  conversionEventMode: 'single'\n\
-    });\n\nmock('sendHttpRequest', (requestUrl, requestOptions, requestBody) => {\n\
-    \  const parsedRequestBody = JSON.parse(requestBody);\n    assertThat(parsedRequestBody).isEqualTo({\n\
+  code: "const copyMockData = setAllMockDataByAuthMethod('stape', {\n  conversionEventMode:\
+    \ 'single'\n});\n\nmock('sendHttpRequest', (requestUrl, requestOptions, requestBody)\
+    \ => {\n  const parsedRequestBody = JSON.parse(requestBody);\n    assertThat(parsedRequestBody).isEqualTo({\n\
     \    validateOnly: false,\n    destinations: [\n      {\n        reference: 'productDestinationId',\n\
     \        productDestinationId: 'productDestinationId',\n        operatingAccount:\
     \ {\n          accountType: 'GOOGLE_ADS',\n          accountId: 'operatingAccountId'\n\
@@ -2545,70 +2661,16 @@ scenarios:
     \ {\n      gcpWrappedKeyInfo: {\n        keyType: 'XCHACHA20_POLY1305',\n    \
     \    wipProvider: '123',\n        kekUri: '123',\n        encryptedDek: '123'\n\
     \      }\n    }\n  });\n\n  return Promise.create((resolve, reject) => {\n   \
-    \ resolve({ statusCode: 200 });\n  });  \n});\n\nrunCode(mockData);\n\ncallLater(()\
+    \ resolve({ statusCode: 200 });\n  });  \n});\n\nrunCode(copyMockData);\n\ncallLater(()\
     \ => {\n  assertApi('gtmOnSuccess').wasCalled();\n  assertApi('gtmOnFailure').wasNotCalled();\n\
     });"
 - name: '[Multiple Events] [Data from UI fields] Request is successfully built and
     sent'
-  code: "setAllMockDataByAuthMethod('stape', {\n  conversionEventMode: 'multiple',\n\
-    \  conversionEvents: [\n    {\n      destionationReference: 'productDestinationId1',\n\
-    \      transactionId: 'Transaction ID 1',\n      eventTimestamp: '2014-10-02T15:01:23Z',\n\
-    \      lastUpdatedTimestamp: '2014-10-02T15:01:23Z',\n      currency: 'BRL',\n\
-    \      conversionValue: 123.45,\n      eventSource: 'WEB',\n      userData: {\n\
-    \        userIdentifiers: [\n          {\n            emailAddress:\n        \
-    \      'test1@example.net'\n          },\n          {\n            phoneNumber:\n\
-    \              '+55199999999'\n          },\n          {\n            address:\
-    \ {\n              givenName:\n                '9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08',\n\
-    \              familyName:\n                '9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08',\n\
-    \              regionCode: 'US',\n              postalCode: '10001'\n        \
-    \    }\n          }\n        ]\n      },\n      adIdentifiers: {\n        gclid:\
-    \ 'gclid',\n        gbraid: 'gbraid',\n        wbraid: 'wbraid',\n        landingPageDeviceInfo:\
-    \ {\n          userAgent: 'Landing Page User Agent',\n          ipAddress: '1.1.1.1'\n\
-    \        },\n        sessionAttributes: 'Session Attributes'\n      },\n     \
-    \ eventDeviceInfo: { userAgent: 'User Agent', ipAddress: '1.1.1.1' },\n      userProperties:\
-    \ { customerType: 'NEW', customerValueBucket: 'LOW' },\n      cartData: {\n  \
-    \      merchantId: 'Merchant Center ID',\n        merchantFeedLabel: 'Merchant\
-    \ Center Feed Label',\n        merchantFeedLanguageCode: 'Merchant Center Feed\
-    \ Language Code',\n        transactionDiscount: 123,\n        items: [\n     \
-    \     {\n            merchantProductId: 'Merchant Product ID 1',\n           \
-    \ quantity: '1',\n            unitPrice: 123\n          },\n          {\n    \
-    \        merchantProductId: 'Merchant Product ID 2',\n            quantity: '2',\n\
-    \            unitPrice: 111\n          }\n        ]\n      },\n      customVariables:\
-    \ [\n        {\n          variable: 'TEST1',\n          value: 'ABC',\n      \
-    \    destinationReferences: ['REFERENCE']\n        },\n        { variable: 'TEST2',\
-    \ value: 'AAAAAAAA' },\n        {\n          variable: 'TEST3',\n          value:\
-    \ '123ABC',\n          destinationReferences: ['REFERENCE', 'REFERENCE2']\n  \
-    \      }\n      ],\n      experimentalFields: [{ field: 'ABC', value: 'FOOBAR'\
-    \ }]\n    },\n    {\n\n      transactionId: 'Transaction ID 2',\n      eventTimestamp:\
-    \ '2014-10-02T15:01:23Z',\n      lastUpdatedTimestamp: '2014-10-02T15:01:23Z',\n\
-    \      currency: 'BRL',\n      conversionValue: 1,\n      eventSource: 'WEB',\n\
-    \      userData: {\n        userIdentifiers: [\n          {\n            emailAddress:\n\
-    \              '74790a65960d58724ba244c376e2bb6cbdd39f6c67d122760b319d51d11813a9'\n\
-    \          },\n          {\n            phoneNumber:\n              '92effd108fc091e55b0239ffc94d867e649d45c28c3de6918ec1edcb0723602c'\n\
-    \          },\n          {\n            address: {\n              givenName:\n\
-    \                'test',\n              familyName:\n                'test',\n\
-    \              regionCode: 'US',\n              postalCode: '10001'\n        \
-    \    }\n          }\n        ]\n      },\n      adIdentifiers: {\n        gclid:\
-    \ 'gclid',\n        gbraid: 'gbraid',\n        wbraid: 'wbraid',\n        landingPageDeviceInfo:\
-    \ {\n          userAgent: 'Landing Page User Agent',\n          ipAddress: '1.1.1.1'\n\
-    \        },\n        sessionAttributes: 'Session Attributes'\n      },\n     \
-    \ eventDeviceInfo: { userAgent: 'User Agent', ipAddress: '1.1.1.1' },\n      userProperties:\
-    \ { customerType: 'NEW', customerValueBucket: 'LOW' },\n      cartData: {\n  \
-    \      merchantId: 'Merchant Center ID',\n        merchantFeedLabel: 'Merchant\
-    \ Center Feed Label',\n        merchantFeedLanguageCode: 'Merchant Center Feed\
-    \ Language Code',\n        transactionDiscount: 123,\n        items: [\n     \
-    \     {\n            merchantProductId: 'Merchant Product ID 1',\n           \
-    \ quantity: '1',\n            unitPrice: 123\n          },\n          {\n    \
-    \        merchantProductId: 'Merchant Product ID 2',\n            quantity: '2',\n\
-    \            unitPrice: 111\n          }\n        ]\n      },\n      customVariables:\
-    \ [\n        {\n          variable: 'TEST1',\n          value: 'ABC',\n      \
-    \    destinationReferences: ['REFERENCE']\n        },\n        { variable: 'TEST2',\
-    \ value: 'AAAAAAAA' },\n        {\n          variable: 'TEST3',\n          value:\
-    \ '123ABC',\n          destinationReferences: ['REFERENCE', 'REFERENCE2']\n  \
-    \      }\n      ],\n      experimentalFields: [{ field: 'ABC', value: 'FOOBAR'\
-    \ }]\n    }\n  ]\n});\n\nmock('sendHttpRequest', (requestUrl, requestOptions,\
-    \ requestBody) => {\n  const parsedRequestBody = JSON.parse(requestBody);\n  assertThat(parsedRequestBody).isEqualTo({\n\
-    \    validateOnly: false,\n    destinations: [\n      {\n        reference: 'productDestinationId',\n\
+  code: "const copyMockData = setAllMockDataByAuthMethod('stape', {\n  conversionEventMode:\
+    \ 'multiple',\n  conversionEvents: multipleConversionEventsMock\n});\n\nmock('sendHttpRequest',\
+    \ (requestUrl, requestOptions, requestBody) => {\n  const parsedRequestBody =\
+    \ JSON.parse(requestBody);\n  assertThat(parsedRequestBody).isEqualTo({\n    validateOnly:\
+    \ false,\n    destinations: [\n      {\n        reference: 'productDestinationId',\n\
     \        productDestinationId: 'productDestinationId',\n        operatingAccount:\
     \ {\n          accountType: 'GOOGLE_ADS',\n          accountId: 'operatingAccountId'\n\
     \        },\n        linkedAccount: { accountType: 'GOOGLE_ADS', accountId: 'linkedAccountId'\
@@ -2681,58 +2743,55 @@ scenarios:
     \ {\n      gcpWrappedKeyInfo: {\n        keyType: 'XCHACHA20_POLY1305',\n    \
     \    wipProvider: '123',\n        kekUri: '123',\n        encryptedDek: '123'\n\
     \      }\n    }\n  });\n\n  return Promise.create((resolve, reject) => {\n   \
-    \ resolve({ statusCode: 200 });\n  });  \n});\n\nrunCode(mockData);\n\ncallLater(()\
+    \ resolve({ statusCode: 200 });\n  });  \n});\n\nrunCode(copyMockData);\n\ncallLater(()\
     \ => {\n  assertApi('gtmOnSuccess').wasCalled();\n  assertApi('gtmOnFailure').wasNotCalled();\n\
     });"
 - name: '[Request] Should call gtmOnFailure when promise resolves and status code
-    is outside success range'
-  code: "setAllMockDataByAuthMethod('stape');\n\nmock('sendHttpRequest', (requestUrl,\
-    \ requestOptions, requestBody) => {\n  return Promise.create((resolve, reject)\
-    \ => {\n    resolve({ statusCode: 500 });\n  });  \n});\n\nrunCode(mockData);\n\
-    \ncallLater(() => {\n  assertApi('gtmOnSuccess').wasNotCalled();\n  assertApi('gtmOnFailure').wasCalled();\n\
-    });"
-- name: '[Request] Should call gtmOnFailure when promise rejects'
-  code: "setAllMockDataByAuthMethod('stape');\n\nmock('sendHttpRequest', (requestUrl,\
-    \ requestOptions, requestBody) => {\n  return Promise.create((resolve, reject)\
-    \ => {\n    reject({ reason: 'Failed' });\n  });  \n});\n\nrunCode(mockData);\n\
-    \ncallLater(() => {\n  assertApi('gtmOnSuccess').wasNotCalled();\n  assertApi('gtmOnFailure').wasCalled();\n\
-    });"
+    is outside success range, or when the request fails'
+  code: "[\n  {\n    callback: (resolve, reject) => resolve({ statusCode: 500 })\n\
+    \  },\n  {\n    callback: (resolve, reject) => reject({ reason: 'Failed' })\n\
+    \  }\n].forEach((scenario) => {\n  const copyMockData = setAllMockDataByAuthMethod('stape');\n\
+    \  \n  mock('sendHttpRequest', (requestUrl, requestOptions, requestBody) => {\n\
+    \    return Promise.create((resolve, reject) => {\n      scenario.callback(resolve,\
+    \ reject);\n    });  \n  });\n  \n  runCode(copyMockData);\n  \n  callLater(()\
+    \ => {\n    assertApi('gtmOnSuccess').wasNotCalled();\n    assertApi('gtmOnFailure').wasCalled();\n\
+    \  });\n});"
 - name: '[Hex] Encoding is correctly defined when hashed User Data is already Hex
     encoded'
-  code: "setGetAllEventData();\nsetAllMockDataByAuthMethod('stape', {\n  conversionEventMode:\
-    \ 'single',\n  userDataEncoding: undefined,\n  autoMapUserData: false,\n  userDataEmailAddresses:\
-    \ '426a1c28c61b7ba258fa3cc300ba7cd3abc11c0d4b585d3ce4a15d6f22d6d363',\n  userDataPhoneNumbers:\
-    \ '426a1c28c61b7ba258fa3cc300ba7cd3abc11c0d4b585d3ce4a15d6f22d6d363',\n  addUserDataAddress:\
-    \ true,\n  userDataAddressGivenName: '426a1c28c61b7ba258fa3cc300ba7cd3abc11c0d4b585d3ce4a15d6f22d6d363',\n\
+  code: "setGetAllEventData();\n\nconst copyMockData = setAllMockDataByAuthMethod('stape',\
+    \ {\n  conversionEventMode: 'single',\n  userDataEncoding: undefined,\n  autoMapUserData:\
+    \ false,\n  userDataEmailAddresses: '426a1c28c61b7ba258fa3cc300ba7cd3abc11c0d4b585d3ce4a15d6f22d6d363',\n\
+    \  userDataPhoneNumbers: '426a1c28c61b7ba258fa3cc300ba7cd3abc11c0d4b585d3ce4a15d6f22d6d363',\n\
+    \  addUserDataAddress: true,\n  userDataAddressGivenName: '426a1c28c61b7ba258fa3cc300ba7cd3abc11c0d4b585d3ce4a15d6f22d6d363',\n\
     \  userDataAddressFamilyName: '426a1c28c61b7ba258fa3cc300ba7cd3abc11c0d4b585d3ce4a15d6f22d6d363',\n\
     \  userDataAddressRegion: '426a1c28c61b7ba258fa3cc300ba7cd3abc11c0d4b585d3ce4a15d6f22d6d363',\n\
     \  userDataAddressPostalCode: '426a1c28c61b7ba258fa3cc300ba7cd3abc11c0d4b585d3ce4a15d6f22d6d363',\n\
     });\n\nmock('sendHttpRequest', (requestUrl, requestOptions, requestBody) => {\n\
     \  const parsedRequestBody = JSON.parse(requestBody);\n  assertThat(parsedRequestBody.encoding).isEqualTo('HEX');\n\
     \n  return Promise.create((resolve, reject) => {\n    resolve({ statusCode: 200\
-    \ });\n  });  \n});\n\nrunCode(mockData);\n\ncallLater(() => {\n  assertApi('gtmOnSuccess').wasCalled();\n\
+    \ });\n  });  \n});\n\nrunCode(copyMockData);\n\ncallLater(() => {\n  assertApi('gtmOnSuccess').wasCalled();\n\
     \  assertApi('gtmOnFailure').wasNotCalled();\n});"
 - name: '[Base64] Encoding is correctly defined when hashed User Data is already Base64
     encoded'
-  code: "setGetAllEventData();\nsetAllMockDataByAuthMethod('stape', {\n  conversionEventMode:\
-    \ 'single',\n  userDataEncoding: undefined,\n  autoMapUserData: false,\n  userDataEmailAddresses:\
-    \ 'osrifrM+43jsL6zoLw/I4luJ2T20MMOXTxBMsVIEx1o=',\n  userDataPhoneNumbers: 'osrifrM+43jsL6zoLw/I4luJ2T20MMOXTxBMsVIEx1o=',\n\
-    \  addUserDataAddress: true,\n  userDataAddressGivenName: 'osrifrM+43jsL6zoLw/I4luJ2T20MMOXTxBMsVIEx1o=',\n\
+  code: "setGetAllEventData();\n\nconst copyMockData = setAllMockDataByAuthMethod('stape',\
+    \ {\n  conversionEventMode: 'single',\n  userDataEncoding: undefined,\n  autoMapUserData:\
+    \ false,\n  userDataEmailAddresses: 'osrifrM+43jsL6zoLw/I4luJ2T20MMOXTxBMsVIEx1o=',\n\
+    \  userDataPhoneNumbers: 'osrifrM+43jsL6zoLw/I4luJ2T20MMOXTxBMsVIEx1o=',\n  addUserDataAddress:\
+    \ true,\n  userDataAddressGivenName: 'osrifrM+43jsL6zoLw/I4luJ2T20MMOXTxBMsVIEx1o=',\n\
     \  userDataAddressFamilyName: 'osrifrM+43jsL6zoLw/I4luJ2T20MMOXTxBMsVIEx1o=',\n\
     \  userDataAddressRegion: 'osrifrM+43jsL6zoLw/I4luJ2T20MMOXTxBMsVIEx1o=',\n  userDataAddressPostalCode:\
     \ 'osrifrM+43jsL6zoLw/I4luJ2T20MMOXTxBMsVIEx1o=',\n});\n\nmock('sendHttpRequest',\
     \ (requestUrl, requestOptions, requestBody) => {\n  const parsedRequestBody =\
     \ JSON.parse(requestBody);\n  assertThat(parsedRequestBody.encoding).isEqualTo('BASE64');\n\
     \n  return Promise.create((resolve, reject) => {\n    resolve({ statusCode: 200\
-    \ });\n  });  \n});\n\nrunCode(mockData);\n\ncallLater(() => {\n  assertApi('gtmOnSuccess').wasCalled();\n\
+    \ });\n  });  \n});\n\nrunCode(copyMockData);\n\ncallLater(() => {\n  assertApi('gtmOnSuccess').wasCalled();\n\
     \  assertApi('gtmOnFailure').wasNotCalled();\n});"
 - name: '[Logs] Should log to console'
-  code: "const originalMockData = setAllMockDataByAuthMethod('stape');\n\n[\n  //\
-    \ if the 'Always log to console' option is selected\n  { mockData: { logType:\
-    \ 'always' }, expectedDebugMode: true },\n  // if the 'Log during debug and preview'\
-    \ option is selected AND is on preview mode\n  { mockData: { logType: 'debug'\
-    \ }, expectedDebugMode: true },\n].forEach(scenario => {\n  const copyMockData\
-    \ = JSON.parse(JSON.stringify(originalMockData));\n  mergeObj(copyMockData, scenario.mockData);\n\
+  code: "[\n  // if the 'Always log to console' option is selected\n  { mockData:\
+    \ { logType: 'always' }, expectedDebugMode: true },\n  // if the 'Log during debug\
+    \ and preview' option is selected AND is on preview mode\n  { mockData: { logType:\
+    \ 'debug' }, expectedDebugMode: true },\n].forEach(scenario => {\n  const copyMockData\
+    \ = setAllMockDataByAuthMethod('stape');\n  assign(mockData, scenario.mockData);\n\
     \  \n  mock('getContainerVersion', () => {\n    return {\n      debugMode: scenario.expectedDebugMode\n\
     \    };\n  }); \n  \n  mock('logToConsole', (logData) => {\n    const parsedLogData\
     \ = JSON.parse(logData);\n    requiredConsoleKeys.forEach(p => assertThat(parsedLogData[p]).isDefined());\n\
@@ -2740,44 +2799,44 @@ scenarios:
     \    assertApi('gtmOnSuccess').wasCalled();\n    assertApi('gtmOnFailure').wasNotCalled();\n\
     \  });\n});"
 - name: '[Logs] Should NOT log to console'
-  code: "const originalMockData = setAllMockDataByAuthMethod('stape');\n\n[\n  //\
-    \ if the 'Log during debug and preview' option is selected AND is NOT on preview\
-    \ mode\n  { mockData: { logType: 'debug' }, expectedDebugMode: false },\n  //\
-    \ if the 'Do not log' option is selected\n  { mockData: { logType: 'no' }, expectedDebugMode:\
-    \ undefined },\n].forEach(scenario => {\n  const copyMockData = JSON.parse(JSON.stringify(originalMockData));\n\
-    \  mergeObj(copyMockData, scenario.mockData);\n  \n  mock('getContainerVersion',\
-    \ () => {\n    return {\n      debugMode: scenario.expectedDebugMode\n    };\n\
-    \  });\n  \n  runCode(copyMockData);\n\n  callLater(() => {\n    assertApi('logToConsole').wasNotCalled();\n\
+  code: "[\n  // if the 'Log during debug and preview' option is selected AND is NOT\
+    \ on preview mode\n  { mockData: { logType: 'debug' }, expectedDebugMode: false\
+    \ },\n  // if the 'Do not log' option is selected\n  { mockData: { logType: 'no'\
+    \ }, expectedDebugMode: undefined },\n].forEach(scenario => {\n  const copyMockData\
+    \ = setAllMockDataByAuthMethod('stape');\n  assign(mockData, scenario.mockData);\n\
+    \  \n  mock('getContainerVersion', () => {\n    return {\n      debugMode: scenario.expectedDebugMode\n\
+    \    };\n  });\n  \n  runCode(copyMockData);\n\n  callLater(() => {\n    assertApi('logToConsole').wasNotCalled();\n\
     \    assertApi('gtmOnSuccess').wasCalled();\n    assertApi('gtmOnFailure').wasNotCalled();\n\
     \  });\n});"
 - name: '[Logs] Should NOT log to BQ, if the ''Do not log to BigQuery'' option is
     selected'
-  code: "setAllMockDataByAuthMethod('stape');\nmockData.bigQueryLogType = 'no';\n\n\
-    // assertApi doesn't work for 'BigQuery.insert()'.\n// Ref: https://gtm-gear.com/posts/gtm-templates-testing/\n\
+  code: "const copyMockData = setAllMockDataByAuthMethod('stape');\ncopyMockData.bigQueryLogType\
+    \ = 'no';\n\n// assertApi doesn't work for 'BigQuery.insert()'.\n// Ref: https://gtm-gear.com/posts/gtm-templates-testing/\n\
     mockObject('BigQuery', {\n  insert: (connectionInfo, rows, options) => { \n  \
     \  fail('BigQuery.insert should not have been called.');\n    return Promise.create((resolve,\
-    \ reject) => {\n      resolve();\n    });\n  }\n});\n\nrunCode(mockData);\n\n\
-    callLater(() => {\n  assertApi('gtmOnSuccess').wasCalled();\n  assertApi('gtmOnFailure').wasNotCalled();\n\
+    \ reject) => {\n      resolve();\n    });\n  }\n});\n\nrunCode(copyMockData);\n\
+    \ncallLater(() => {\n  assertApi('gtmOnSuccess').wasCalled();\n  assertApi('gtmOnFailure').wasNotCalled();\n\
     });"
 - name: '[Logs] Should log to BQ, if the ''Log to BigQuery'' option is selected'
-  code: "setAllMockDataByAuthMethod('stape');\nmockData.bigQueryLogType = 'always';\n\
-    \nmockObject('BigQuery', {\n  insert: (connectionInfo, rows, options) => { \n\
-    \    assertThat(connectionInfo).isDefined();\n    assertThat(rows).isArray();\n\
+  code: "const copyMockData = setAllMockDataByAuthMethod('stape');\ncopyMockData.bigQueryLogType\
+    \ = 'always';\n\nmockObject('BigQuery', {\n  insert: (connectionInfo, rows, options)\
+    \ => { \n    assertThat(connectionInfo).isDefined();\n    assertThat(rows).isArray();\n\
     \    assertThat(rows).hasLength(1);\n    requiredBqKeys.forEach(p => assertThat(rows[0][p]).isDefined());\n\
     \    assertThat(options).isEqualTo(expectedBqOptions);\n    return Promise.create((resolve,\
-    \ reject) => {\n      resolve();\n    });\n  }\n});\n\nrunCode(mockData);\n\n\
-    callLater(() => {\n  assertApi('gtmOnSuccess').wasCalled();\n  assertApi('gtmOnFailure').wasNotCalled();\n\
+    \ reject) => {\n      resolve();\n    });\n  }\n});\n\nrunCode(copyMockData);\n\
+    \ncallLater(() => {\n  assertApi('gtmOnSuccess').wasCalled();\n  assertApi('gtmOnFailure').wasNotCalled();\n\
     });"
 setup: "const Promise = require('Promise');\nconst JSON = require('JSON');\nconst\
   \ makeInteger = require('makeInteger');\nconst Object = require('Object');\nconst\
-  \ callLater = require('callLater');\n\nconst mergeObj = (target, source) => {\n\
-  \  for (const key in source) {\n    if (source.hasOwnProperty(key)) target[key]\
-  \ = source[key];\n  }\n  return target;\n};\n\nconst expectedDataManagerApiVersion\
-  \ = '1';\n\nconst expectedBigQuerySettings = {\n  logBigQueryProjectId: 'logBigQueryProjectId',\n\
-  \  logBigQueryDatasetId: 'logBigQueryDatasetId',\n  logBigQueryTableId: 'logBigQueryTableId'\n\
-  };\n\nconst requiredConsoleKeys = ['Type', 'TraceId', 'Name'];\nconst requiredBqKeys\
-  \ = ['timestamp', 'type', 'trace_id', 'tag_name'];\nconst expectedBqOptions = {\
-  \ ignoreUnknownValues: true };\n\nconst mockData = {\n  logBigQueryProjectId: expectedBigQuerySettings.logBigQueryProjectId,\n\
+  \ callLater = require('callLater');\n\nfunction assign() {\n  const target = arguments[0];\n\
+  \  for (let i = 1; i < arguments.length; i++) {\n    for (let key in arguments[i])\
+  \ {\n      target[key] = arguments[i][key];\n    }\n  }\n  return target;\n}\n\n\
+  const expectedDataManagerApiVersion = '1';\n\nconst expectedBigQuerySettings = {\n\
+  \  logBigQueryProjectId: 'logBigQueryProjectId',\n  logBigQueryDatasetId: 'logBigQueryDatasetId',\n\
+  \  logBigQueryTableId: 'logBigQueryTableId'\n};\n\nconst requiredConsoleKeys = ['Type',\
+  \ 'TraceId', 'Name'];\nconst requiredBqKeys = ['timestamp', 'type', 'trace_id',\
+  \ 'tag_name'];\nconst expectedBqOptions = { ignoreUnknownValues: true };\n\nconst\
+  \ mockData = {\n  logBigQueryProjectId: expectedBigQuerySettings.logBigQueryProjectId,\n\
   \  logBigQueryDatasetId: expectedBigQuerySettings.logBigQueryDatasetId,\n  logBigQueryTableId:\
   \ expectedBigQuerySettings.logBigQueryTableId\n};\n\nconst setAllMockDataByAuthMethod\
   \ = (type, objToBeMerged) => {\n  const base = {\n    validateOnly: false,\n   \
@@ -2822,11 +2881,10 @@ setup: "const Promise = require('Promise');\nconst JSON = require('JSON');\ncons
   \        },\n        {\n          product: 'GOOGLE_ADS',\n          operatingAccountId:\
   \ 'operatingAccountId1',\n          loginAccountId: 'loginAccountId1',\n       \
   \   productDestinationId: 'productDestinationId1'\n        }\n      ]\n    }\n \
-  \ };\n      \n  mergeObj(base, objToBeMerged || {});\n  mergeObj(mockDataByAuthType[type],\
-  \ base);\n  mergeObj(mockData, mockDataByAuthType[type]);\n  return mockData;\n\
-  };\n\nconst setGetAllEventData = (objToBeMerged) => {\n  mock('getAllEventData',\
-  \ mergeObj({\n    'x-ga-protocol_version': '2',\n    'x-ga-measurement_id': 'G-123ABC',\n\
-  \    'x-ga-gtm_version': '45je55e1za200',\n    'x-ga-page_id': 1747422523211,\n\
+  \ };\n  \n  \n  return assign(JSON.parse(JSON.stringify(mockData)), base, mockDataByAuthType[type],\
+  \ objToBeMerged || {});\n};\n\nconst setGetAllEventData = (objToBeMerged) => {\n\
+  \  mock('getAllEventData', assign({\n    'x-ga-protocol_version': '2',\n    'x-ga-measurement_id':\
+  \ 'G-123ABC',\n    'x-ga-gtm_version': '45je55e1za200',\n    'x-ga-page_id': 1747422523211,\n\
   \    'x-ga-gcd': '13l3l3l3l1l1',\n    'x-ga-npa': '0',\n    'x-ga-dma': '0',\n \
   \   'x-ga-mp2-tag_exp':\n      '101509157~103116025~103130498~103130500~103136993~103136995~103200001~103207802~103211513~103233427~103252644~103252646~103263073~103301114~103301116',\n\
   \    client_id: 'AUJctU7H7hBB/aMuhE4pKwGu5DWDdklg5abyyyn8i/I=.1747154479',\n   \
@@ -2875,7 +2933,57 @@ setup: "const Promise = require('Promise');\nconst JSON = require('JSON');\ncons
   \ if (header === 'x-gtm-identifier') return 'expectedXGtmIdentifier';\n  else if\
   \ (header === 'x-gtm-default-domain') return 'expectedXGtmDefaultDomain';\n  else\
   \ if (header === 'x-gtm-api-key') return 'expectedXGtmApiKey';\n});\n\nmock('getGoogleAuth',\
-  \ 'googleAuthToken');\n\nmock('getTimestampMillis', 1747945830456);"
+  \ 'googleAuthToken');\n\nmock('getTimestampMillis', 1747945830456);\n\nconst multipleConversionEventsMock\
+  \ = [\n  {\n    destionationReference: 'productDestinationId1',\n    transactionId:\
+  \ 'Transaction ID 1',\n    eventTimestamp: '2014-10-02T15:01:23Z',\n    lastUpdatedTimestamp:\
+  \ '2014-10-02T15:01:23Z',\n    currency: 'BRL',\n    conversionValue: 123.45,\n\
+  \    eventSource: 'WEB',\n    userData: {\n      userIdentifiers: [\n        {\n\
+  \          emailAddress:\n            'test1@example.net'\n        },\n        {\n\
+  \          phoneNumber:\n            '+55199999999'\n        },\n        {\n   \
+  \       address: {\n            givenName:\n              '9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08',\n\
+  \            familyName:\n              '9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08',\n\
+  \            regionCode: 'US',\n            postalCode: '10001'\n          }\n \
+  \       }\n      ]\n    },\n    adIdentifiers: {\n      gclid: 'gclid',\n      gbraid:\
+  \ 'gbraid',\n      wbraid: 'wbraid',\n      landingPageDeviceInfo: {\n        userAgent:\
+  \ 'Landing Page User Agent',\n        ipAddress: '1.1.1.1'\n      },\n      sessionAttributes:\
+  \ 'Session Attributes'\n    },\n    eventDeviceInfo: { userAgent: 'User Agent',\
+  \ ipAddress: '1.1.1.1' },\n    userProperties: { customerType: 'NEW', customerValueBucket:\
+  \ 'LOW' },\n    cartData: {\n      merchantId: 'Merchant Center ID',\n      merchantFeedLabel:\
+  \ 'Merchant Center Feed Label',\n      merchantFeedLanguageCode: 'Merchant Center\
+  \ Feed Language Code',\n      transactionDiscount: 123,\n      items: [\n      \
+  \  {\n          merchantProductId: 'Merchant Product ID 1',\n          quantity:\
+  \ '1',\n          unitPrice: 123\n        },\n        {\n          merchantProductId:\
+  \ 'Merchant Product ID 2',\n          quantity: '2',\n          unitPrice: 111\n\
+  \        }\n      ]\n    },\n    customVariables: [\n      {\n        variable:\
+  \ 'TEST1',\n        value: 'ABC',\n        destinationReferences: ['REFERENCE']\n\
+  \      },\n      { variable: 'TEST2', value: 'AAAAAAAA' },\n      {\n        variable:\
+  \ 'TEST3',\n        value: '123ABC',\n        destinationReferences: ['REFERENCE',\
+  \ 'REFERENCE2']\n      }\n    ],\n    experimentalFields: [{ field: 'ABC', value:\
+  \ 'FOOBAR' }]\n  },\n  {\n    transactionId: 'Transaction ID 2',\n    eventTimestamp:\
+  \ '2014-10-02T15:01:23Z',\n    lastUpdatedTimestamp: '2014-10-02T15:01:23Z',\n \
+  \   currency: 'BRL',\n    conversionValue: 1,\n    eventSource: 'WEB',\n    userData:\
+  \ {\n      userIdentifiers: [\n        {\n          emailAddress:\n            '74790a65960d58724ba244c376e2bb6cbdd39f6c67d122760b319d51d11813a9'\n\
+  \        },\n        {\n          phoneNumber:\n            '92effd108fc091e55b0239ffc94d867e649d45c28c3de6918ec1edcb0723602c'\n\
+  \        },\n        {\n          address: {\n            givenName:\n         \
+  \     'test',\n            familyName:\n              'test',\n            regionCode:\
+  \ 'US',\n            postalCode: '10001'\n          }\n        }\n      ]\n    },\n\
+  \    adIdentifiers: {\n      gclid: 'gclid',\n      gbraid: 'gbraid',\n      wbraid:\
+  \ 'wbraid',\n      landingPageDeviceInfo: {\n        userAgent: 'Landing Page User\
+  \ Agent',\n        ipAddress: '1.1.1.1'\n      },\n      sessionAttributes: 'Session\
+  \ Attributes'\n    },\n    eventDeviceInfo: { userAgent: 'User Agent', ipAddress:\
+  \ '1.1.1.1' },\n    userProperties: { customerType: 'NEW', customerValueBucket:\
+  \ 'LOW' },\n    cartData: {\n      merchantId: 'Merchant Center ID',\n      merchantFeedLabel:\
+  \ 'Merchant Center Feed Label',\n      merchantFeedLanguageCode: 'Merchant Center\
+  \ Feed Language Code',\n      transactionDiscount: 123,\n      items: [\n      \
+  \  {\n          merchantProductId: 'Merchant Product ID 1',\n          quantity:\
+  \ '1',\n          unitPrice: 123\n        },\n        {\n          merchantProductId:\
+  \ 'Merchant Product ID 2',\n          quantity: '2',\n          unitPrice: 111\n\
+  \        }\n      ]\n    },\n    customVariables: [\n      {\n        variable:\
+  \ 'TEST1',\n        value: 'ABC',\n        destinationReferences: ['REFERENCE']\n\
+  \      },\n      { variable: 'TEST2', value: 'AAAAAAAA' },\n      {\n        variable:\
+  \ 'TEST3',\n        value: '123ABC',\n        destinationReferences: ['REFERENCE',\
+  \ 'REFERENCE2']\n      }\n    ],\n    experimentalFields: [{ field: 'ABC', value:\
+  \ 'FOOBAR' }]\n  }\n];"
 
 
 ___NOTES___
