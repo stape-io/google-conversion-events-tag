@@ -1,6 +1,8 @@
 homepage: 'https://stape.io/'
 documentation: 'https://github.com/stape-io/google-conversion-events-tag'
 versions:
+  - sha: 8675caf206bd0f04c83ba9b3977fcfd5e3f76fcd
+    changeNotes: Added missing User Data and Ad Identifiers validation before dispatching the event.
   - sha: 1e7c4c34ba986bdea6aac365d4ee302c8a1d5246
     changeNotes: Increased request timeout of Stape Connection to 20s.
   - sha: d1d442551e82cdad1735fec7eb7734e3c4f797a8
