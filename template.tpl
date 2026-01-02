@@ -38,383 +38,201 @@ ___TEMPLATE_PARAMETERS___
 [
   {
     "type": "RADIO",
-    "name": "authFlow",
-    "displayName": "Authentication Type",
+    "name": "eventType",
+    "displayName": "Event Type",
     "radioItems": [
       {
-        "value": "stape",
-        "displayValue": "Stape Google Connection",
-        "help": "You can enable it on the Stape container settings, in the \u003ca href\u003d\"https://app.stape.io/container/\" target\u003d\"_blank\"\u003eConnections\u003c/a\u003e section.\n\u003c/br\u003e\u003c/br\u003e\n\u003ca href\u003d\"https://stape.io/solutions/data-manager-api-connection\" target\u003d\"_blank\"\u003eLearn more here.\u003c/a\u003e",
-        "subParams": []
+        "value": "conversion",
+        "displayValue": "Conversion"
       },
       {
-        "value": "own",
-        "displayValue": "Own Google Credentials",
-        "help": "This type of auth is more complicated. Only choose it if you know what you are doing and do not want to use the Stape Google Connection authentication.\n\u003cbr/\u003e\u003cbr/\u003e\nIt uses the \u003ca href\u003d\"https://cloud.google.com/docs/authentication/application-default-credentials\"\u003eGCP Application Default Credentials\u003c/a\u003e to automatically find credentials from the server environment.\n\u003cbr/\u003e\u003cbr/\u003e\nIt\u0027s performed through a \u003ca href\u003d\"https://developers.google.com/data-manager/api/devguides/quickstart/set-up-access?credential_type\u003dservice_account\"\u003eService Account impersonation\u003c/a\u003e.\n\u003cbr/\u003e\u003cbr/\u003e\n\u003ca href\u003d\"https://github.com/stape-io/google-conversion-events-tag?tab\u003dreadme-ov-file#how-to-use-the-google-conversion-events-tag\"\u003eLearn more and how-to\u003c/a\u003e."
+        "value": "pageview",
+        "displayValue": "Pageview"
       }
     ],
     "simpleValueType": true,
-    "defaultValue": "stape"
+    "defaultValue": "conversion",
+    "help": "\u003cb\u003eConversion\u003c/b\u003e\n\u003cbr/\u003e\nSends the conversion event.\n\u003cbr/\u003e\u003cbr/\u003e\n\u003cb\u003ePageview\u003c/b\u003e \n\u003cbr/\u003e\nSets the the \u003ci\u003e_dm_session_attributes\u003c/i\u003e cookie containing a base64 JSON encoded string with the \u003ci\u003eSession Attributes\u003c/i\u003e values for conversion event attribution and modeling.\n\u003cbr/\u003e\nDefault mappings: \n\u003cul\u003e \n\u003cli\u003eSession Attribute \u003ci\u003egad_source\u003c/i\u003e: \u003ci\u003egad_source\u003c/i\u003e URL Parameter value \u003c/li\u003e\n\u003cli\u003eSession Attribute \u003ci\u003egad_campaignid\u003c/i\u003e: \u003ci\u003egad_campaignid\u003c/i\u003e URL Parameter value\u003c/li\u003e \u003cli\u003eSession Attribute \u003ci\u003elanding_page_url\u003c/i\u003e: \u003ci\u003epage_location\u003c/i\u003e Event Data value\u003c/li\u003e\n\u003cli\u003eSession Attribute \u003ci\u003elanding_page_referrer\u003c/i\u003e: \u003ci\u003epage_referrer\u003c/i\u003e Event Data value\u003c/li\u003e\u003c/li\u003e\n\u003cli\u003eSession Attribute \u003ci\u003elanding_page_user_agent\u003c/i\u003e: \u003ci\u003euser_agent\u003c/i\u003e Event Data value\u003c/li\u003e\u003c/li\u003e\n\u003cli\u003eSession Attribute \u003ci\u003esession_start_time_usec\u003c/i\u003e: current timestamp of the time when the Pageview tag set the cookie\u003c/li\u003e\n\u003c/ul\u003e\n\u003cbr/\u003e Learn more: \u003ca href\u003d\"https://support.google.com/google-ads/answer/16194756?hl\u003den\"\u003e[1]\u003c/a\u003e and \u003ca href\u003d\"https://ads-developers.googleblog.com/2025/08/maximize-performance-of-your-google-ads.html\"\u003e[2]\u003c/a\u003e."
   },
   {
     "type": "GROUP",
-    "name": "destinationsGroup",
-    "displayName": "",
+    "name": "pageviewGroup",
     "subParams": [
       {
-        "type": "SIMPLE_TABLE",
-        "name": "stapeAuthDestinationsList",
-        "displayName": "Destination Accounts and Conversion Events",
-        "simpleTableColumns": [
+        "type": "GROUP",
+        "name": "cookieSettingsGroup",
+        "displayName": "Session Attributes Cookie Settings (Web only)",
+        "groupStyle": "ZIPPY_OPEN",
+        "subParams": [
           {
-            "defaultValue": "GOOGLE_ADS",
-            "displayName": "Product",
-            "name": "product",
-            "type": "SELECT",
+            "type": "TEXT",
+            "name": "cookieExpiration",
+            "displayName": "Cookie Expiration",
+            "simpleValueType": true,
+            "help": "The number of days Session Attributes cookie will live.\n\u003cbr\u003e\u003cbr\u003e\nGoogle advertising platforms have a maximum lookback window of 90 days. Therefore, it\u0027s advised not to exceed 90 days of expiration.",
+            "valueUnit": "days",
+            "defaultValue": 90,
+            "valueHint": "90",
+            "valueValidators": [
+              {
+                "type": "NON_NEGATIVE_NUMBER"
+              }
+            ]
+          },
+          {
+            "type": "TEXT",
+            "name": "cookieDomain",
+            "displayName": "Cookie Domain",
+            "simpleValueType": true,
+            "help": "Overrides the cookie domain (defaults to \u003cb\u003eauto\u003c/b\u003e).\n\u003cbr/\u003e\nEnter your website\u0027s top-level domain as a fixed value (e.g., example.com).\n\u003cbr/\u003e\nIf left as default, the top-level domain will be automatically determined using the following priority:\n\u003cul\u003e\n\u003cli\u003eTop-level domain of the \u003ci\u003eForwarded\u003c/i\u003e header (if present).\u003c/li\u003e\n\u003cli\u003eTop-level domain of the \u003ci\u003eX-Forwarded-Host\u003c/i\u003e header (if present).\u003c/li\u003e\n\u003cli\u003eTop-level domain of the \u003ci\u003eHost\u003c/i\u003e header.\u003c/li\u003e\n\u003c/ul\u003e",
             "valueValidators": [
               {
                 "type": "NON_EMPTY"
               }
             ],
+            "defaultValue": "auto",
+            "valueHint": "example.com"
+          },
+          {
+            "type": "SELECT",
+            "name": "cookieSameSite",
+            "displayName": "Cookie SameSite",
+            "macrosInSelect": true,
             "selectItems": [
               {
-                "value": "GOOGLE_ADS",
-                "displayValue": "Google Ads"
-              }
-            ]
-          },
-          {
-            "defaultValue": "",
-            "displayName": "Operating Customer ID",
-            "name": "operatingAccountId",
-            "type": "TEXT",
-            "valueHint": "1234567890",
-            "valueValidators": [
-              {
-                "type": "NON_EMPTY"
+                "value": "none",
+                "displayValue": "None"
               },
               {
-                "type": "POSITIVE_NUMBER"
-              }
-            ]
-          },
-          {
-            "defaultValue": "",
-            "displayName": "Customer ID",
-            "name": "linkedAccountId",
-            "type": "TEXT",
-            "valueValidators": [
-              {
-                "type": "NON_EMPTY"
+                "value": "lax",
+                "displayValue": "Lax"
               },
               {
-                "type": "POSITIVE_NUMBER"
+                "value": "strict",
+                "displayValue": "Strict"
               }
             ],
-            "valueHint": "1234567890"
+            "simpleValueType": true,
+            "defaultValue": "none",
+            "help": "\u003ca href\u003d\"https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Set-Cookie#samesitesamesite-value\"\u003eLearn more\u003c/a\u003e."
           },
           {
-            "defaultValue": "",
-            "displayName": "Conversion Event ID",
-            "name": "productDestinationId",
-            "type": "TEXT",
-            "valueHint": "1234567890",
-            "isUnique": true,
-            "valueValidators": [
-              {
-                "type": "NON_EMPTY"
-              }
-            ]
-          }
-        ],
-        "enablingConditions": [
-          {
-            "paramName": "authFlow",
-            "paramValue": "stape",
-            "type": "EQUALS"
-          }
-        ],
-        "valueValidators": [
-          {
-            "type": "NON_EMPTY"
-          }
-        ],
-        "newRowButtonText": "Add Conversion Event",
-        "help": "\u003cb\u003eProduct\u003c/b\u003e: The Product the Conversion belongs to.\n\u003cbr/\u003e\u003cbr/\u003e\n\u003cb\u003eOperating Customer ID\u003c/b\u003e: The \u003ci\u003eAccount ID\u003c/i\u003e (without hyphens) of the account (Google Ads account, DV360 account etc.) that will receive the conversion events. \u003ca href\u003d\"https://developers.google.com/data-manager/api/reference/rest/v1/Destination\"\u003eLearn more\u003c/a\u003e.\n\u003cbr/\u003e\u003cbr/\u003e\n\u003cb\u003eCustomer ID\u003c/b\u003e: The \u003ci\u003eAccount ID\u003c/i\u003e (without hyphens) of the account for which the link between the Data Partner account (Stape) and the Advertiser account was established.\n\u003cbr/\u003e\ne.g. the link between the Data Partner account (Stape) and Advertiser account can be done at MCC level, but the data is going to be sent to a subaccount of the MCC.\n\u003cbr/\u003e\nIn this case: the \u003ci\u003eCustomer Account\u003c/i\u003e is the MCC, and \u003ci\u003eOperating Customer Account\u003c/i\u003e is the subaccount.\n\u003cbr/\u003e\nIf the link is done with the same account that will receive the data, then the \u003ci\u003eCustomer Account\u003c/i\u003e and \u003ci\u003eOperating Customer Account\u003c/i\u003e are the same.\n\u003cbr/\u003e\n\u003ca href\u003d\"https://developers.google.com/data-manager/api/reference/rest/v1/Destination\"\u003eLearn more\u003c/a\u003e.\n\u003cbr/\u003e\u003cbr/\u003e\n\u003cb\u003eConversion Event ID\u003c/b\u003e: The ID of the conversion you want to interact with.\n\u003cbr/\u003e\nYou can find it by going to the \u003ci\u003eGoogle Ads account \u003e Goals \u003e Conversions \u003e Summary \u003e Access the desired Conversion Action\u003c/i\u003e. After you click on the Conversion Action, the ID is on the \u003cb\u003ectId\u003c/b\u003e URL query parameter on your browser.\n\u003cbr/\u003e"
-      },
-      {
-        "type": "SIMPLE_TABLE",
-        "name": "ownAuthDestinationsList",
-        "displayName": "Destination Accounts and Conversion Events",
-        "simpleTableColumns": [
-          {
-            "defaultValue": "GOOGLE_ADS",
-            "displayName": "Product",
-            "name": "product",
             "type": "SELECT",
-            "valueValidators": [
-              {
-                "type": "NON_EMPTY"
-              }
-            ],
+            "name": "cookieHttpOnly",
+            "displayName": "Http Only Flag",
+            "macrosInSelect": true,
             "selectItems": [
               {
-                "value": "GOOGLE_ADS",
-                "displayValue": "Google Ads"
-              }
-            ]
-          },
-          {
-            "defaultValue": "",
-            "displayName": "Operating Customer ID",
-            "name": "operatingAccountId",
-            "type": "TEXT",
-            "valueHint": "1234567890",
-            "valueValidators": [
-              {
-                "type": "NON_EMPTY"
+                "value": false,
+                "displayValue": "False"
               },
               {
-                "type": "POSITIVE_NUMBER"
+                "value": true,
+                "displayValue": "True"
               }
-            ]
-          },
-          {
-            "defaultValue": "",
-            "displayName": "Customer ID",
-            "name": "loginAccountId",
-            "type": "TEXT",
-            "valueHint": "1234567890",
-            "valueValidators": []
-          },
-          {
-            "defaultValue": "",
-            "displayName": "Conversion Event ID",
-            "name": "productDestinationId",
-            "type": "TEXT",
-            "valueHint": "1234567890",
-            "isUnique": true,
-            "valueValidators": [
-              {
-                "type": "NON_EMPTY"
-              }
-            ]
+            ],
+            "simpleValueType": true,
+            "defaultValue": true
           }
-        ],
-        "enablingConditions": [
-          {
-            "paramName": "authFlow",
-            "paramValue": "own",
-            "type": "EQUALS"
-          }
-        ],
-        "valueValidators": [
-          {
-            "type": "NON_EMPTY"
-          }
-        ],
-        "newRowButtonText": "Add Conversion Event",
-        "help": "\u003cb\u003eProduct\u003c/b\u003e: The Product the Conversion belongs to.\n\u003cbr/\u003e\u003cbr/\u003e\n\u003cb\u003eOperating Customer ID\u003c/b\u003e: The \u003ci\u003eAccount ID\u003c/i\u003e (without hyphens) of the account (Google Ads account, DV360 account etc.) that will receive the conversion events. \u003ca href\u003d\"https://developers.google.com/data-manager/api/reference/rest/v1/Destination\"\u003eLearn more\u003c/a\u003e.\n\u003cbr/\u003e\u003cbr/\u003e\n\u003cb\u003eCustomer ID\u003c/b\u003e: The \u003ci\u003eAccount ID\u003c/i\u003e of the account (Google Ads account, DV360 account etc.) used for authorization (without hyphens) when making the API request.\n\u003cbr/\u003e\nIf your credentials are for access to a \u003ci\u003eManager Account\u003c/i\u003e that has the \u003ci\u003eOperating Account\u003c/i\u003e as one of its subaccounts, set the \u003ci\u003eCustomer ID\u003c/i\u003e to the ID of the \u003ci\u003eManager Account\u003c/i\u003e.\n\u003cbr/\u003e\nIf your credentials are for the account that is the \u003ci\u003eOperating Account\u003c/i\u003e, you don\u0027t need to set \u003ci\u003eCustomer ID\u003c/i\u003e.\n\u003cbr/\u003e\nLearn more: \u003ca href\u003d\"https://developers.google.com/data-manager/api/reference/rest/v1/Destination\"\u003e[1]\u003c/a\u003e and \u003ca href\u003d\"https://developers.google.com/data-manager/api/get-started/quickstart/send-events?persona\u003dadvertiser#prepare_a_destination\"\u003e[2]\u003c/a\u003e.\n\u003cbr/\u003e\u003cbr/\u003e\n\u003cb\u003eConversion Event ID\u003c/b\u003e: The ID of the conversion you want to interact with.\n\u003cbr/\u003e\nYou can find it by going to the \u003ci\u003eGoogle Ads account \u003e Goals \u003e Conversions \u003e Summary \u003e Access the desired Conversion Action\u003c/i\u003e. After you click on the Conversion Action, the ID is on the \u003cb\u003ectId\u003c/b\u003e URL query parameter on your browser.\n\u003cbr/\u003e"
+        ]
       }
     ],
-    "groupStyle": "NO_ZIPPY"
-  },
-  {
-    "type": "SELECT",
-    "name": "validateOnly",
-    "displayName": "Validate Only",
-    "macrosInSelect": true,
-    "selectItems": [
+    "enablingConditions": [
       {
-        "value": true,
-        "displayValue": "true"
-      },
-      {
-        "value": false,
-        "displayValue": "false"
-      }
-    ],
-    "simpleValueType": true,
-    "help": "If \u003cb\u003etrue\u003c/b\u003e, the request is validated but not executed. Only errors are returned, not results.\u003cbr /\u003e \u003ca href\u003d\"https://developers.google.com/data-manager/api/reference/rest/v1/events/ingest#request-body\"\u003eLearn more\u003c/a\u003e.",
-    "defaultValue": false
-  },
-  {
-    "type": "SELECT",
-    "name": "useOptimisticScenario",
-    "displayName": "Use Optimistic Scenario",
-    "macrosInSelect": true,
-    "selectItems": [
-      {
-        "value": true,
-        "displayValue": "true"
-      },
-      {
-        "value": false,
-        "displayValue": "false"
-      }
-    ],
-    "simpleValueType": true,
-    "help": "The tag will call gtmOnSuccess() without waiting for a response from the API. This will speed up sGTM response time however your tag will always return the status fired successfully even in case it is not.",
-    "defaultValue": false
-  },
-  {
-    "type": "GROUP",
-    "name": "requestLevelConsentGroup",
-    "displayName": "Request-level Consent",
-    "groupStyle": "ZIPPY_OPEN_ON_PARAM",
-    "subParams": [
-      {
-        "type": "LABEL",
-        "name": "requestLevelConsentGroupLabel",
-        "displayName": "Request-level consent to apply to all users in the request.\n\u003cbr/\u003e\nUser-level consent overrides request-level consent, and can be specified for each conversion event when sending data to \u003ci\u003eMultiple Conversion Events\u003c/i\u003e in the \u003cb\u003eConversion Events\u003c/b\u003e section."
-      },
-      {
-        "type": "SELECT",
-        "name": "adUserData",
-        "displayName": "Consent for Ad User Data",
-        "macrosInSelect": true,
-        "selectItems": [
-          {
-            "value": "CONSENT_GRANTED",
-            "displayValue": "CONSENT_GRANTED"
-          },
-          {
-            "value": "CONSENT_DENIED",
-            "displayValue": "CONSENT_DENIED"
-          },
-          {
-            "value": "CONSENT_STATUS_UNSPECIFIED",
-            "displayValue": "CONSENT_STATUS_UNSPECIFIED"
-          }
-        ],
-        "simpleValueType": true,
-        "help": "This represents consent to Ad User Data.",
-        "notSetText": "(not set)"
-      },
-      {
-        "type": "SELECT",
-        "name": "adPersonalization",
-        "displayName": "Consent for Ad Personalization",
-        "macrosInSelect": true,
-        "selectItems": [
-          {
-            "value": "CONSENT_GRANTED",
-            "displayValue": "CONSENT_GRANTED"
-          },
-          {
-            "value": "CONSENT_DENIED",
-            "displayValue": "CONSENT_DENIED"
-          },
-          {
-            "value": "CONSENT_STATUS_UNSPECIFIED",
-            "displayValue": "CONSENT_STATUS_UNSPECIFIED"
-          }
-        ],
-        "simpleValueType": true,
-        "help": "This represents consent to Ad Personalization.",
-        "notSetText": "(not set)"
+        "paramName": "eventType",
+        "paramValue": "pageview",
+        "type": "EQUALS"
       }
     ]
   },
   {
     "type": "GROUP",
-    "name": "conversionEventsGroup",
-    "displayName": "Conversion Events",
-    "groupStyle": "ZIPPY_OPEN",
+    "name": "conversionGroup",
     "subParams": [
       {
-        "type": "SELECT",
-        "name": "userDataEncoding",
-        "displayName": "User Data Encoding",
-        "macrosInSelect": true,
-        "selectItems": [
+        "type": "RADIO",
+        "name": "authFlow",
+        "displayName": "Authentication Type",
+        "radioItems": [
           {
-            "value": "HEX",
-            "displayValue": "HEX"
+            "value": "stape",
+            "displayValue": "Stape Google Connection",
+            "help": "You can enable it on the Stape container settings, in the \u003ca href\u003d\"https://app.stape.io/container/\" target\u003d\"_blank\"\u003eConnections\u003c/a\u003e section.\n\u003c/br\u003e\u003c/br\u003e\n\u003ca href\u003d\"https://stape.io/solutions/data-manager-api-connection\" target\u003d\"_blank\"\u003eLearn more here.\u003c/a\u003e",
+            "subParams": []
           },
           {
-            "value": "BASE64",
-            "displayValue": "BASE64"
+            "value": "own",
+            "displayValue": "Own Google Credentials",
+            "help": "This type of auth is more complicated. Only choose it if you know what you are doing and do not want to use the Stape Google Connection authentication.\n\u003cbr/\u003e\u003cbr/\u003e\nIt uses the \u003ca href\u003d\"https://cloud.google.com/docs/authentication/application-default-credentials\"\u003eGCP Application Default Credentials\u003c/a\u003e to automatically find credentials from the server environment.\n\u003cbr/\u003e\u003cbr/\u003e\nIt\u0027s performed through a \u003ca href\u003d\"https://developers.google.com/data-manager/api/devguides/quickstart/set-up-access?credential_type\u003dservice_account\"\u003eService Account impersonation\u003c/a\u003e.\n\u003cbr/\u003e\u003cbr/\u003e\n\u003ca href\u003d\"https://github.com/stape-io/google-conversion-events-tag?tab\u003dreadme-ov-file#how-to-use-the-google-conversion-events-tag\"\u003eLearn more and how-to\u003c/a\u003e."
           }
         ],
         "simpleValueType": true,
-        "help": "The encoding type of the user identifiers SHA256 hash: \u003ci\u003eHEX\u003c/i\u003e or \u003ci\u003eBASE64\u003c/i\u003e.\n\u003cbr/\u003e\u003cbr/\u003e\n\u003cb\u003eRequired\u003c/b\u003e for \u003ca href\u003d\"https://developers.google.com/data-manager/api/reference/rest/v1/UserData\"\u003e\u003ci\u003eUserData\u003c/i\u003e\u003c/a\u003e (User Email Address, User Phone Number and User Given/Family Name) uploads.\n\u003cbr/\u003e\nFor other types (User Address Region and User Address Postal Code) uploads, this field is \u003cb\u003eignored\u003c/b\u003e.\n\u003cbr/\u003e\u003cbr/\u003e\nFor hashed user identifiers, this is the encoding type of the hashed string. \n\u003cbr/\u003e\nFor encrypted hashed user identifiers, this is the encoding type of the outer encrypted string, but not necessarily the inner hashed string, meaning the inner hashed string could be encoded in a different way than the outer encrypted string.\n\u003cbr/\u003e\u003cbr/\u003e\n\u003cb\u003eDefault\u003c/b\u003e: \u003ci\u003eHEX\u003c/i\u003e - when passing a non-hashed value to \u003ci\u003eUserData\u003c/i\u003e (User Email Address, User Phone Number and User Given/Family Name) fields; or when using default values from GA4 Event Data.",
-        "notSetText": "(not set)"
+        "defaultValue": "stape"
       },
       {
-        "type": "SELECT",
-        "name": "enableUserDataEncryption",
-        "displayName": "User Data Encryption",
-        "macrosInSelect": true,
-        "selectItems": [
-          {
-            "value": false,
-            "displayValue": "false"
-          },
-          {
-            "value": true,
-            "displayValue": "true"
-          }
-        ],
-        "simpleValueType": true,
-        "help": "Encryption information for \u003ca href\u003d\"https://developers.google.com/data-manager/api/reference/rest/v1/UserData\"\u003e\u003ci\u003eUserData\u003c/i\u003e\u003c/a\u003e (User Email Address, User Phone Number and User Given/Family Name) uploads.\n\u003cbr/\u003e\u003cbr/\u003e\nIf not set, it\u0027s assumed that uploaded identifying information is hashed but not encrypted.\n\u003cbr/\u003e\u003cbr/\u003e \nFor other types (User Address Region and User Address Postal Code) uploads, this field is \u003cb\u003eignored\u003c/b\u003e.\n\u003cbr/\u003e\u003cbr/\u003e\nReferences:  \n\u003cul\u003e \n\u003cli\u003e\u003ca href\u003d\"https://developers.google.com/data-manager/api/get-started/encryption\"\u003eData Manager API: Getting started with Encryption\u003c/a\u003e\u003c/li\u003e \u003cli\u003e\u003ca href\u003d\"https://developers.google.com/data-manager/api/reference/rest/v1/EncryptionInfo\"\u003eEncryptionInfo object\u003c/a\u003e\u003c/li\u003e \u003c/ul\u003e",
-        "defaultValue": false,
+        "type": "GROUP",
+        "name": "destinationsGroup",
+        "displayName": "",
         "subParams": [
           {
-            "type": "GROUP",
-            "name": "userDataEncryptionInfoGroup",
-            "displayName": "Encryption Info (Google Cloud Platform wrapped key information)",
-            "groupStyle": "ZIPPY_OPEN_ON_PARAM",
-            "subParams": [
+            "type": "SIMPLE_TABLE",
+            "name": "stapeAuthDestinationsList",
+            "displayName": "Destination Accounts and Conversion Events",
+            "simpleTableColumns": [
               {
+                "defaultValue": "GOOGLE_ADS",
+                "displayName": "Product",
+                "name": "product",
                 "type": "SELECT",
-                "name": "gcpWrappedKeyType",
-                "displayName": "Key Type",
-                "macrosInSelect": false,
+                "valueValidators": [
+                  {
+                    "type": "NON_EMPTY"
+                  }
+                ],
                 "selectItems": [
                   {
-                    "value": "XCHACHA20_POLY1305",
-                    "displayValue": "XCHACHA20_POLY1305"
+                    "value": "GOOGLE_ADS",
+                    "displayValue": "Google Ads"
                   }
-                ],
-                "simpleValueType": true,
+                ]
+              },
+              {
+                "defaultValue": "",
+                "displayName": "Operating Customer ID",
+                "name": "operatingAccountId",
+                "type": "TEXT",
+                "valueHint": "1234567890",
                 "valueValidators": [
                   {
                     "type": "NON_EMPTY"
+                  },
+                  {
+                    "type": "POSITIVE_NUMBER"
                   }
-                ],
-                "help": "The type of algorithm used to encrypt the data."
+                ]
               },
               {
+                "defaultValue": "",
+                "displayName": "Customer ID",
+                "name": "linkedAccountId",
                 "type": "TEXT",
-                "name": "gcpWrappedKeyWipProvider",
-                "displayName": "Workload Identity pool provider",
-                "simpleValueType": true,
                 "valueValidators": [
                   {
                     "type": "NON_EMPTY"
-                  }
-                ],
-                "help": "The \u003ca href\u003d\"https://cloud.google.com/iam/docs/workload-identity-federation\"\u003eWorkload Identity\u003c/a\u003e pool provider required to use KEK."
-              },
-              {
-                "type": "TEXT",
-                "name": "gcpWrappedKeyKekUri",
-                "displayName": "Google Cloud Platform Cloud Key Management Service resource ID",
-                "simpleValueType": true,
-                "valueValidators": [
+                  },
                   {
-                    "type": "NON_EMPTY"
+                    "type": "POSITIVE_NUMBER"
                   }
                 ],
-                "help": "The Google Cloud Platform \u003ca href\u003d\"https://cloud.google.com/kms/docs/getting-resource-ids\"\u003eCloud Key Management Service resource ID\u003c/a\u003e."
+                "valueHint": "1234567890"
               },
               {
+                "defaultValue": "",
+                "displayName": "Conversion Event ID",
+                "name": "productDestinationId",
                 "type": "TEXT",
-                "name": "gcpWrappedKeyEncryptedDek",
-                "displayName": "Encrypted data encryption key",
-                "simpleValueType": true,
-                "help": "The base64 encoded encrypted data encryption key.",
+                "valueHint": "1234567890",
+                "isUnique": true,
                 "valueValidators": [
                   {
                     "type": "NON_EMPTY"
@@ -424,453 +242,302 @@ ___TEMPLATE_PARAMETERS___
             ],
             "enablingConditions": [
               {
-                "paramName": "enableUserDataEncryption",
-                "paramValue": false,
-                "type": "NOT_EQUALS"
+                "paramName": "authFlow",
+                "paramValue": "stape",
+                "type": "EQUALS"
               }
-            ]
-          }
-        ]
-      },
-      {
-        "type": "SELECT",
-        "name": "conversionEventMode",
-        "displayName": "Conversion Event Mode",
-        "macrosInSelect": false,
-        "selectItems": [
-          {
-            "value": "single",
-            "displayValue": "Single Conversion Event"
-          },
-          {
-            "value": "multiple",
-            "displayValue": "Multiple Conversion Events"
-          }
-        ],
-        "simpleValueType": true,
-        "help": "Send data for a single conversion event or for multiple conversion events."
-      },
-      {
-        "type": "GROUP",
-        "name": "conversionEventsMultipleGroup",
-        "subParams": [
-          {
-            "type": "TEXT",
-            "name": "conversionEvents",
-            "displayName": "Conversion Events Array",
-            "simpleValueType": true,
-            "help": "Specify the Conversion Events array. This is useful when you need to upload data for multiple conversion events at once. At most 2000 Conversion Events can be specified in the array.\n\u003cbr/\u003e\u003cbr/\u003e\nThe array must be formatted as specified in the\nGoogle Documentation. You can specify different consent types for each Conversion Event, overriding the request-level consent.\n\u003cbr/\u003e\u003cbr/\u003e\n\u003cb\u003eIf you already pass SHA256 hashed fields to \u003ca href\u003d\"https://developers.google.com/data-manager/api/reference/rest/v1/UserData\"\u003e\u003ci\u003eUserData\u003c/i\u003e\u003c/a\u003e field, make sure to specify the SHA256 hash encoding in the corresponding template field. Otherwise, the tag will hash it automatically and set it for you.\u003c/b\u003e\n\u003cbr/\u003e\u003cbr/\u003e\nWhen working with multiple Conversion Event IDs, you can direct an event to a specific subset of them. To do so, list the desired Conversion Event IDs in the \u003ca target\u003d\"https://developers.google.com/data-manager/api/reference/rest/v1/events/ingest#event\"\u003e\u003ci\u003edestinationReferences\u003c/i\u003e\u003c/a\u003e array.\n\u003cbr/\u003e\u003cbr/\u003e\nReferences: \n\u003cul\u003e\n\u003cli\u003e\u003ca href\u003d\"https://developers.google.com/data-manager/api/reference/rest/v1/events/ingest#Event\"\u003eConversion Event\u003c/a\u003e\u003c/li\u003e\n\u003cli\u003e\u003ca href\u003d\"https://developers.google.com/data-manager/api/get-started/formatting\"\u003eNormalization guidelines\u003c/a\u003e\u003c/li\u003e\n\u003cli\u003e\u003ca href\u003d\"https://developers.google.com/data-manager/api/get-started/quickstart/send-events?persona\u003dadvertiser#build_the_request_body\"\u003eExample\u003c/a\u003e\u003c/li\u003e\n\u003c/ul\u003e",
+            ],
             "valueValidators": [
               {
                 "type": "NON_EMPTY"
               }
-            ]
-          }
-        ],
-        "enablingConditions": [
+            ],
+            "newRowButtonText": "Add Conversion Event",
+            "help": "\u003cb\u003eProduct\u003c/b\u003e: The Product the Conversion belongs to.\n\u003cbr/\u003e\u003cbr/\u003e\n\u003cb\u003eOperating Customer ID\u003c/b\u003e: The \u003ci\u003eAccount ID\u003c/i\u003e (without hyphens) of the account (Google Ads account, DV360 account etc.) that will receive the conversion events. \u003ca href\u003d\"https://developers.google.com/data-manager/api/reference/rest/v1/Destination\"\u003eLearn more\u003c/a\u003e.\n\u003cbr/\u003e\u003cbr/\u003e\n\u003cb\u003eCustomer ID\u003c/b\u003e: The \u003ci\u003eAccount ID\u003c/i\u003e (without hyphens) of the account for which the link between the Data Partner account (Stape) and the Advertiser account was established.\n\u003cbr/\u003e\ne.g. the link between the Data Partner account (Stape) and Advertiser account can be done at MCC level, but the data is going to be sent to a subaccount of the MCC.\n\u003cbr/\u003e\nIn this case: the \u003ci\u003eCustomer Account\u003c/i\u003e is the MCC, and \u003ci\u003eOperating Customer Account\u003c/i\u003e is the subaccount.\n\u003cbr/\u003e\nIf the link is done with the same account that will receive the data, then the \u003ci\u003eCustomer Account\u003c/i\u003e and \u003ci\u003eOperating Customer Account\u003c/i\u003e are the same.\n\u003cbr/\u003e\n\u003ca href\u003d\"https://developers.google.com/data-manager/api/reference/rest/v1/Destination\"\u003eLearn more\u003c/a\u003e.\n\u003cbr/\u003e\u003cbr/\u003e\n\u003cb\u003eConversion Event ID\u003c/b\u003e: The ID of the conversion you want to interact with.\n\u003cbr/\u003e\nYou can find it by going to the \u003ci\u003eGoogle Ads account \u003e Goals \u003e Conversions \u003e Summary \u003e Access the desired Conversion Action\u003c/i\u003e. After you click on the Conversion Action, the ID is on the \u003cb\u003ectId\u003c/b\u003e URL query parameter on your browser.\n\u003cbr/\u003e"
+          },
           {
-            "paramName": "conversionEventMode",
-            "paramValue": "multiple",
-            "type": "EQUALS"
+            "type": "SIMPLE_TABLE",
+            "name": "ownAuthDestinationsList",
+            "displayName": "Destination Accounts and Conversion Events",
+            "simpleTableColumns": [
+              {
+                "defaultValue": "GOOGLE_ADS",
+                "displayName": "Product",
+                "name": "product",
+                "type": "SELECT",
+                "valueValidators": [
+                  {
+                    "type": "NON_EMPTY"
+                  }
+                ],
+                "selectItems": [
+                  {
+                    "value": "GOOGLE_ADS",
+                    "displayValue": "Google Ads"
+                  }
+                ]
+              },
+              {
+                "defaultValue": "",
+                "displayName": "Operating Customer ID",
+                "name": "operatingAccountId",
+                "type": "TEXT",
+                "valueHint": "1234567890",
+                "valueValidators": [
+                  {
+                    "type": "NON_EMPTY"
+                  },
+                  {
+                    "type": "POSITIVE_NUMBER"
+                  }
+                ]
+              },
+              {
+                "defaultValue": "",
+                "displayName": "Customer ID",
+                "name": "loginAccountId",
+                "type": "TEXT",
+                "valueHint": "1234567890",
+                "valueValidators": []
+              },
+              {
+                "defaultValue": "",
+                "displayName": "Conversion Event ID",
+                "name": "productDestinationId",
+                "type": "TEXT",
+                "valueHint": "1234567890",
+                "isUnique": true,
+                "valueValidators": [
+                  {
+                    "type": "NON_EMPTY"
+                  }
+                ]
+              }
+            ],
+            "enablingConditions": [
+              {
+                "paramName": "authFlow",
+                "paramValue": "own",
+                "type": "EQUALS"
+              }
+            ],
+            "valueValidators": [
+              {
+                "type": "NON_EMPTY"
+              }
+            ],
+            "newRowButtonText": "Add Conversion Event",
+            "help": "\u003cb\u003eProduct\u003c/b\u003e: The Product the Conversion belongs to.\n\u003cbr/\u003e\u003cbr/\u003e\n\u003cb\u003eOperating Customer ID\u003c/b\u003e: The \u003ci\u003eAccount ID\u003c/i\u003e (without hyphens) of the account (Google Ads account, DV360 account etc.) that will receive the conversion events. \u003ca href\u003d\"https://developers.google.com/data-manager/api/reference/rest/v1/Destination\"\u003eLearn more\u003c/a\u003e.\n\u003cbr/\u003e\u003cbr/\u003e\n\u003cb\u003eCustomer ID\u003c/b\u003e: The \u003ci\u003eAccount ID\u003c/i\u003e of the account (Google Ads account, DV360 account etc.) used for authorization (without hyphens) when making the API request.\n\u003cbr/\u003e\nIf your credentials are for access to a \u003ci\u003eManager Account\u003c/i\u003e that has the \u003ci\u003eOperating Account\u003c/i\u003e as one of its subaccounts, set the \u003ci\u003eCustomer ID\u003c/i\u003e to the ID of the \u003ci\u003eManager Account\u003c/i\u003e.\n\u003cbr/\u003e\nIf your credentials are for the account that is the \u003ci\u003eOperating Account\u003c/i\u003e, you don\u0027t need to set \u003ci\u003eCustomer ID\u003c/i\u003e.\n\u003cbr/\u003e\nLearn more: \u003ca href\u003d\"https://developers.google.com/data-manager/api/reference/rest/v1/Destination\"\u003e[1]\u003c/a\u003e and \u003ca href\u003d\"https://developers.google.com/data-manager/api/get-started/quickstart/send-events?persona\u003dadvertiser#prepare_a_destination\"\u003e[2]\u003c/a\u003e.\n\u003cbr/\u003e\u003cbr/\u003e\n\u003cb\u003eConversion Event ID\u003c/b\u003e: The ID of the conversion you want to interact with.\n\u003cbr/\u003e\nYou can find it by going to the \u003ci\u003eGoogle Ads account \u003e Goals \u003e Conversions \u003e Summary \u003e Access the desired Conversion Action\u003c/i\u003e. After you click on the Conversion Action, the ID is on the \u003cb\u003ectId\u003c/b\u003e URL query parameter on your browser.\n\u003cbr/\u003e"
           }
         ],
         "groupStyle": "NO_ZIPPY"
-      }
-    ]
-  },
-  {
-    "type": "GROUP",
-    "name": "conversionEventsSingleGroup",
-    "groupStyle": "NO_ZIPPY",
-    "subParams": [
+      },
       {
-        "type": "GROUP",
-        "name": "conversionInformationGroup",
-        "displayName": "Conversion Information",
-        "groupStyle": "ZIPPY_OPEN_ON_PARAM",
-        "subParams": [
+        "type": "SELECT",
+        "name": "validateOnly",
+        "displayName": "Validate Only",
+        "macrosInSelect": true,
+        "selectItems": [
           {
-            "type": "SELECT",
-            "name": "autoMapConversionInformation",
-            "displayName": "Auto-map Conversion Information",
-            "macrosInSelect": true,
-            "selectItems": [
-              {
-                "value": true,
-                "displayValue": "true"
-              },
-              {
-                "value": false,
-                "displayValue": "false"
-              }
-            ],
-            "simpleValueType": true,
-            "help": "If enabled, the tag will attempt to automatically map parameters from the Event Data.\n\u003cbr/\u003e\u003cbr/\u003e\nAny value you manually enter in a field below will always override the auto-mapped value.\n\u003cbr/\u003e\u003cbr/\u003e\nDefault mappings:\n\u003cul\u003e\n\u003cli\u003eTransaction/Order ID: \u003ci\u003eeventData.transaction_id\u003c/i\u003e\u003c/li\u003e\n\u003cli\u003eCurrency: \u003ci\u003eeventData.currency\u003c/i\u003e\n\u003cli\u003eConversion Value: \u003ci\u003eeventData.value\u003c/i\u003e \u003e Sum of \u003ci\u003eeventData.items Price * Quantity\u003c/i\u003e\u003c/li\u003e\n\u003c/ul\u003e",
-            "defaultValue": true
+            "value": true,
+            "displayValue": "true"
           },
           {
-            "type": "SELECT",
-            "name": "eventSource",
-            "displayName": "Event Source",
-            "macrosInSelect": true,
-            "selectItems": [
-              {
-                "value": "WEB",
-                "displayValue": "WEB"
-              },
-              {
-                "value": "APP",
-                "displayValue": "APP"
-              },
-              {
-                "value": "IN_STORE",
-                "displayValue": "IN_STORE"
-              },
-              {
-                "value": "PHONE",
-                "displayValue": "PHONE"
-              },
-              {
-                "value": "OTHER",
-                "displayValue": "OTHER"
-              }
-            ],
-            "simpleValueType": true,
-            "help": "\u003cb\u003eRequired.\u003c/b\u003e\n\u003cbr/\u003e\u003cbr/\u003e\nA signal for where the event happened originally (web, app, in-store, etc.).",
-            "notSetText": "(not set)",
-            "valueValidators": [
-              {
-                "type": "NON_EMPTY"
-              }
-            ]
-          },
-          {
-            "type": "TEXT",
-            "name": "transactionId",
-            "displayName": "Transaction/Order ID",
-            "simpleValueType": true,
-            "help": "\u003cb\u003eOptional\u003c/b\u003e when sending offline conversion or enhanced conversion for leads.\n\u003cbr/\u003e\n\u003cb\u003eRequired\u003c/b\u003e when sending offline conversion as an additional data source to boost performance and data strength of an online conversion.\n\u003cbr/\u003e\n\u003ca href\u003d\"https://developers.google.com/data-manager/api/devguides/events\"\u003eLearn more.\u003c/a\u003e\n\u003cbr/\u003e\u003cbr/\u003e\nThe unique identifier for this event."
-          },
-          {
-            "type": "TEXT",
-            "name": "eventTimestamp",
-            "displayName": "Event Timestamp",
-            "simpleValueType": true,
-            "help": "\u003cb\u003eRequired.\u003c/b\u003e\n\u003cbr/\u003e\u003cbr/\u003e\nThe time the event occurred.\n\u003cbr/\u003e\u003cbr/\u003e\nThe supported formats are:\n\u003cul\u003e \n\u003cli\u003eRFC 3339 compliant formats:\n\u003cul\u003e\n\u003cli\u003e2014-10-02T15:01:23Z\u003c/li\u003e\n\u003cli\u003e2014-10-02T15:01:23.045123456Z\u003c/li\u003e\n\u003cli\u003e2014-10-02T15:01:23+05:30\u003c/li\u003e\n\u003c/ul\u003e\n\u003c/li\u003e \n\u003cli\u003eUnix timestamp (in seconds or milliseconds)\u003c/li\u003e\n\u003c/ul\u003e\n\u003cbr/\u003e\nIf not set, the tag will fallback to the current time if none is found."
-          },
-          {
-            "type": "TEXT",
-            "name": "lastUpdatedTimestamp",
-            "displayName": "Last Updated Timestamp",
-            "simpleValueType": true,
-            "help": "The last time the event was updated.\n\u003cbr/\u003e\u003cbr/\u003e\nThe supported formats are:\n\u003cul\u003e \n\u003cli\u003eRFC 3339 compliant formats:\n\u003cul\u003e\n\u003cli\u003e2014-10-02T15:01:23Z\u003c/li\u003e\n\u003cli\u003e2014-10-02T15:01:23.045123456Z\u003c/li\u003e\n\u003cli\u003e2014-10-02T15:01:23+05:30\u003c/li\u003e\n\u003c/ul\u003e\n\u003c/li\u003e \n\u003cli\u003eUnix timestamp (in seconds or milliseconds)\u003c/li\u003e\n\u003c/ul\u003e"
-          },
-          {
-            "type": "TEXT",
-            "name": "currency",
-            "displayName": "Currency",
-            "simpleValueType": true,
-            "help": "The currency code associated with all monetary values within this event.\n\u003cbr/\u003e\u003cbr/\u003e\nThe value must be a recognized currency code as per \u003ca href\u003d\"http://en.wikipedia.org/wiki/ISO_4217\"\u003eISO-4217 standard\u003c/a\u003e (e.g. EUR, USD, etc.)."
-          },
-          {
-            "type": "TEXT",
-            "name": "conversionValue",
-            "displayName": "Conversion Value",
-            "simpleValueType": true,
-            "help": "The conversion value associated with the event, for value-based conversions."
+            "value": false,
+            "displayValue": "false"
           }
-        ]
+        ],
+        "simpleValueType": true,
+        "help": "If \u003cb\u003etrue\u003c/b\u003e, the request is validated but not executed. Only errors are returned, not results.\u003cbr /\u003e \u003ca href\u003d\"https://developers.google.com/data-manager/api/reference/rest/v1/events/ingest#request-body\"\u003eLearn more\u003c/a\u003e.",
+        "defaultValue": false
+      },
+      {
+        "type": "SELECT",
+        "name": "useOptimisticScenario",
+        "displayName": "Use Optimistic Scenario",
+        "macrosInSelect": true,
+        "selectItems": [
+          {
+            "value": true,
+            "displayValue": "true"
+          },
+          {
+            "value": false,
+            "displayValue": "false"
+          }
+        ],
+        "simpleValueType": true,
+        "help": "The tag will call gtmOnSuccess() without waiting for a response from the API. This will speed up sGTM response time however your tag will always return the status fired successfully even in case it is not.",
+        "defaultValue": false
       },
       {
         "type": "GROUP",
-        "name": "userDataGroup",
-        "displayName": "User Data",
+        "name": "requestLevelConsentGroup",
+        "displayName": "Request-level Consent",
         "groupStyle": "ZIPPY_OPEN_ON_PARAM",
         "subParams": [
           {
             "type": "LABEL",
-            "name": "userDataGroupLabel",
-            "displayName": "When sending User Data Identifiers, \u003cb\u003eat least one\u003c/b\u003e of User Email Address(es), User Phone Number(s) or User Address must be specified.\n\u003cbr/\u003e\nThe total number of User Data identifiers must not exceed 10 items."
+            "name": "requestLevelConsentGroupLabel",
+            "displayName": "Request-level consent to apply to all users in the request.\n\u003cbr/\u003e\nUser-level consent overrides request-level consent, and can be specified for each conversion event when sending data to \u003ci\u003eMultiple Conversion Events\u003c/i\u003e in the \u003cb\u003eConversion Events\u003c/b\u003e section."
           },
           {
             "type": "SELECT",
-            "name": "autoMapUserData",
-            "displayName": "Auto-map Conversion Information",
+            "name": "adUserData",
+            "displayName": "Consent for Ad User Data",
             "macrosInSelect": true,
             "selectItems": [
               {
-                "value": true,
-                "displayValue": "true"
+                "value": "CONSENT_GRANTED",
+                "displayValue": "CONSENT_GRANTED"
               },
               {
-                "value": false,
-                "displayValue": "false"
+                "value": "CONSENT_DENIED",
+                "displayValue": "CONSENT_DENIED"
+              },
+              {
+                "value": "CONSENT_STATUS_UNSPECIFIED",
+                "displayValue": "CONSENT_STATUS_UNSPECIFIED"
               }
             ],
             "simpleValueType": true,
-            "help": "If enabled, the tag will attempt to automatically map parameters from the Event Data.\n\u003cbr/\u003e\u003cbr/\u003e\nAny value you manually enter in a field below will always override the auto-mapped value.\n\u003cbr/\u003e\u003cbr/\u003e\nDefault mappings:\n\u003cul\u003e\n\u003cli\u003eEmail: \u003ci\u003eeventData.email\u003c/i\u003e \u003e \u003ci\u003eeventData.email_address\u003c/i\u003e \u003e \u003ci\u003eeventData.user_data.email\u003c/i\u003e \u003e \u003ci\u003eeventData.user_data.email_address\u003c/i\u003e \u003e \u003ci\u003eeventData.user_data.sha256_email_address\u003c/i\u003e\u003c/li\u003e\n\u003cli\u003ePhone: \u003ci\u003eeventData.phone\u003c/i\u003e \u003e \u003ci\u003eeventData.phone_number\u003c/i\u003e \u003e \u003ci\u003eeventData.user_data.phone\u003c/i\u003e \u003e \u003ci\u003eeventData.user_data.phone_number\u003c/i\u003e \u003e \u003ci\u003eeventData.user_data.sha256_phone_number\u003c/i\u003e\u003c/li\u003e\n\u003cli\u003eUser Given Name: \u003ci\u003eeventData.user_data.address.first_name\u003c/i\u003e \u003e \u003ci\u003eeventData.user_data.address.sha256_first_name\u003c/i\u003e\u003c/li\u003e\n\u003cli\u003eUser Family Name: \u003ci\u003eeventData.user_data.address.last_name\u003c/i\u003e \u003e \u003ci\u003eeventData.user_data.address.sha256_last_name\u003c/i\u003e\u003c/li\u003e\n\u003cli\u003eUser Address Region: \u003ci\u003eeventData.user_data.address.country\u003c/i\u003e\u003c/li\u003e\n\u003cli\u003eUser Address Postal Code: \u003ci\u003eeventData.user_data.address.postal_code\u003c/i\u003e\u003c/li\u003e\n\n\u003c/ul\u003e",
-            "defaultValue": true
+            "help": "This represents consent to Ad User Data.",
+            "notSetText": "(not set)"
           },
           {
-            "type": "TEXT",
-            "name": "userDataEmailAddresses",
-            "displayName": "User Email Address(es)",
+            "type": "SELECT",
+            "name": "adPersonalization",
+            "displayName": "Consent for Ad Personalization",
+            "macrosInSelect": true,
+            "selectItems": [
+              {
+                "value": "CONSENT_GRANTED",
+                "displayValue": "CONSENT_GRANTED"
+              },
+              {
+                "value": "CONSENT_DENIED",
+                "displayValue": "CONSENT_DENIED"
+              },
+              {
+                "value": "CONSENT_STATUS_UNSPECIFIED",
+                "displayValue": "CONSENT_STATUS_UNSPECIFIED"
+              }
+            ],
             "simpleValueType": true,
-            "help": "Specify a single email address, or an array of email addresses. Each item can be already SHA256 hashed or not. They can be already encrypted as well.\n\u003cbr/\u003e\u003cbr/\u003e\nIf already SHA256 hashed, make sure to follow these \u003ca href\u003d\"https://developers.google.com/data-manager/api/get-started/formatting#userdata_format\"\u003enormalization guidelines\u003c/a\u003e before applying the hash, and also to \u003cb\u003especify the hash encoding in the corresponding template field\u003c/b\u003e.",
-            "valueHint": "jane@example.com"
+            "help": "This represents consent to Ad Personalization.",
+            "notSetText": "(not set)"
+          }
+        ]
+      },
+      {
+        "type": "GROUP",
+        "name": "conversionEventsGroup",
+        "displayName": "Conversion Events",
+        "groupStyle": "ZIPPY_OPEN",
+        "subParams": [
+          {
+            "type": "SELECT",
+            "name": "userDataEncoding",
+            "displayName": "User Data Encoding",
+            "macrosInSelect": true,
+            "selectItems": [
+              {
+                "value": "HEX",
+                "displayValue": "HEX"
+              },
+              {
+                "value": "BASE64",
+                "displayValue": "BASE64"
+              }
+            ],
+            "simpleValueType": true,
+            "help": "The encoding type of the user identifiers SHA256 hash: \u003ci\u003eHEX\u003c/i\u003e or \u003ci\u003eBASE64\u003c/i\u003e.\n\u003cbr/\u003e\u003cbr/\u003e\n\u003cb\u003eRequired\u003c/b\u003e for \u003ca href\u003d\"https://developers.google.com/data-manager/api/reference/rest/v1/UserData\"\u003e\u003ci\u003eUserData\u003c/i\u003e\u003c/a\u003e (User Email Address, User Phone Number and User Given/Family Name) uploads.\n\u003cbr/\u003e\nFor other types (User Address Region and User Address Postal Code) uploads, this field is \u003cb\u003eignored\u003c/b\u003e.\n\u003cbr/\u003e\u003cbr/\u003e\nFor hashed user identifiers, this is the encoding type of the hashed string. \n\u003cbr/\u003e\nFor encrypted hashed user identifiers, this is the encoding type of the outer encrypted string, but not necessarily the inner hashed string, meaning the inner hashed string could be encoded in a different way than the outer encrypted string.\n\u003cbr/\u003e\u003cbr/\u003e\n\u003cb\u003eDefault\u003c/b\u003e: \u003ci\u003eHEX\u003c/i\u003e - when passing a non-hashed value to \u003ci\u003eUserData\u003c/i\u003e (User Email Address, User Phone Number and User Given/Family Name) fields; or when using default values from GA4 Event Data.",
+            "notSetText": "(not set)"
           },
           {
-            "type": "TEXT",
-            "name": "userDataPhoneNumbers",
-            "displayName": "User Phone Number(s)",
+            "type": "SELECT",
+            "name": "enableUserDataEncryption",
+            "displayName": "User Data Encryption",
+            "macrosInSelect": true,
+            "selectItems": [
+              {
+                "value": false,
+                "displayValue": "false"
+              },
+              {
+                "value": true,
+                "displayValue": "true"
+              }
+            ],
             "simpleValueType": true,
-            "help": "Specify a single phone number, or an array of phone numbers. Each item can be already SHA256 hashed or not. They can be already encrypted as well.\n\u003cbr/\u003e\u003cbr/\u003e\nUse \u003ca href\u003d\"https://en.wikipedia.org/wiki/E.164\"\u003eE.164 format\u003c/a\u003e. Include the plus sign (+) and the country code.\n\u003cbr/\u003e\nIf already SHA256 hashed, make sure to follow these \u003ca href\u003d\"https://developers.google.com/data-manager/api/get-started/formatting#userdata_format\"\u003enormalization guidelines\u003c/a\u003e before applying the hash, and also to \u003cb\u003especify the hash encoding in the corresponding template field\u003c/b\u003e.",
-            "valueHint": "+1555999999999"
-          },
-          {
-            "type": "CHECKBOX",
-            "name": "addUserDataAddress",
-            "checkboxText": "Add User Address data",
-            "simpleValueType": true,
+            "help": "Encryption information for \u003ca href\u003d\"https://developers.google.com/data-manager/api/reference/rest/v1/UserData\"\u003e\u003ci\u003eUserData\u003c/i\u003e\u003c/a\u003e (User Email Address, User Phone Number and User Given/Family Name) uploads.\n\u003cbr/\u003e\u003cbr/\u003e\nIf not set, it\u0027s assumed that uploaded identifying information is hashed but not encrypted.\n\u003cbr/\u003e\u003cbr/\u003e \nFor other types (User Address Region and User Address Postal Code) uploads, this field is \u003cb\u003eignored\u003c/b\u003e.\n\u003cbr/\u003e\u003cbr/\u003e\nReferences:  \n\u003cul\u003e \n\u003cli\u003e\u003ca href\u003d\"https://developers.google.com/data-manager/api/get-started/encryption\"\u003eData Manager API: Getting started with Encryption\u003c/a\u003e\u003c/li\u003e \u003cli\u003e\u003ca href\u003d\"https://developers.google.com/data-manager/api/reference/rest/v1/EncryptionInfo\"\u003eEncryptionInfo object\u003c/a\u003e\u003c/li\u003e \u003c/ul\u003e",
+            "defaultValue": false,
             "subParams": [
               {
                 "type": "GROUP",
-                "name": "userDataAddressGroup",
+                "name": "userDataEncryptionInfoGroup",
+                "displayName": "Encryption Info (Google Cloud Platform wrapped key information)",
+                "groupStyle": "ZIPPY_OPEN_ON_PARAM",
                 "subParams": [
                   {
-                    "type": "LABEL",
-                    "name": "userDataAddressLabel",
-                    "displayName": "You must specify \u003cb\u003eall\u003c/b\u003e the fields below (User Given Name, User Family Name, User Address Region and User Address Postal Code)."
+                    "type": "SELECT",
+                    "name": "gcpWrappedKeyType",
+                    "displayName": "Key Type",
+                    "macrosInSelect": false,
+                    "selectItems": [
+                      {
+                        "value": "XCHACHA20_POLY1305",
+                        "displayValue": "XCHACHA20_POLY1305"
+                      }
+                    ],
+                    "simpleValueType": true,
+                    "valueValidators": [
+                      {
+                        "type": "NON_EMPTY"
+                      }
+                    ],
+                    "help": "The type of algorithm used to encrypt the data."
                   },
                   {
                     "type": "TEXT",
-                    "name": "userDataAddressGivenName",
-                    "displayName": "User Given Name",
+                    "name": "gcpWrappedKeyWipProvider",
+                    "displayName": "Workload Identity pool provider",
                     "simpleValueType": true,
-                    "help": "Specify the User Given Name (First Name). Don\u0027t include prefixes such as \u003ci\u003eMrs.\u003c/i\u003e. It can be already SHA256 hashed or not. It can be encrypted as well.\n\u003cbr/\u003e\u003cbr/\u003e\nIf already SHA256 hashed, make sure to follow these \u003ca href\u003d\"https://developers.google.com/data-manager/api/get-started/formatting#userdata_format\"\u003enormalization guidelines\u003c/a\u003e before applying the hash, and also to \u003cb\u003especify the hash encoding in the corresponding template field\u003c/b\u003e.",
-                    "valueHint": "john",
-                    "valueValidators": []
+                    "valueValidators": [
+                      {
+                        "type": "NON_EMPTY"
+                      }
+                    ],
+                    "help": "The \u003ca href\u003d\"https://cloud.google.com/iam/docs/workload-identity-federation\"\u003eWorkload Identity\u003c/a\u003e pool provider required to use KEK."
                   },
                   {
                     "type": "TEXT",
-                    "name": "userDataAddressFamilyName",
-                    "displayName": "User Family Name",
+                    "name": "gcpWrappedKeyKekUri",
+                    "displayName": "Google Cloud Platform Cloud Key Management Service resource ID",
                     "simpleValueType": true,
-                    "help": "Specify the User Family Name (Last Name). Don\u0027t include suffixes such as \u003ci\u003eJr\u003c/i\u003e. It can be already SHA256 hashed or not. It can be encrypted as well.\n\u003cbr/\u003e\u003cbr/\u003e\nIf already SHA256 hashed, make sure to follow these \u003ca href\u003d\"https://developers.google.com/data-manager/api/get-started/formatting#userdata_format\"\u003enormalization guidelines\u003c/a\u003e before applying the hash, and also to \u003cb\u003especify the hash encoding in the corresponding template field\u003c/b\u003e.",
-                    "valueHint": "doe",
-                    "valueValidators": []
+                    "valueValidators": [
+                      {
+                        "type": "NON_EMPTY"
+                      }
+                    ],
+                    "help": "The Google Cloud Platform \u003ca href\u003d\"https://cloud.google.com/kms/docs/getting-resource-ids\"\u003eCloud Key Management Service resource ID\u003c/a\u003e."
                   },
                   {
                     "type": "TEXT",
-                    "name": "userDataAddressRegion",
-                    "displayName": "User Address Region",
+                    "name": "gcpWrappedKeyEncryptedDek",
+                    "displayName": "Encrypted data encryption key",
                     "simpleValueType": true,
-                    "help": "The 2-letter region code in \u003ca href\u003d\"https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2\"\u003eISO-3166-1 alpha-2\u003c/a\u003e of the user\u0027s address. Do not hash.",
-                    "valueHint": "US",
-                    "valueValidators": []
-                  },
-                  {
-                    "type": "TEXT",
-                    "name": "userDataAddressPostalCode",
-                    "displayName": "User Address Postal Code",
-                    "simpleValueType": true,
-                    "help": "The postal code of the user\u0027s address. Do not hash.\n\u003cbr/\u003e\nBoth US and international zip and postal codes are allowed. \n\u003cbr/\u003e\nFor US addresses, use either 5 digits or 5 digits followed by a 4-digit extension. Using a 4-digit extension may improve your match rate.\n\u003cbr/\u003e\nFor all other countries, don\u0027t use postal code extensions.",
-                    "valueHint": "10001",
-                    "valueValidators": []
+                    "help": "The base64 encoded encrypted data encryption key.",
+                    "valueValidators": [
+                      {
+                        "type": "NON_EMPTY"
+                      }
+                    ]
                   }
                 ],
                 "enablingConditions": [
                   {
-                    "paramName": "addUserDataAddress",
-                    "paramValue": true,
-                    "type": "EQUALS"
-                  }
-                ],
-                "groupStyle": "NO_ZIPPY"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "type": "GROUP",
-        "name": "adIdentifiersGroup",
-        "displayName": "Ad Identifiers",
-        "groupStyle": "ZIPPY_OPEN_ON_PARAM",
-        "subParams": [
-          {
-            "type": "TEXT",
-            "name": "adIdentifiersGclid",
-            "displayName": "gclid",
-            "simpleValueType": true,
-            "help": "The Google Click ID (\u003ci\u003egclid\u003c/i\u003e) associated with this event."
-          },
-          {
-            "type": "TEXT",
-            "name": "adIdentifiersGbraid",
-            "displayName": "gbraid",
-            "simpleValueType": true,
-            "help": "The click identifier for clicks associated with app events and originating from iOS devices starting with iOS14."
-          },
-          {
-            "type": "TEXT",
-            "name": "adIdentifiersWbraid",
-            "displayName": "wbraid",
-            "simpleValueType": true,
-            "help": "The click identifier for clicks associated with web events and originating from iOS devices starting with iOS14."
-          },
-          {
-            "type": "TEXT",
-            "name": "adIdentifiersLandingPageDeviceInfoUserAgent",
-            "displayName": "Landing Page User Agent",
-            "simpleValueType": true,
-            "help": "Information gathered about the device\u0027s user agent being used (if any) at the time of landing onto the advertiser’s site after interacting with the ad."
-          },
-          {
-            "type": "TEXT",
-            "name": "adIdentifiersLandingPageDeviceInfoIpAddress",
-            "displayName": "Landing Page IP Address",
-            "simpleValueType": true,
-            "help": "Information gathered about the device\u0027s IP address being used (if any) at the time of landing onto the advertiser’s site after interacting with the ad.\n\u003cbr/\u003e\u003cbr/\u003e\n\u003cb\u003eNote:\u003c/b\u003e Google Ads does not support IP address matching for end users in the European Economic Area (EEA), United Kingdom (UK), or Switzerland (CH). Add logic to conditionally exclude sharing IP addresses from users from these regions and ensure that you provide users with clear and comprehensive information about the data you collect on your sites, apps, and other properties and get consent where required by law or any applicable Google policies. See the \u003ca href\u003d\"https://support.google.com/google-ads/answer/2998031\"\u003eAbout offline conversion imports page\u003c/a\u003e for more details."
-          },
-          {
-            "type": "TEXT",
-            "name": "adIdentifiersSessionAttributes",
-            "displayName": "Session Attributes String",
-            "simpleValueType": true,
-            "help": "Session attributes string for event attribution and modeling.\n\u003cbr/\u003e\nLearn more: \u003ca href\u003d\"https://support.google.com/google-ads/answer/16194756\"\u003e[1]\u003c/a\u003e and \u003ca href\u003d\"https://ads-developers.googleblog.com/2025/08/maximize-performance-of-your-google-ads.html\"\u003e[2]\u003c/a\u003e."
-          }
-        ]
-      },
-      {
-        "type": "GROUP",
-        "name": "eventDeviceInfoGroup",
-        "displayName": "Event Device Information",
-        "groupStyle": "ZIPPY_OPEN_ON_PARAM",
-        "subParams": [
-          {
-            "type": "SELECT",
-            "name": "autoMapEventDeviceInfo",
-            "displayName": "Auto-map Event Device Information",
-            "macrosInSelect": true,
-            "selectItems": [
-              {
-                "value": true,
-                "displayValue": "true"
-              },
-              {
-                "value": false,
-                "displayValue": "false"
-              }
-            ],
-            "simpleValueType": true,
-            "help": "If enabled, the tag will attempt to automatically map parameters from the Event Data.\n\u003cbr/\u003e\u003cbr/\u003e\nAny value you manually enter in a field below will always override the auto-mapped value.\n\u003cbr/\u003e\u003cbr/\u003e\nDefault mappings:\n\u003cul\u003e\n\u003cli\u003eUser Agent: \u003ci\u003eeventData.user_agent\u003c/i\u003e\u003c/li\u003e\n\u003cli\u003eIP Address: \u003ci\u003eeventData.ip_override\u003c/i\u003e\u003c/li\u003e\n\u003c/ul\u003e",
-            "defaultValue": true
-          },
-          {
-            "type": "TEXT",
-            "name": "eventDeviceInfoUserAgent",
-            "displayName": "User Agent",
-            "simpleValueType": true,
-            "help": "Information gathered about the device\u0027s user agent being used (if any) when the event happened."
-          },
-          {
-            "type": "TEXT",
-            "name": "eventDeviceInfoIpAddress",
-            "displayName": "IP Address",
-            "simpleValueType": true,
-            "help": "Information gathered about the device\u0027s IP address being used (if any) when the event happened.\n\u003cbr/\u003e\u003cbr/\u003e\n\u003cb\u003eNote:\u003c/b\u003e Google Ads does not support IP address matching for end users in the European Economic Area (EEA), United Kingdom (UK), or Switzerland (CH). Add logic to conditionally exclude sharing IP addresses from users from these regions and ensure that you provide users with clear and comprehensive information about the data you collect on your sites, apps, and other properties and get consent where required by law or any applicable Google policies. See the \u003ca href\u003d\"https://support.google.com/google-ads/answer/2998031\"\u003eAbout offline conversion imports page\u003c/a\u003e for more details."
-          }
-        ]
-      },
-      {
-        "type": "GROUP",
-        "name": "userPropertiesGroup",
-        "displayName": "User Properties",
-        "groupStyle": "ZIPPY_OPEN_ON_PARAM",
-        "subParams": [
-          {
-            "type": "SELECT",
-            "name": "userPropertiesCustomerType",
-            "displayName": "Customer Type",
-            "macrosInSelect": true,
-            "selectItems": [
-              {
-                "value": "NEW",
-                "displayValue": "NEW"
-              },
-              {
-                "value": "RETURNING",
-                "displayValue": "RETURNING"
-              },
-              {
-                "value": "REENGAGED",
-                "displayValue": "REENGAGED"
-              }
-            ],
-            "simpleValueType": true,
-            "help": "Type of the customer associated with the event.",
-            "notSetText": "(not set)"
-          },
-          {
-            "type": "SELECT",
-            "name": "userPropertiesCustomerValueBucket",
-            "displayName": "Customer Value Bucket",
-            "macrosInSelect": true,
-            "selectItems": [
-              {
-                "value": "LOW",
-                "displayValue": "LOW"
-              },
-              {
-                "value": "MEDIUM",
-                "displayValue": "MEDIUM"
-              },
-              {
-                "value": "HIGH",
-                "displayValue": "HIGH"
-              }
-            ],
-            "simpleValueType": true,
-            "help": "The advertiser-assessed value of the customer.",
-            "notSetText": "(not set)"
-          }
-        ]
-      },
-      {
-        "type": "GROUP",
-        "name": "cartDataGroup",
-        "displayName": "Cart Data",
-        "groupStyle": "ZIPPY_OPEN_ON_PARAM",
-        "subParams": [
-          {
-            "type": "SELECT",
-            "name": "autoMapCartData",
-            "displayName": "Auto-map Cart Data",
-            "macrosInSelect": true,
-            "selectItems": [
-              {
-                "value": true,
-                "displayValue": "true"
-              },
-              {
-                "value": false,
-                "displayValue": "false"
-              }
-            ],
-            "simpleValueType": true,
-            "help": "If enabled, the tag will attempt to automatically map parameters from the Event Data.\n\u003cbr/\u003e\u003cbr/\u003e\nAny value you manually enter in a field below will always override the auto-mapped value.\n\u003cbr/\u003e\u003cbr/\u003e\nDefault mappings:\n\u003cul\u003e\n\u003cli\u003eItems: \u003ci\u003eeventData.items\u003c/i\u003e\u003c/li\u003e\n\u003c/ul\u003e",
-            "defaultValue": true,
-            "subParams": [
-              {
-                "type": "TEXT",
-                "name": "itemIdKey",
-                "displayName": "Custom Item ID Key",
-                "simpleValueType": true,
-                "help": "Optional. \u003cbr/\u003e\u003cbr/\u003e You can specify a custom key, which will be used to set the content Item ID, by default \u003ci\u003eitem_id\u003c/i\u003e will be used. This may be useful if you are using WooCommerce extensions.",
-                "enablingConditions": [
-                  {
-                    "paramName": "autoMapCartData",
+                    "paramName": "enableUserDataEncryption",
                     "paramValue": false,
                     "type": "NOT_EQUALS"
                   }
@@ -879,125 +546,33 @@ ___TEMPLATE_PARAMETERS___
             ]
           },
           {
-            "type": "TEXT",
-            "name": "cartDataMerchantId",
-            "displayName": "Merchant Center ID",
-            "simpleValueType": true,
-            "help": "The Merchant Center ID associated with the items.\n\u003cbr/\u003e\u003cbr/\u003e\n\u003ca href\u003d\"https://support.google.com/paymentscenter/answer/7163092?hl\u003den\"\u003eLearn more\u003c/a\u003e."
-          },
-          {
-            "type": "TEXT",
-            "name": "cartDataMerchantFeedLabel",
-            "displayName": "Merchant Center Feed Label",
-            "simpleValueType": true,
-            "help": "The Merchant Center feed label associated with the feed of the items.\n\u003cbr/\u003e\u003cbr/\u003e\nYou can find it as a URL parameter in the Merchant Center URL:  \u003ci\u003efeedLabel\u003d\u003cb\u003eDK\u003c/b\u003e\u003c/i\u003e."
-          },
-          {
-            "type": "TEXT",
-            "name": "cartDataMerchantFeedLanguageCode",
-            "displayName": "Merchant Center Feed Language Code",
-            "simpleValueType": true,
-            "help": "The language code in ISO 639-1 associated with the Merchant Center feed of the items.where your items are uploaded.\n\u003cbr/\u003e\u003cbr/\u003e\nYou can find it as a URL parameter in the Merchant Center URL: \u003ci\u003elanguage\u003d\u003cb\u003eda\u003c/b\u003e\u003c/i\u003e."
-          },
-          {
-            "type": "TEXT",
-            "name": "cartDataTransactionDiscount",
-            "displayName": "Transaction Discount",
-            "simpleValueType": true,
-            "help": "The sum of all discounts associated with the transaction/conversion."
-          },
-          {
-            "type": "TEXT",
-            "name": "cartDataItems",
-            "displayName": "Items",
-            "simpleValueType": true,
-            "help": "The list of items associated with the event. Each item is an object in the list with the following properties: \u003ci\u003emerchantProductId\u003c/i\u003e, \u003ci\u003equantity\u003c/i\u003e and \u003ci\u003eunitPrice\u003c/i\u003e.\n\u003cbr/\u003e\n\u003ca href\u003d\"https://developers.google.com/data-manager/api/reference/rest/v1/events/ingest#item\"\u003eLearn more\u003c/a\u003e."
-          }
-        ]
-      },
-      {
-        "type": "GROUP",
-        "name": "customVariablesGroup",
-        "displayName": "Custom Variables",
-        "groupStyle": "ZIPPY_OPEN_ON_PARAM",
-        "subParams": [
-          {
-            "type": "LABEL",
-            "name": "customVariablesGroupLabel",
-            "displayName": "\u003ca href\u003d\"https://developers.google.com/data-manager/api/reference/rest/v1/events/ingest#customvariable\"\u003eLearn more\u003c/a\u003e about Custom Variables.\n\u003cbr/\u003e\nIn the optional \u003ci\u003eDestination References\u003c/i\u003e column, you may leave it blank, or specify either a single reference or an array of references.\n\u003cbr/\u003e\u003cbr/\u003e"
-          },
-          {
-            "type": "SIMPLE_TABLE",
-            "name": "customVariablesList",
-            "displayName": "",
-            "simpleTableColumns": [
+            "type": "SELECT",
+            "name": "conversionEventMode",
+            "displayName": "Conversion Event Mode",
+            "macrosInSelect": false,
+            "selectItems": [
               {
-                "defaultValue": "",
-                "displayName": "Variable Name",
-                "name": "name",
-                "type": "TEXT",
-                "isUnique": true,
-                "valueValidators": [
-                  {
-                    "type": "NON_EMPTY"
-                  }
-                ]
+                "value": "single",
+                "displayValue": "Single Conversion Event"
               },
               {
-                "defaultValue": "",
-                "displayName": "Variable Value",
-                "name": "value",
-                "type": "TEXT",
-                "valueValidators": [
-                  {
-                    "type": "NON_EMPTY"
-                  }
-                ]
-              },
-              {
-                "defaultValue": "",
-                "displayName": "Destination References",
-                "name": "destinationReferences",
-                "type": "TEXT"
+                "value": "multiple",
+                "displayValue": "Multiple Conversion Events"
               }
             ],
-            "newRowButtonText": "Add Variable"
-          }
-        ]
-      },
-      {
-        "type": "GROUP",
-        "name": "experimentalFieldsGroup",
-        "displayName": "Experimental Fields",
-        "groupStyle": "ZIPPY_OPEN_ON_PARAM",
-        "subParams": [
-          {
-            "type": "LABEL",
-            "name": "experimentalFieldsGroupLabel",
-            "displayName": "\u003ca href\u003d\"https://developers.google.com/data-manager/api/reference/rest/v1/events/ingest#experimentalfield\"\u003eLearn more\u003c/a\u003e about Experimental Fields.\n\u003cbr/\u003e\u003cbr/\u003e"
+            "simpleValueType": true,
+            "help": "Send data for a single conversion event or for multiple conversion events."
           },
           {
-            "type": "SIMPLE_TABLE",
-            "name": "experimentalFieldsList",
-            "displayName": "",
-            "simpleTableColumns": [
+            "type": "GROUP",
+            "name": "conversionEventsMultipleGroup",
+            "subParams": [
               {
-                "defaultValue": "",
-                "displayName": "Field Name",
-                "name": "name",
                 "type": "TEXT",
-                "isUnique": true,
-                "valueValidators": [
-                  {
-                    "type": "NON_EMPTY"
-                  }
-                ]
-              },
-              {
-                "defaultValue": "",
-                "displayName": "Field Value",
-                "name": "value",
-                "type": "TEXT",
+                "name": "conversionEvents",
+                "displayName": "Conversion Events Array",
+                "simpleValueType": true,
+                "help": "Specify the Conversion Events array. This is useful when you need to upload data for multiple conversion events at once. At most 2000 Conversion Events can be specified in the array.\n\u003cbr/\u003e\u003cbr/\u003e\nThe array must be formatted as specified in the\nGoogle Documentation. You can specify different consent types for each Conversion Event, overriding the request-level consent.\n\u003cbr/\u003e\u003cbr/\u003e\n\u003cb\u003eIf you already pass SHA256 hashed fields to \u003ca href\u003d\"https://developers.google.com/data-manager/api/reference/rest/v1/UserData\"\u003e\u003ci\u003eUserData\u003c/i\u003e\u003c/a\u003e field, make sure to specify the SHA256 hash encoding in the corresponding template field. Otherwise, the tag will hash it automatically and set it for you.\u003c/b\u003e\n\u003cbr/\u003e\u003cbr/\u003e\nWhen working with multiple Conversion Event IDs, you can direct an event to a specific subset of them. To do so, list the desired Conversion Event IDs in the \u003ca target\u003d\"https://developers.google.com/data-manager/api/reference/rest/v1/events/ingest#event\"\u003e\u003ci\u003edestinationReferences\u003c/i\u003e\u003c/a\u003e array.\n\u003cbr/\u003e\u003cbr/\u003e\nReferences: \n\u003cul\u003e\n\u003cli\u003e\u003ca href\u003d\"https://developers.google.com/data-manager/api/reference/rest/v1/events/ingest#Event\"\u003eConversion Event\u003c/a\u003e\u003c/li\u003e\n\u003cli\u003e\u003ca href\u003d\"https://developers.google.com/data-manager/api/get-started/formatting\"\u003eNormalization guidelines\u003c/a\u003e\u003c/li\u003e\n\u003cli\u003e\u003ca href\u003d\"https://developers.google.com/data-manager/api/get-started/quickstart/send-events?persona\u003dadvertiser#build_the_request_body\"\u003eExample\u003c/a\u003e\u003c/li\u003e\n\u003c/ul\u003e",
                 "valueValidators": [
                   {
                     "type": "NON_EMPTY"
@@ -1005,38 +580,623 @@ ___TEMPLATE_PARAMETERS___
                 ]
               }
             ],
-            "newRowButtonText": "Add Field"
+            "enablingConditions": [
+              {
+                "paramName": "conversionEventMode",
+                "paramValue": "multiple",
+                "type": "EQUALS"
+              }
+            ],
+            "groupStyle": "NO_ZIPPY"
+          }
+        ]
+      },
+      {
+        "type": "GROUP",
+        "name": "conversionEventsSingleGroup",
+        "groupStyle": "NO_ZIPPY",
+        "subParams": [
+          {
+            "type": "GROUP",
+            "name": "conversionInformationGroup",
+            "displayName": "Conversion Information",
+            "groupStyle": "ZIPPY_OPEN",
+            "subParams": [
+              {
+                "type": "SELECT",
+                "name": "autoMapConversionInformation",
+                "displayName": "Auto-map Conversion Information",
+                "macrosInSelect": true,
+                "selectItems": [
+                  {
+                    "value": true,
+                    "displayValue": "true"
+                  },
+                  {
+                    "value": false,
+                    "displayValue": "false"
+                  }
+                ],
+                "simpleValueType": true,
+                "help": "If enabled, the tag will attempt to automatically map parameters from the Event Data.\n\u003cbr/\u003e\u003cbr/\u003e\nAny value you manually enter in a field below will always override the auto-mapped value.\n\u003cbr/\u003e\u003cbr/\u003e\nDefault mappings:\n\u003cul\u003e\n\u003cli\u003eTransaction/Order ID: \u003ci\u003eeventData.transaction_id\u003c/i\u003e\u003c/li\u003e\n\u003cli\u003eCurrency: \u003ci\u003eeventData.currency\u003c/i\u003e\n\u003cli\u003eConversion Value: \u003ci\u003eeventData.value\u003c/i\u003e \u003e Sum of \u003ci\u003eeventData.items Price * Quantity\u003c/i\u003e\u003c/li\u003e\n\u003c/ul\u003e",
+                "defaultValue": true
+              },
+              {
+                "type": "SELECT",
+                "name": "eventSource",
+                "displayName": "Event Source",
+                "macrosInSelect": true,
+                "selectItems": [
+                  {
+                    "value": "WEB",
+                    "displayValue": "WEB"
+                  },
+                  {
+                    "value": "APP",
+                    "displayValue": "APP"
+                  },
+                  {
+                    "value": "IN_STORE",
+                    "displayValue": "IN_STORE"
+                  },
+                  {
+                    "value": "PHONE",
+                    "displayValue": "PHONE"
+                  },
+                  {
+                    "value": "OTHER",
+                    "displayValue": "OTHER"
+                  }
+                ],
+                "simpleValueType": true,
+                "help": "\u003cb\u003eRequired.\u003c/b\u003e\n\u003cbr/\u003e\u003cbr/\u003e\nA signal for where the event happened originally (web, app, in-store, etc.).",
+                "notSetText": "(not set)",
+                "valueValidators": [
+                  {
+                    "type": "NON_EMPTY"
+                  }
+                ]
+              },
+              {
+                "type": "TEXT",
+                "name": "transactionId",
+                "displayName": "Transaction/Order ID",
+                "simpleValueType": true,
+                "help": "\u003cb\u003eOptional\u003c/b\u003e when sending offline conversion or enhanced conversion for leads.\n\u003cbr/\u003e\n\u003cb\u003eRequired\u003c/b\u003e when sending offline conversion as an additional data source to boost performance and data strength of an online conversion.\n\u003cbr/\u003e\n\u003ca href\u003d\"https://developers.google.com/data-manager/api/devguides/events\"\u003eLearn more.\u003c/a\u003e\n\u003cbr/\u003e\u003cbr/\u003e\nThe unique identifier for this event."
+              },
+              {
+                "type": "TEXT",
+                "name": "eventTimestamp",
+                "displayName": "Event Timestamp",
+                "simpleValueType": true,
+                "help": "\u003cb\u003eRequired.\u003c/b\u003e\n\u003cbr/\u003e\u003cbr/\u003e\nThe time the event occurred.\n\u003cbr/\u003e\u003cbr/\u003e\nThe supported formats are:\n\u003cul\u003e \n\u003cli\u003eRFC 3339 compliant formats:\n\u003cul\u003e\n\u003cli\u003e2014-10-02T15:01:23Z\u003c/li\u003e\n\u003cli\u003e2014-10-02T15:01:23.045123456Z\u003c/li\u003e\n\u003cli\u003e2014-10-02T15:01:23+05:30\u003c/li\u003e\n\u003c/ul\u003e\n\u003c/li\u003e \n\u003cli\u003eUnix timestamp (in seconds or milliseconds)\u003c/li\u003e\n\u003c/ul\u003e\n\u003cbr/\u003e\nIf not set, the tag will fallback to the current time if none is found."
+              },
+              {
+                "type": "TEXT",
+                "name": "lastUpdatedTimestamp",
+                "displayName": "Last Updated Timestamp",
+                "simpleValueType": true,
+                "help": "The last time the event was updated.\n\u003cbr/\u003e\u003cbr/\u003e\nThe supported formats are:\n\u003cul\u003e \n\u003cli\u003eRFC 3339 compliant formats:\n\u003cul\u003e\n\u003cli\u003e2014-10-02T15:01:23Z\u003c/li\u003e\n\u003cli\u003e2014-10-02T15:01:23.045123456Z\u003c/li\u003e\n\u003cli\u003e2014-10-02T15:01:23+05:30\u003c/li\u003e\n\u003c/ul\u003e\n\u003c/li\u003e \n\u003cli\u003eUnix timestamp (in seconds or milliseconds)\u003c/li\u003e\n\u003c/ul\u003e"
+              },
+              {
+                "type": "TEXT",
+                "name": "currency",
+                "displayName": "Currency",
+                "simpleValueType": true,
+                "help": "The currency code associated with all monetary values within this event.\n\u003cbr/\u003e\u003cbr/\u003e\nThe value must be a recognized currency code as per \u003ca href\u003d\"http://en.wikipedia.org/wiki/ISO_4217\"\u003eISO-4217 standard\u003c/a\u003e (e.g. EUR, USD, etc.)."
+              },
+              {
+                "type": "TEXT",
+                "name": "conversionValue",
+                "displayName": "Conversion Value",
+                "simpleValueType": true,
+                "help": "The conversion value associated with the event, for value-based conversions."
+              }
+            ]
+          },
+          {
+            "type": "GROUP",
+            "name": "userDataGroup",
+            "displayName": "User Data",
+            "groupStyle": "ZIPPY_OPEN_ON_PARAM",
+            "subParams": [
+              {
+                "type": "LABEL",
+                "name": "userDataGroupLabel",
+                "displayName": "When sending User Data Identifiers, \u003cb\u003eat least one\u003c/b\u003e of User Email Address(es), User Phone Number(s) or User Address must be specified.\n\u003cbr/\u003e\nThe total number of User Data identifiers must not exceed 10 items."
+              },
+              {
+                "type": "SELECT",
+                "name": "autoMapUserData",
+                "displayName": "Auto-map Conversion Information",
+                "macrosInSelect": true,
+                "selectItems": [
+                  {
+                    "value": true,
+                    "displayValue": "true"
+                  },
+                  {
+                    "value": false,
+                    "displayValue": "false"
+                  }
+                ],
+                "simpleValueType": true,
+                "help": "If enabled, the tag will attempt to automatically map parameters from the Event Data.\n\u003cbr/\u003e\u003cbr/\u003e\nAny value you manually enter in a field below will always override the auto-mapped value.\n\u003cbr/\u003e\u003cbr/\u003e\nDefault mappings:\n\u003cul\u003e\n\u003cli\u003eEmail: \u003ci\u003eeventData.email\u003c/i\u003e \u003e \u003ci\u003eeventData.email_address\u003c/i\u003e \u003e \u003ci\u003eeventData.user_data.email\u003c/i\u003e \u003e \u003ci\u003eeventData.user_data.email_address\u003c/i\u003e \u003e \u003ci\u003eeventData.user_data.sha256_email_address\u003c/i\u003e\u003c/li\u003e\n\u003cli\u003ePhone: \u003ci\u003eeventData.phone\u003c/i\u003e \u003e \u003ci\u003eeventData.phone_number\u003c/i\u003e \u003e \u003ci\u003eeventData.user_data.phone\u003c/i\u003e \u003e \u003ci\u003eeventData.user_data.phone_number\u003c/i\u003e \u003e \u003ci\u003eeventData.user_data.sha256_phone_number\u003c/i\u003e\u003c/li\u003e\n\u003cli\u003eUser Given Name: \u003ci\u003eeventData.user_data.address.first_name\u003c/i\u003e \u003e \u003ci\u003eeventData.user_data.address.sha256_first_name\u003c/i\u003e\u003c/li\u003e\n\u003cli\u003eUser Family Name: \u003ci\u003eeventData.user_data.address.last_name\u003c/i\u003e \u003e \u003ci\u003eeventData.user_data.address.sha256_last_name\u003c/i\u003e\u003c/li\u003e\n\u003cli\u003eUser Address Region: \u003ci\u003eeventData.user_data.address.country\u003c/i\u003e\u003c/li\u003e\n\u003cli\u003eUser Address Postal Code: \u003ci\u003eeventData.user_data.address.postal_code\u003c/i\u003e\u003c/li\u003e\n\n\u003c/ul\u003e",
+                "defaultValue": true
+              },
+              {
+                "type": "TEXT",
+                "name": "userDataEmailAddresses",
+                "displayName": "User Email Address(es)",
+                "simpleValueType": true,
+                "help": "Specify a single email address, or an array of email addresses. Each item can be already SHA256 hashed or not. They can be already encrypted as well.\n\u003cbr/\u003e\u003cbr/\u003e\nIf already SHA256 hashed, make sure to follow these \u003ca href\u003d\"https://developers.google.com/data-manager/api/get-started/formatting#userdata_format\"\u003enormalization guidelines\u003c/a\u003e before applying the hash, and also to \u003cb\u003especify the hash encoding in the corresponding template field\u003c/b\u003e.",
+                "valueHint": "jane@example.com"
+              },
+              {
+                "type": "TEXT",
+                "name": "userDataPhoneNumbers",
+                "displayName": "User Phone Number(s)",
+                "simpleValueType": true,
+                "help": "Specify a single phone number, or an array of phone numbers. Each item can be already SHA256 hashed or not. They can be already encrypted as well.\n\u003cbr/\u003e\u003cbr/\u003e\nUse \u003ca href\u003d\"https://en.wikipedia.org/wiki/E.164\"\u003eE.164 format\u003c/a\u003e. Include the plus sign (+) and the country code.\n\u003cbr/\u003e\nIf already SHA256 hashed, make sure to follow these \u003ca href\u003d\"https://developers.google.com/data-manager/api/get-started/formatting#userdata_format\"\u003enormalization guidelines\u003c/a\u003e before applying the hash, and also to \u003cb\u003especify the hash encoding in the corresponding template field\u003c/b\u003e.",
+                "valueHint": "+1555999999999"
+              },
+              {
+                "type": "CHECKBOX",
+                "name": "addUserDataAddress",
+                "checkboxText": "Add User Address data",
+                "simpleValueType": true,
+                "subParams": [
+                  {
+                    "type": "GROUP",
+                    "name": "userDataAddressGroup",
+                    "subParams": [
+                      {
+                        "type": "LABEL",
+                        "name": "userDataAddressLabel",
+                        "displayName": "You must specify \u003cb\u003eall\u003c/b\u003e the fields below (User Given Name, User Family Name, User Address Region and User Address Postal Code)."
+                      },
+                      {
+                        "type": "TEXT",
+                        "name": "userDataAddressGivenName",
+                        "displayName": "User Given Name",
+                        "simpleValueType": true,
+                        "help": "Specify the User Given Name (First Name). Don\u0027t include prefixes such as \u003ci\u003eMrs.\u003c/i\u003e. It can be already SHA256 hashed or not. It can be encrypted as well.\n\u003cbr/\u003e\u003cbr/\u003e\nIf already SHA256 hashed, make sure to follow these \u003ca href\u003d\"https://developers.google.com/data-manager/api/get-started/formatting#userdata_format\"\u003enormalization guidelines\u003c/a\u003e before applying the hash, and also to \u003cb\u003especify the hash encoding in the corresponding template field\u003c/b\u003e.",
+                        "valueHint": "john",
+                        "valueValidators": []
+                      },
+                      {
+                        "type": "TEXT",
+                        "name": "userDataAddressFamilyName",
+                        "displayName": "User Family Name",
+                        "simpleValueType": true,
+                        "help": "Specify the User Family Name (Last Name). Don\u0027t include suffixes such as \u003ci\u003eJr\u003c/i\u003e. It can be already SHA256 hashed or not. It can be encrypted as well.\n\u003cbr/\u003e\u003cbr/\u003e\nIf already SHA256 hashed, make sure to follow these \u003ca href\u003d\"https://developers.google.com/data-manager/api/get-started/formatting#userdata_format\"\u003enormalization guidelines\u003c/a\u003e before applying the hash, and also to \u003cb\u003especify the hash encoding in the corresponding template field\u003c/b\u003e.",
+                        "valueHint": "doe",
+                        "valueValidators": []
+                      },
+                      {
+                        "type": "TEXT",
+                        "name": "userDataAddressRegion",
+                        "displayName": "User Address Region",
+                        "simpleValueType": true,
+                        "help": "The 2-letter region code in \u003ca href\u003d\"https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2\"\u003eISO-3166-1 alpha-2\u003c/a\u003e of the user\u0027s address. Do not hash.",
+                        "valueHint": "US",
+                        "valueValidators": []
+                      },
+                      {
+                        "type": "TEXT",
+                        "name": "userDataAddressPostalCode",
+                        "displayName": "User Address Postal Code",
+                        "simpleValueType": true,
+                        "help": "The postal code of the user\u0027s address. Do not hash.\n\u003cbr/\u003e\nBoth US and international zip and postal codes are allowed. \n\u003cbr/\u003e\nFor US addresses, use either 5 digits or 5 digits followed by a 4-digit extension. Using a 4-digit extension may improve your match rate.\n\u003cbr/\u003e\nFor all other countries, don\u0027t use postal code extensions.",
+                        "valueHint": "10001",
+                        "valueValidators": []
+                      }
+                    ],
+                    "enablingConditions": [
+                      {
+                        "paramName": "addUserDataAddress",
+                        "paramValue": true,
+                        "type": "EQUALS"
+                      }
+                    ],
+                    "groupStyle": "NO_ZIPPY"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "GROUP",
+            "name": "adIdentifiersGroup",
+            "displayName": "Ad Identifiers",
+            "groupStyle": "ZIPPY_OPEN_ON_PARAM",
+            "subParams": [
+              {
+                "type": "SELECT",
+                "name": "autoMapAdIdentifiersClickIds",
+                "displayName": "Auto-map Click IDs",
+                "macrosInSelect": true,
+                "selectItems": [
+                  {
+                    "value": true,
+                    "displayValue": "true"
+                  },
+                  {
+                    "value": false,
+                    "displayValue": "false"
+                  }
+                ],
+                "simpleValueType": true,
+                "help": "If enabled, the tag will attempt to automatically map the \u003ci\u003egclid\u003c/i\u003e, \u003ci\u003egbraid\u003c/i\u003e and \u003ci\u003ewbraid\u003c/i\u003e values using the following sources (in order):\n\u003cul\u003e\n\u003cli\u003eEvent Data\u003c/li\u003e\n\u003cli\u003eURL Parameter\u003c/li\u003e\n\u003cli\u003eServer Cookie\u003c/li\u003e\n\u003cli\u003eJavaScript Cookie\u003c/li\u003e\n\u003c/ul\u003e\n\u003cbr/\u003e\nAny value you manually enter in a field below will always override the auto-mapped value.\n\u003cbr/\u003e\u003cbr/\u003e\n⚠️ Note that this feature might break if Google changes the format of the cookie values. Stape will do its best to keep up with the changes. \n\u003cbr/\u003e\u003cbr/\u003e\nDefault mappings:\n\u003cul\u003e\n  \u003cli\u003egclid:\n    \u003cul\u003e\n      \u003cli\u003e\u003ci\u003egclid\u003c/i\u003e Event Data value\u003c/li\u003e\n      \u003cli\u003e\u003ci\u003egclid\u003c/i\u003e URL Parameter value\u003c/li\u003e\n      \u003cli\u003e\u003ci\u003eFPGCLAW\u003c/i\u003e Event Data value\u003c/li\u003e\n      \u003cli\u003e\u003ci\u003eFPGCLAW\u003c/i\u003e Common Cookie value\u003c/li\u003e\n      \u003cli\u003e\u003ci\u003eFPGCLAW\u003c/i\u003e Server Cookie value\u003c/li\u003e\n      \u003cli\u003e\u003ci\u003e_gcl_aw\u003c/i\u003e Event Data value\u003c/li\u003e\n      \u003cli\u003e\u003ci\u003egcl_aw\u003c/i\u003e Event Data value\u003c/li\u003e\n      \u003cli\u003e\u003ci\u003e_gcl_aw\u003c/i\u003e Common Cookie value\u003c/li\u003e\n      \u003cli\u003e\u003ci\u003e_gcl_aw\u003c/i\u003e JavaScript cookie value\u003c/li\u003e\n    \u003c/ul\u003e\n  \u003c/li\u003e\n  \u003cli\u003egbraid:\n    \u003cul\u003e\n      \u003cli\u003e\u003ci\u003egbraid\u003c/i\u003e Event Data value\u003c/li\u003e\n      \u003cli\u003e\u003ci\u003egbraid\u003c/i\u003e URL Parameter value\u003c/li\u003e\n      \u003cli\u003e\u003ci\u003eFPGCLAG\u003c/i\u003e Event Data value\u003c/li\u003e\n      \u003cli\u003e\u003ci\u003eFPGCLAG\u003c/i\u003e Common Cookie value\u003c/li\u003e\n      \u003cli\u003e\u003ci\u003eFPGCLAG\u003c/i\u003e Server Cookie value\u003c/li\u003e\n      \u003cli\u003e\u003ci\u003e_gcl_ag\u003c/i\u003e Event Data value\u003c/li\u003e\n      \u003cli\u003e\u003ci\u003egcl_ag\u003c/i\u003e Event Data value\u003c/li\u003e\n      \u003cli\u003e\u003ci\u003e_gcl_ag\u003c/i\u003e Common Cookie value\u003c/li\u003e\n      \u003cli\u003e\u003ci\u003e_gcl_ag\u003c/i\u003e JavaScript cookie value\u003c/li\u003e\n    \u003c/ul\u003e\n  \u003c/li\u003e\n  \u003cli\u003ewbraid:\n    \u003cul\u003e\n      \u003cli\u003e\u003ci\u003ewbraid\u003c/i\u003e Event Data value\u003c/li\u003e\n      \u003cli\u003e\u003ci\u003ewbraid\u003c/i\u003e URL Parameter value\u003c/li\u003e\n      \u003cli\u003e\u003ci\u003eFPGCLGB\u003c/i\u003e Event Data value\u003c/li\u003e\n      \u003cli\u003e\u003ci\u003eFPGCLGB\u003c/i\u003e Common Cookie value\u003c/li\u003e\n      \u003cli\u003e\u003ci\u003eFPGCLGB\u003c/i\u003e Server Cookie value\u003c/li\u003e\n      \u003cli\u003e\u003ci\u003e_gcl_gb\u003c/i\u003e Event Data value\u003c/li\u003e\n      \u003cli\u003e\u003ci\u003egcl_gb\u003c/i\u003e Event Data value\u003c/li\u003e\n      \u003cli\u003e\u003ci\u003e_gcl_gb\u003c/i\u003e Common Cookie value\u003c/li\u003e\n      \u003cli\u003e\u003ci\u003e_gcl_gb\u003c/i\u003e JavaScript cookie value\u003c/li\u003e\n    \u003c/ul\u003e\n  \u003c/li\u003e\n\u003c/ul\u003e",
+                "defaultValue": false
+              },
+              {
+                "type": "TEXT",
+                "name": "adIdentifiersGclid",
+                "displayName": "gclid",
+                "simpleValueType": true,
+                "help": "The Google Click ID (\u003ci\u003egclid\u003c/i\u003e) associated with this event."
+              },
+              {
+                "type": "TEXT",
+                "name": "adIdentifiersGbraid",
+                "displayName": "gbraid",
+                "simpleValueType": true,
+                "help": "The click identifier for clicks associated with app events and originating from iOS devices starting with iOS14."
+              },
+              {
+                "type": "TEXT",
+                "name": "adIdentifiersWbraid",
+                "displayName": "wbraid",
+                "simpleValueType": true,
+                "help": "The click identifier for clicks associated with web events and originating from iOS devices starting with iOS14."
+              },
+              {
+                "type": "TEXT",
+                "name": "adIdentifiersLandingPageDeviceInfoUserAgent",
+                "displayName": "Landing Page User Agent",
+                "simpleValueType": true,
+                "help": "Information gathered about the device\u0027s user agent being used (if any) at the time of landing onto the advertiser’s site after interacting with the ad."
+              },
+              {
+                "type": "TEXT",
+                "name": "adIdentifiersLandingPageDeviceInfoIpAddress",
+                "displayName": "Landing Page IP Address",
+                "simpleValueType": true,
+                "help": "Information gathered about the device\u0027s IP address being used (if any) at the time of landing onto the advertiser’s site after interacting with the ad.\n\u003cbr/\u003e\u003cbr/\u003e\n\u003cb\u003eNote:\u003c/b\u003e Google Ads does not support IP address matching for end users in the European Economic Area (EEA), United Kingdom (UK), or Switzerland (CH). Add logic to conditionally exclude sharing IP addresses from users from these regions and ensure that you provide users with clear and comprehensive information about the data you collect on your sites, apps, and other properties and get consent where required by law or any applicable Google policies. See the \u003ca href\u003d\"https://support.google.com/google-ads/answer/2998031\"\u003eAbout offline conversion imports page\u003c/a\u003e for more details."
+              },
+              {
+                "type": "SELECT",
+                "name": "autoMapAdIdentifiersSessionAttributes",
+                "displayName": "Auto-map Session Attributes",
+                "macrosInSelect": true,
+                "selectItems": [
+                  {
+                    "value": true,
+                    "displayValue": "true"
+                  },
+                  {
+                    "value": false,
+                    "displayValue": "false"
+                  }
+                ],
+                "simpleValueType": true,
+                "help": "If enabled, the tag will attempt to automatically map the \u003ci\u003eSession Attributes\u003c/i\u003e from, in this order: \n\u003cul\u003e\n\u003cli\u003e\u003ci\u003esession_attributes\u003c/i\u003e Event Data value\u003c/li\u003e\n\u003cli\u003e \u003ci\u003e_dm_session_attributes\u003c/i\u003e Common Cookie value \u003c/li\u003e \n\u003cli\u003e\u003ci\u003e_dm_session_attributes\u003c/i\u003e cookie set by the Pageview event\u003c/li\u003e\n\u003c/ul\u003e\n\u003cbr/\u003e\nAny value you manually enter in a field below will always override the auto-mapped value.\n\u003cbr/\u003e\u003cbr/\u003e\nDefault mappings:\n\u003cul\u003e\n\u003cli\u003eSession Attribute \u003ci\u003egad_source\u003c/i\u003e: \u003ci\u003egad_source\u003c/i\u003e URL Parameter value \u003c/li\u003e\n\u003cli\u003eSession Attribute \u003ci\u003egad_campaignid\u003c/i\u003e: \u003ci\u003egad_campaignid\u003c/i\u003e URL Parameter value\u003c/li\u003e\n\u003cli\u003eSession Attribute \u003ci\u003elanding_page_url\u003c/i\u003e: \u003ci\u003epage_location\u003c/i\u003e Event Data value\u003c/li\u003e\n\u003cli\u003eSession Attribute \u003ci\u003elanding_page_referrer\u003c/i\u003e: \u003ci\u003epage_referrer\u003c/i\u003e Event Data value\u003c/li\u003e\u003c/li\u003e\n\u003cli\u003eSession Attribute \u003ci\u003elanding_page_user_agent\u003c/i\u003e: \u003ci\u003euser_agent\u003c/i\u003e Event Data value\u003c/li\u003e\u003c/li\u003e\n\u003cli\u003eSession Attribute \u003ci\u003esession_start_time_usec\u003c/i\u003e: current timestamp of the time when the Pageview tag set the cookie\u003c/li\u003e\n\u003c/ul\u003e\n\u003cbr/\u003e\nLearn more: \u003ca href\u003d\"https://support.google.com/google-ads/answer/16194756?hl\u003den\"\u003e[1]\u003c/a\u003e and \u003ca href\u003d\"https://ads-developers.googleblog.com/2025/08/maximize-performance-of-your-google-ads.html\"\u003e[2]\u003c/a\u003e.",
+                "defaultValue": false
+              },
+              {
+                "type": "TEXT",
+                "name": "adIdentifiersSessionAttributes",
+                "displayName": "Session Attributes String",
+                "simpleValueType": true,
+                "help": "Session attributes string for conversion event attribution and modeling.\n\u003cbr/\u003e\nLearn more: \u003ca href\u003d\"https://support.google.com/google-ads/answer/16194756?hl\u003den\"\u003e[1]\u003c/a\u003e and \u003ca href\u003d\"https://ads-developers.googleblog.com/2025/08/maximize-performance-of-your-google-ads.html\"\u003e[2]\u003c/a\u003e."
+              }
+            ]
+          },
+          {
+            "type": "GROUP",
+            "name": "eventDeviceInfoGroup",
+            "displayName": "Event Device Information",
+            "groupStyle": "ZIPPY_OPEN_ON_PARAM",
+            "subParams": [
+              {
+                "type": "SELECT",
+                "name": "autoMapEventDeviceInfo",
+                "displayName": "Auto-map Event Device Information",
+                "macrosInSelect": true,
+                "selectItems": [
+                  {
+                    "value": true,
+                    "displayValue": "true"
+                  },
+                  {
+                    "value": false,
+                    "displayValue": "false"
+                  }
+                ],
+                "simpleValueType": true,
+                "help": "If enabled, the tag will attempt to automatically map parameters from the Event Data.\n\u003cbr/\u003e\u003cbr/\u003e\nAny value you manually enter in a field below will always override the auto-mapped value.\n\u003cbr/\u003e\u003cbr/\u003e\nDefault mappings:\n\u003cul\u003e\n\u003cli\u003eUser Agent: \u003ci\u003eeventData.user_agent\u003c/i\u003e\u003c/li\u003e\n\u003cli\u003eIP Address: \u003ci\u003eeventData.ip_override\u003c/i\u003e\u003c/li\u003e\n\u003c/ul\u003e",
+                "defaultValue": true
+              },
+              {
+                "type": "TEXT",
+                "name": "eventDeviceInfoUserAgent",
+                "displayName": "User Agent",
+                "simpleValueType": true,
+                "help": "Information gathered about the device\u0027s user agent being used (if any) when the event happened."
+              },
+              {
+                "type": "TEXT",
+                "name": "eventDeviceInfoIpAddress",
+                "displayName": "IP Address",
+                "simpleValueType": true,
+                "help": "Information gathered about the device\u0027s IP address being used (if any) when the event happened.\n\u003cbr/\u003e\u003cbr/\u003e\n\u003cb\u003eNote:\u003c/b\u003e Google Ads does not support IP address matching for end users in the European Economic Area (EEA), United Kingdom (UK), or Switzerland (CH). Add logic to conditionally exclude sharing IP addresses from users from these regions and ensure that you provide users with clear and comprehensive information about the data you collect on your sites, apps, and other properties and get consent where required by law or any applicable Google policies. See the \u003ca href\u003d\"https://support.google.com/google-ads/answer/2998031\"\u003eAbout offline conversion imports page\u003c/a\u003e for more details."
+              }
+            ]
+          },
+          {
+            "type": "GROUP",
+            "name": "userPropertiesGroup",
+            "displayName": "User Properties",
+            "groupStyle": "ZIPPY_OPEN_ON_PARAM",
+            "subParams": [
+              {
+                "type": "SELECT",
+                "name": "userPropertiesCustomerType",
+                "displayName": "Customer Type",
+                "macrosInSelect": true,
+                "selectItems": [
+                  {
+                    "value": "NEW",
+                    "displayValue": "NEW"
+                  },
+                  {
+                    "value": "RETURNING",
+                    "displayValue": "RETURNING"
+                  },
+                  {
+                    "value": "REENGAGED",
+                    "displayValue": "REENGAGED"
+                  }
+                ],
+                "simpleValueType": true,
+                "help": "Type of the customer associated with the event.",
+                "notSetText": "(not set)"
+              },
+              {
+                "type": "SELECT",
+                "name": "userPropertiesCustomerValueBucket",
+                "displayName": "Customer Value Bucket",
+                "macrosInSelect": true,
+                "selectItems": [
+                  {
+                    "value": "LOW",
+                    "displayValue": "LOW"
+                  },
+                  {
+                    "value": "MEDIUM",
+                    "displayValue": "MEDIUM"
+                  },
+                  {
+                    "value": "HIGH",
+                    "displayValue": "HIGH"
+                  }
+                ],
+                "simpleValueType": true,
+                "help": "The advertiser-assessed value of the customer.",
+                "notSetText": "(not set)"
+              }
+            ]
+          },
+          {
+            "type": "GROUP",
+            "name": "cartDataGroup",
+            "displayName": "Cart Data",
+            "groupStyle": "ZIPPY_OPEN_ON_PARAM",
+            "subParams": [
+              {
+                "type": "SELECT",
+                "name": "autoMapCartData",
+                "displayName": "Auto-map Cart Data",
+                "macrosInSelect": true,
+                "selectItems": [
+                  {
+                    "value": true,
+                    "displayValue": "true"
+                  },
+                  {
+                    "value": false,
+                    "displayValue": "false"
+                  }
+                ],
+                "simpleValueType": true,
+                "help": "If enabled, the tag will attempt to automatically map parameters from the Event Data.\n\u003cbr/\u003e\u003cbr/\u003e\nAny value you manually enter in a field below will always override the auto-mapped value.\n\u003cbr/\u003e\u003cbr/\u003e\nDefault mappings:\n\u003cul\u003e\n\u003cli\u003eItems: \u003ci\u003eeventData.items\u003c/i\u003e\u003c/li\u003e\n\u003c/ul\u003e",
+                "defaultValue": true,
+                "subParams": [
+                  {
+                    "type": "TEXT",
+                    "name": "itemIdKey",
+                    "displayName": "Custom Item ID Key",
+                    "simpleValueType": true,
+                    "help": "Optional. \u003cbr/\u003e\u003cbr/\u003e You can specify a custom key, which will be used to set the content Item ID, by default \u003ci\u003eitem_id\u003c/i\u003e will be used. This may be useful if you are using WooCommerce extensions.",
+                    "enablingConditions": [
+                      {
+                        "paramName": "autoMapCartData",
+                        "paramValue": false,
+                        "type": "NOT_EQUALS"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "TEXT",
+                "name": "cartDataMerchantId",
+                "displayName": "Merchant Center ID",
+                "simpleValueType": true,
+                "help": "The Merchant Center ID associated with the items.\n\u003cbr/\u003e\u003cbr/\u003e\n\u003ca href\u003d\"https://support.google.com/paymentscenter/answer/7163092?hl\u003den\"\u003eLearn more\u003c/a\u003e."
+              },
+              {
+                "type": "TEXT",
+                "name": "cartDataMerchantFeedLabel",
+                "displayName": "Merchant Center Feed Label",
+                "simpleValueType": true,
+                "help": "The Merchant Center feed label associated with the feed of the items.\n\u003cbr/\u003e\u003cbr/\u003e\nYou can find it as a URL parameter in the Merchant Center URL:  \u003ci\u003efeedLabel\u003d\u003cb\u003eDK\u003c/b\u003e\u003c/i\u003e."
+              },
+              {
+                "type": "TEXT",
+                "name": "cartDataMerchantFeedLanguageCode",
+                "displayName": "Merchant Center Feed Language Code",
+                "simpleValueType": true,
+                "help": "The language code in ISO 639-1 associated with the Merchant Center feed of the items.where your items are uploaded.\n\u003cbr/\u003e\u003cbr/\u003e\nYou can find it as a URL parameter in the Merchant Center URL: \u003ci\u003elanguage\u003d\u003cb\u003eda\u003c/b\u003e\u003c/i\u003e."
+              },
+              {
+                "type": "TEXT",
+                "name": "cartDataTransactionDiscount",
+                "displayName": "Transaction Discount",
+                "simpleValueType": true,
+                "help": "The sum of all discounts associated with the transaction/conversion."
+              },
+              {
+                "type": "TEXT",
+                "name": "cartDataItems",
+                "displayName": "Items",
+                "simpleValueType": true,
+                "help": "The list of items associated with the event. Each item is an object in the list with the following properties: \u003ci\u003emerchantProductId\u003c/i\u003e, \u003ci\u003equantity\u003c/i\u003e and \u003ci\u003eunitPrice\u003c/i\u003e.\n\u003cbr/\u003e\n\u003ca href\u003d\"https://developers.google.com/data-manager/api/reference/rest/v1/events/ingest#item\"\u003eLearn more\u003c/a\u003e."
+              }
+            ]
+          },
+          {
+            "type": "GROUP",
+            "name": "customVariablesGroup",
+            "displayName": "Custom Variables",
+            "groupStyle": "ZIPPY_OPEN_ON_PARAM",
+            "subParams": [
+              {
+                "type": "LABEL",
+                "name": "customVariablesGroupLabel",
+                "displayName": "\u003ca href\u003d\"https://developers.google.com/data-manager/api/reference/rest/v1/events/ingest#customvariable\"\u003eLearn more\u003c/a\u003e about Custom Variables.\n\u003cbr/\u003e\nIn the optional \u003ci\u003eDestination References\u003c/i\u003e column, you may leave it blank, or specify either a single reference or an array of references.\n\u003cbr/\u003e\u003cbr/\u003e"
+              },
+              {
+                "type": "SIMPLE_TABLE",
+                "name": "customVariablesList",
+                "displayName": "",
+                "simpleTableColumns": [
+                  {
+                    "defaultValue": "",
+                    "displayName": "Variable Name",
+                    "name": "name",
+                    "type": "TEXT",
+                    "isUnique": true,
+                    "valueValidators": [
+                      {
+                        "type": "NON_EMPTY"
+                      }
+                    ]
+                  },
+                  {
+                    "defaultValue": "",
+                    "displayName": "Variable Value",
+                    "name": "value",
+                    "type": "TEXT",
+                    "valueValidators": [
+                      {
+                        "type": "NON_EMPTY"
+                      }
+                    ]
+                  },
+                  {
+                    "defaultValue": "",
+                    "displayName": "Destination References",
+                    "name": "destinationReferences",
+                    "type": "TEXT"
+                  }
+                ],
+                "newRowButtonText": "Add Variable"
+              }
+            ]
+          },
+          {
+            "type": "GROUP",
+            "name": "experimentalFieldsGroup",
+            "displayName": "Experimental Fields",
+            "groupStyle": "ZIPPY_OPEN_ON_PARAM",
+            "subParams": [
+              {
+                "type": "LABEL",
+                "name": "experimentalFieldsGroupLabel",
+                "displayName": "\u003ca href\u003d\"https://developers.google.com/data-manager/api/reference/rest/v1/events/ingest#experimentalfield\"\u003eLearn more\u003c/a\u003e about Experimental Fields.\n\u003cbr/\u003e\u003cbr/\u003e"
+              },
+              {
+                "type": "SIMPLE_TABLE",
+                "name": "experimentalFieldsList",
+                "displayName": "",
+                "simpleTableColumns": [
+                  {
+                    "defaultValue": "",
+                    "displayName": "Field Name",
+                    "name": "name",
+                    "type": "TEXT",
+                    "isUnique": true,
+                    "valueValidators": [
+                      {
+                        "type": "NON_EMPTY"
+                      }
+                    ]
+                  },
+                  {
+                    "defaultValue": "",
+                    "displayName": "Field Value",
+                    "name": "value",
+                    "type": "TEXT",
+                    "valueValidators": [
+                      {
+                        "type": "NON_EMPTY"
+                      }
+                    ]
+                  }
+                ],
+                "newRowButtonText": "Add Field"
+              }
+            ]
+          }
+        ],
+        "enablingConditions": [
+          {
+            "paramName": "conversionEventMode",
+            "paramValue": "single",
+            "type": "EQUALS"
+          }
+        ]
+      },
+      {
+        "type": "GROUP",
+        "name": "ownConnectionSettings",
+        "displayName": "Own Connection Settings",
+        "groupStyle": "ZIPPY_CLOSED",
+        "subParams": [
+          {
+            "type": "TEXT",
+            "name": "xGoogUserProject",
+            "displayName": "X-Goog-User-Project header",
+            "simpleValueType": true,
+            "help": "A request header that specifies the GCP project to bill for access charges associated with the request.\n\u003ca href\u003d\"https://docs.cloud.google.com/storage/docs/json_api/v1/parameters#xgooguserproject\"\u003eLearn more.\u003c/a\u003e"
+          }
+        ],
+        "enablingConditions": [
+          {
+            "paramName": "authFlow",
+            "paramValue": "own",
+            "type": "EQUALS"
           }
         ]
       }
     ],
     "enablingConditions": [
       {
-        "paramName": "conversionEventMode",
-        "paramValue": "single",
-        "type": "EQUALS"
-      }
-    ]
-  },
-  {
-    "type": "GROUP",
-    "name": "ownConnectionSettings",
-    "displayName": "Own Connection Settings",
-    "groupStyle": "ZIPPY_CLOSED",
-    "subParams": [
-      {
-        "type": "TEXT",
-        "name": "xGoogUserProject",
-        "displayName": "X-Goog-User-Project header",
-        "simpleValueType": true,
-        "help": "A request header that specifies the GCP project to bill for access charges associated with the request.\n\u003ca href\u003d\"https://docs.cloud.google.com/storage/docs/json_api/v1/parameters#xgooguserproject\"\u003eLearn more.\u003c/a\u003e"
-      }
-    ],
-    "enablingConditions": [
-      {
-        "paramName": "authFlow",
-        "paramValue": "own",
-        "type": "EQUALS"
+        "paramName": "eventType",
+        "paramValue": "pageview",
+        "type": "NOT_EQUALS"
       }
     ]
   },
@@ -1091,6 +1251,13 @@ ___TEMPLATE_PARAMETERS___
         ],
         "simpleValueType": true,
         "defaultValue": "debug"
+      }
+    ],
+    "enablingConditions": [
+      {
+        "paramName": "eventType",
+        "paramValue": "pageview",
+        "type": "NOT_EQUALS"
       }
     ]
   },
@@ -1159,6 +1326,13 @@ ___TEMPLATE_PARAMETERS___
           }
         ]
       }
+    ],
+    "enablingConditions": [
+      {
+        "paramName": "eventType",
+        "paramValue": "pageview",
+        "type": "NOT_EQUALS"
+      }
     ]
   }
 ]
@@ -1167,9 +1341,13 @@ ___TEMPLATE_PARAMETERS___
 ___SANDBOXED_JS_FOR_SERVER___
 
 const BigQuery = require('BigQuery');
+const computeEffectiveTldPlusOne = require('computeEffectiveTldPlusOne');
+const createRegex = require('createRegex');
 const encodeUriComponent = require('encodeUriComponent');
 const getAllEventData = require('getAllEventData');
 const getContainerVersion = require('getContainerVersion');
+const getCookieValues = require('getCookieValues');
+const getEventData = require('getEventData');
 const getGoogleAuth = require('getGoogleAuth');
 const getRequestHeader = require('getRequestHeader');
 const getTimestampMillis = require('getTimestampMillis');
@@ -1180,9 +1358,12 @@ const makeInteger = require('makeInteger');
 const makeNumber = require('makeNumber');
 const makeString = require('makeString');
 const Math = require('Math');
+const parseUrl = require('parseUrl');
 const Object = require('Object');
 const sendHttpRequest = require('sendHttpRequest');
+const setCookie = require('setCookie');
 const sha256Sync = require('sha256Sync');
+const toBase64 = require('toBase64');
 
 /*==============================================================================
 ==============================================================================*/
@@ -1195,22 +1376,18 @@ if (shouldExitEarly(data, eventData)) {
   return data.gtmOnSuccess();
 }
 
-const mappedData = getDataForConversionEventsUpload(data, eventData);
+const actionHandlers = {
+  pageview: handlePageViewEvent,
+  conversion: handleConversionEvent
+};
 
-const invalidFields = validateMappedData(mappedData);
-if (invalidFields) {
-  log({
-    Name: 'GoogleConversionEvent',
-    Type: 'Message',
-    EventName: 'ConversionEvent',
-    Message: 'Request was not sent.',
-    Reason: invalidFields
-  });
-
+const handler = actionHandlers[data.eventType || 'conversion'];
+if (handler) {
+  const error = handler(data, eventData);
+  if (error) return;
+} else {
   return data.gtmOnFailure();
 }
-
-sendRequest(data, mappedData, apiVersion);
 
 if (useOptimisticScenario) {
   return data.gtmOnSuccess();
@@ -1220,53 +1397,83 @@ if (useOptimisticScenario) {
   Vendor related functions
 ==============================================================================*/
 
-function validateMappedData(mappedData) {
-  const conversionEvents = mappedData.events;
+function createSessionAttributesBase64String(sessionAttributes) {
+  let sessionAttributesBase64 = toBase64(JSON.stringify(sessionAttributes));
 
-  if (getType(conversionEvents) !== 'array' || conversionEvents.length === 0) {
-    return 'At least 1 Conversion Event must be specified.';
+  // Attempt to reduce the payload size if it exceeds the 4000-character limit.
+  const keysToRemove = ['landing_page_referrer', 'landing_page_user_agent'];
+  for (const key of keysToRemove) {
+    if (sessionAttributesBase64.length <= 4000) break;
+    sessionAttributes[key] = undefined;
+    sessionAttributesBase64 = toBase64(JSON.stringify(sessionAttributes));
+  }
+  if (sessionAttributesBase64.length > 4000) return;
+
+  const plusSignRegex = createRegex('\\+', 'g');
+  const forwardSlashRegex = createRegex('\\/', 'g');
+  const equalSignSuffixRegex = createRegex('=+$', 'g');
+  return sessionAttributesBase64
+    .replace(plusSignRegex, '-')
+    .replace(forwardSlashRegex, '_')
+    .replace(equalSignSuffixRegex, '');
+}
+
+function handlePageViewEvent(data, eventData) {
+  const url = getUrl(eventData);
+  if (!url) {
+    data.gtmOnSuccess();
+    return;
   }
 
-  const doesNotHaveUserData = conversionEvents.some((e) => {
+  // Ref: https://support.google.com/google-ads/answer/16194756
+
+  const urlSearchParams = parseUrl(url).searchParams;
+  const urlSearchParamsKeys = Object.keys(urlSearchParams);
+  const hasAdsParams = urlSearchParamsKeys.some((key) => {
     return (
-      getType(e.userData) !== 'object' ||
-      getType(e.userData.userIdentifiers) !== 'array' ||
-      e.userData.userIdentifiers.length === 0 ||
-      e.userData.userIdentifiers.some((i) => {
-        const userIdentifierIsObject = getType(i) === 'object';
-        const userIdentifierKey = userIdentifierIsObject ? Object.keys(i)[0] : undefined;
-        const userIdentifierValue = userIdentifierIsObject ? Object.values(i)[0] : undefined;
-        return (
-          !hasProps(i) ||
-          !userIdentifierValue ||
-          (userIdentifierKey === 'address' &&
-            (!hasProps(userIdentifierValue) || Object.values(userIdentifierValue).some((v) => !v)))
-        );
-      })
+      (key.indexOf('gad_') === 0 || key === 'gclid' || key === 'gbraid') && urlSearchParams[key]
     );
   });
 
-  const doesNotHaveAdIdentifiers = conversionEvents.some((e) => {
-    const adIdentifierEntries =
-      getType(e.adIdentifiers) === 'object' ? Object.entries(e.adIdentifiers) : undefined;
-    return (
-      getType(e.adIdentifiers) !== 'object' ||
-      !hasProps(e.adIdentifiers) ||
-      adIdentifierEntries.every((keyValue) => {
-        const key = keyValue[0];
-        const value = keyValue[1];
-        return (
-          !value ||
-          (key === 'landingPageDeviceInfo' &&
-            (!hasProps(value) || Object.values(value).every((v) => !v)))
-        );
-      })
-    );
-  });
-
-  if (doesNotHaveUserData && doesNotHaveAdIdentifiers) {
-    return 'At least 1 Ad Identifier or User Data must be specified.';
+  if (!hasAdsParams) {
+    data.gtmOnSuccess();
+    return;
   }
+
+  const sessionAttributes = {};
+  urlSearchParamsKeys.forEach((key) => {
+    if (key.indexOf('gad_') === 0) sessionAttributes[key] = urlSearchParams[key];
+  });
+  sessionAttributes.session_start_time_usec = makeString(getTimestampMillis() * 1000);
+  if (eventData.page_location) sessionAttributes.landing_page_url = eventData.page_location;
+  if (eventData.page_referrer) sessionAttributes.landing_page_referrer = eventData.page_referrer;
+  if (eventData.user_agent) sessionAttributes.landing_page_user_agent = eventData.user_agent;
+
+  let sessionAttributesBase64 = createSessionAttributesBase64String(sessionAttributes);
+  if (!sessionAttributesBase64) {
+    log({
+      Name: 'GoogleConversionEvent',
+      Type: 'Message',
+      EventName: 'PageviewEvent',
+      Message: 'Cookie was not set.',
+      Reason: 'Session attributes base64 cookie is bigger than 4000 characters.'
+    });
+    data.gtmOnFailure();
+    return true;
+  }
+
+  const cookieOptions = {
+    domain: getCookieDomain(data),
+    samesite: data.cookieSameSite || 'none',
+    path: '/',
+    secure: true,
+    httpOnly: !!data.cookieHttpOnly,
+    'max-age': 60 * 60 * 24 * (makeInteger(data.cookieExpiration) || 90)
+  };
+  setCookie('_dm_session_attributes', sessionAttributesBase64, cookieOptions, false);
+
+  data.gtmOnSuccess();
+  return;
 }
 
 function addDestinationsData(data, mappedData) {
@@ -1505,12 +1712,28 @@ function addUserData(data, eventData, conversionEvent) {
   return conversionEvent;
 }
 
-function addAdIdentifiers(data, conversionEvent) {
+function addAdIdentifiers(data, eventData, conversionEvent) {
   const adIdentifiers = {};
+
+  if (isUIFieldTrue(data.autoMapAdIdentifiersClickIds)) {
+    const clickIds = getClickIds(eventData);
+    if (clickIds.gclid) adIdentifiers.gclid = clickIds.gclid;
+    if (clickIds.gbraid) adIdentifiers.gbraid = clickIds.gbraid;
+    if (clickIds.wbraid) adIdentifiers.wbraid = clickIds.wbraid;
+  }
 
   if (data.adIdentifiersGclid) adIdentifiers.gclid = data.adIdentifiersGclid;
   if (data.adIdentifiersGbraid) adIdentifiers.gbraid = data.adIdentifiersGbraid;
   if (data.adIdentifiersWbraid) adIdentifiers.wbraid = data.adIdentifiersWbraid;
+
+  if (isUIFieldTrue(data.autoMapAdIdentifiersSessionAttributes)) {
+    const commonCookie = eventData.common_cookie || {};
+    const sessionAttributes =
+      eventData.session_attributes ||
+      commonCookie._dm_session_attributes ||
+      getCookieValues('_dm_session_attributes')[0];
+    if (sessionAttributes) adIdentifiers.sessionAttributes = sessionAttributes;
+  }
 
   if (data.adIdentifiersLandingPageDeviceInfoUserAgent) {
     adIdentifiers.landingPageDeviceInfo = adIdentifiers.landingPageDeviceInfo || {};
@@ -1665,7 +1888,7 @@ function addConversionEventsData(data, eventData, mappedData) {
 
     addConversionInformation(data, eventData, conversionEvent);
     addUserData(data, eventData, conversionEvent);
-    addAdIdentifiers(data, conversionEvent);
+    addAdIdentifiers(data, eventData, conversionEvent);
     addEventDeviceInformation(data, eventData, conversionEvent);
     addUserProperties(data, conversionEvent);
     addCartData(data, eventData, conversionEvent);
@@ -1793,6 +2016,67 @@ function hashDataIfNeeded(mappedData) {
   return mappedData;
 }
 
+function getClickIds(eventData) {
+  const parseClickIdFromCookieValue = (cookieValue, cookieType) => {
+    if (getType(cookieValue) !== 'string') return;
+    if (cookieType === 'server') {
+      const cookieValueMatch = cookieValue.match('\\.k(.+)\\$i');
+      return cookieValueMatch ? cookieValueMatch[1] : undefined;
+    } else if (cookieType === 'js') {
+      const cookieValueSplit = cookieValue.split('.');
+      return cookieValueSplit[cookieValueSplit.length - 1];
+    }
+  };
+
+  const urlSearchParams = (parseUrl(getUrl(eventData)) || {}).searchParams || {};
+  const commonCookie = eventData.common_cookie || {};
+
+  return {
+    gclid:
+      eventData.gclid ||
+      urlSearchParams.gclid ||
+      parseClickIdFromCookieValue(
+        eventData.FPGCLAW || commonCookie.FPGCLAW || getCookieValues('FPGCLAW')[0],
+        'server'
+      ) ||
+      parseClickIdFromCookieValue(
+        eventData._gcl_aw ||
+          eventData.gcl_aw ||
+          commonCookie._gcl_aw ||
+          getCookieValues('_gcl_aw')[0],
+        'js'
+      ),
+    gbraid:
+      eventData.gbraid ||
+      urlSearchParams.gbraid ||
+      parseClickIdFromCookieValue(
+        eventData.FPGCLAG || commonCookie.FPGCLAG || getCookieValues('FPGCLAG')[0],
+        'server'
+      ) ||
+      parseClickIdFromCookieValue(
+        eventData._gcl_ag ||
+          eventData.gcl_ag ||
+          commonCookie._gcl_ag ||
+          getCookieValues('_gcl_ag')[0],
+        'server' // '_gcl_ag' follows the Server format
+      ),
+    wbraid:
+      eventData.wbraid ||
+      urlSearchParams.wbraid ||
+      parseClickIdFromCookieValue(
+        eventData.FPGCLGB || commonCookie.FPGCLGB || getCookieValues('FPGCLGB')[0],
+        'server'
+      ) ||
+      parseClickIdFromCookieValue(
+        eventData._gcl_gb ||
+          eventData.gcl_gb ||
+          commonCookie._gcl_gb ||
+          getCookieValues('_gcl_gb')[0],
+        'js'
+      )
+  };
+}
+
 function generateRequestUrl(data, apiVersion) {
   if (data.authFlow === 'own') {
     return 'https://datamanager.googleapis.com/v' + apiVersion + '/events:ingest';
@@ -1898,6 +2182,75 @@ function sendRequest(data, mappedData, apiVersion) {
     });
 }
 
+function validateMappedData(mappedData) {
+  const conversionEvents = mappedData.events;
+
+  if (getType(conversionEvents) !== 'array' || conversionEvents.length === 0) {
+    return 'At least 1 Conversion Event must be specified.';
+  }
+
+  const doesNotHaveUserData = conversionEvents.some((e) => {
+    return (
+      getType(e.userData) !== 'object' ||
+      getType(e.userData.userIdentifiers) !== 'array' ||
+      e.userData.userIdentifiers.length === 0 ||
+      e.userData.userIdentifiers.some((i) => {
+        const userIdentifierIsObject = getType(i) === 'object';
+        const userIdentifierKey = userIdentifierIsObject ? Object.keys(i)[0] : undefined;
+        const userIdentifierValue = userIdentifierIsObject ? Object.values(i)[0] : undefined;
+        return (
+          !hasProps(i) ||
+          !userIdentifierValue ||
+          (userIdentifierKey === 'address' &&
+            (!hasProps(userIdentifierValue) || Object.values(userIdentifierValue).some((v) => !v)))
+        );
+      })
+    );
+  });
+
+  const doesNotHaveAdIdentifiers = conversionEvents.some((e) => {
+    const adIdentifierEntries =
+      getType(e.adIdentifiers) === 'object' ? Object.entries(e.adIdentifiers) : undefined;
+    return (
+      getType(e.adIdentifiers) !== 'object' ||
+      !hasProps(e.adIdentifiers) ||
+      adIdentifierEntries.every((keyValue) => {
+        const key = keyValue[0];
+        const value = keyValue[1];
+        return (
+          !value ||
+          (key === 'landingPageDeviceInfo' &&
+            (!hasProps(value) || Object.values(value).every((v) => !v)))
+        );
+      })
+    );
+  });
+
+  if (doesNotHaveUserData && doesNotHaveAdIdentifiers) {
+    return 'At least 1 Ad Identifier or User Data must be specified.';
+  }
+}
+
+function handleConversionEvent(data, eventData) {
+  const mappedData = getDataForConversionEventsUpload(data, eventData);
+
+  const invalidOrMissingFields = validateMappedData(mappedData);
+  if (invalidOrMissingFields) {
+    log({
+      Name: 'GoogleConversionEvent',
+      Type: 'Message',
+      EventName: 'ConversionEvent',
+      Message: 'Request was not sent.',
+      Reason: invalidOrMissingFields
+    });
+
+    data.gtmOnFailure();
+    return true;
+  }
+
+  sendRequest(data, mappedData, apiVersion);
+}
+
 /*==============================================================================
   Helpers
 ==============================================================================*/
@@ -1905,10 +2258,21 @@ function sendRequest(data, mappedData, apiVersion) {
 function shouldExitEarly(data, eventData) {
   if (!isConsentGivenOrNotRequired(data, eventData)) return true;
 
-  const url = eventData.page_location || getRequestHeader('referer');
+  const url = getUrl(data);
   if (url && url.lastIndexOf('https://gtm-msr.appspot.com/', 0) === 0) return true;
 
   return false;
+}
+
+function getUrl(eventData) {
+  return eventData.page_location || eventData.page_referrer || getRequestHeader('referer');
+}
+
+function getCookieDomain(data) {
+  return !data.cookieDomain || data.cookieDomain === 'auto'
+    ? computeEffectiveTldPlusOne(getEventData('page_location') || getRequestHeader('referer')) ||
+        'auto'
+    : data.cookieDomain;
 }
 
 function enc(data) {
@@ -2453,6 +2817,132 @@ ___SERVER_PERMISSIONS___
       "isEditedByUser": true
     },
     "isRequired": true
+  },
+  {
+    "instance": {
+      "key": {
+        "publicId": "get_cookies",
+        "versionId": "1"
+      },
+      "param": [
+        {
+          "key": "cookieAccess",
+          "value": {
+            "type": 1,
+            "string": "specific"
+          }
+        },
+        {
+          "key": "cookieNames",
+          "value": {
+            "type": 2,
+            "listItem": [
+              {
+                "type": 1,
+                "string": "FPGCLAW"
+              },
+              {
+                "type": 1,
+                "string": "_gcl_aw"
+              },
+              {
+                "type": 1,
+                "string": "FPGCLAG"
+              },
+              {
+                "type": 1,
+                "string": "_gcl_ag"
+              },
+              {
+                "type": 1,
+                "string": "FPGCLGB"
+              },
+              {
+                "type": 1,
+                "string": "_gcl_gb"
+              },
+              {
+                "type": 1,
+                "string": "_dm_session_attributes"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "clientAnnotations": {
+      "isEditedByUser": true
+    },
+    "isRequired": true
+  },
+  {
+    "instance": {
+      "key": {
+        "publicId": "set_cookies",
+        "versionId": "1"
+      },
+      "param": [
+        {
+          "key": "allowedCookies",
+          "value": {
+            "type": 2,
+            "listItem": [
+              {
+                "type": 3,
+                "mapKey": [
+                  {
+                    "type": 1,
+                    "string": "name"
+                  },
+                  {
+                    "type": 1,
+                    "string": "domain"
+                  },
+                  {
+                    "type": 1,
+                    "string": "path"
+                  },
+                  {
+                    "type": 1,
+                    "string": "secure"
+                  },
+                  {
+                    "type": 1,
+                    "string": "session"
+                  }
+                ],
+                "mapValue": [
+                  {
+                    "type": 1,
+                    "string": "_dm_session_attributes"
+                  },
+                  {
+                    "type": 1,
+                    "string": "*"
+                  },
+                  {
+                    "type": 1,
+                    "string": "*"
+                  },
+                  {
+                    "type": 1,
+                    "string": "any"
+                  },
+                  {
+                    "type": 1,
+                    "string": "any"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "clientAnnotations": {
+      "isEditedByUser": true
+    },
+    "isRequired": true
   }
 ]
 
@@ -2460,8 +2950,70 @@ ___SERVER_PERMISSIONS___
 ___TESTS___
 
 scenarios:
-- name: Request must not be sent if Conversions Events, or Ad Identifiers and User
-    Data are missing
+- name: '[Page View] Session Attributes cookie is NOT set if the cookie exceeds 4000
+    characters'
+  code: |-
+    let bigString = 'bigStringbigString';
+    const iterations = 5;
+    for (let i = 0; i < iterations; i++) bigString += bigString + bigString;
+    const pageLocation = 'https://example.com/?gad_source=1&gad_campaignid=123123&gclid=gclid&' + bigString;
+
+    setGetAllEventData({
+      page_location: pageLocation,
+      page_referrer: 'https://google.com'
+    });
+
+    const copyMockData = setAllMockDataByEventType('pageview');
+
+    runCode(copyMockData);
+
+    assertApi('setCookie').wasNotCalled();
+    assertApi('gtmOnSuccess').wasNotCalled();
+    assertApi('gtmOnFailure').wasCalled();
+- name: '[Page View] Session Attributes cookie is NOT set if URL doesn''t contain
+    Ads parameters'
+  code: |-
+    setGetAllEventData({
+      page_location: 'https://example.com/'
+    });
+
+    const copyMockData = setAllMockDataByEventType('pageview');
+
+    runCode(copyMockData);
+
+    assertApi('setCookie').wasNotCalled();
+    assertApi('gtmOnSuccess').wasCalled();
+    assertApi('gtmOnFailure').wasNotCalled();
+- name: '[Page View] Session Attributes cookie is set if URL contains Ads parameters,
+    cookie exceeds 4000 characters and Attributes got removed'
+  code: "let bigString = 'bigStringbigString';\nconst iterations = 5;\nfor (let i\
+    \ = 0; i < iterations; i++) bigString += bigString + bigString;\nconst pageReferrer\
+    \ = 'https://google.com/' + bigString;\n\nsetGetAllEventData({\n  page_location:\
+    \ 'https://example.com/?gad_source=1&gad_campaignid=123123&gclid=gclid',\n  page_referrer:\
+    \ pageReferrer\n});\n\nconst copyMockData = setAllMockDataByEventType('pageview');\n\
+    \nrunCode(copyMockData);\n\n// landing_page_referrer will be removed to keep the\
+    \ size below 4000 characters\nassertApi('setCookie').wasCalledWith(\n  '_dm_session_attributes',\n\
+    \  'eyJnYWRfc291cmNlIjoiMSIsImdhZF9jYW1wYWlnbmlkIjoiMTIzMTIzIiwic2Vzc2lvbl9zdGFydF90aW1lX3VzZWMiOiIxNzQ3OTQ1ODMwNDU2MDAwIiwibGFuZGluZ19wYWdlX3VybCI6Imh0dHBzOi8vZXhhbXBsZS5jb20vP2dhZF9zb3VyY2U9MSZnYWRfY2FtcGFpZ25pZD0xMjMxMjMmZ2NsaWQ9Z2NsaWQiLCJsYW5kaW5nX3BhZ2VfdXNlcl9hZ2VudCI6InVzZXJfYWdlbnQifQ',\
+    \ \n  {\n    'max-age': 90 * 24 * 60 * 60,\n    domain: 'auto',\n    samesite:\
+    \ 'none',\n    httpOnly: true,\n    secure: true,\n    path: '/'\n  }, \n  false\n\
+    );\nassertApi('gtmOnSuccess').wasCalled();\nassertApi('gtmOnFailure').wasNotCalled();"
+- name: '[Page View] Session Attributes cookie is set if URL contains Ads parameters'
+  code: "setGetAllEventData({\n  page_location: 'https://example.com/?gad_source=1&gad_campaignid=123123&gclid=gclid',\n\
+    \  page_referrer: 'https://google.com'\n});\n\n[\n  {\n    // mock: {} - it uses\
+    \ the default values\n    expectedCookieOptions: {\n      'max-age': 90 * 24 *\
+    \ 60 * 60,\n      domain: 'auto',\n      samesite: 'none',\n      httpOnly: true,\n\
+    \      secure: true,\n      path: '/'\n    }\n  },\n  {\n    mock: {\n      cookieExpiration:\
+    \ 10,\n      cookieDomain: 'sst.example.com',\n      cookieSameSite: 'lax',\n\
+    \      cookieHttpOnly: false\n    },\n    expectedCookieOptions: {\n      'max-age':\
+    \ 10 * 24 * 60 * 60,\n      domain: 'sst.example.com',\n      samesite: 'lax',\n\
+    \      httpOnly: false,\n      secure: true,\n      path: '/'\n    }\n  }\n].forEach((scenario)\
+    \ => {\n  const copyMockData = setAllMockDataByEventType('pageview', undefined,\
+    \ scenario.mock);\n\n  runCode(copyMockData);\n  \n  assertApi('setCookie').wasCalledWith('_dm_session_attributes',\
+    \ 'eyJnYWRfc291cmNlIjoiMSIsImdhZF9jYW1wYWlnbmlkIjoiMTIzMTIzIiwic2Vzc2lvbl9zdGFydF90aW1lX3VzZWMiOiIxNzQ3OTQ1ODMwNDU2MDAwIiwibGFuZGluZ19wYWdlX3VybCI6Imh0dHBzOi8vZXhhbXBsZS5jb20vP2dhZF9zb3VyY2U9MSZnYWRfY2FtcGFpZ25pZD0xMjMxMjMmZ2NsaWQ9Z2NsaWQiLCJsYW5kaW5nX3BhZ2VfcmVmZXJyZXIiOiJodHRwczovL2dvb2dsZS5jb20iLCJsYW5kaW5nX3BhZ2VfdXNlcl9hZ2VudCI6InVzZXJfYWdlbnQifQ',\
+    \ scenario.expectedCookieOptions, false);\n  assertApi('gtmOnSuccess').wasCalled();\n\
+    \  assertApi('gtmOnFailure').wasNotCalled();\n});"
+- name: '[Conversion] Request must not be sent if Conversions Events, or Ad Identifiers
+    and User Data are missing'
   code: "const conversionEventBaseMock = JSON.parse(JSON.stringify(multipleConversionEventsMock[0]));\n\
     \n[\n  {\n    description: 'No conversion event is specified - undefined',\n \
     \   mockData: {\n      conversionEventMode: 'multiple',\n      conversionEvents:\
@@ -2530,45 +3082,48 @@ scenarios:
     \             sessionAttributes: undefined,\n             landingPageDeviceInfo:\
     \ {\n               userAgent: undefined,\n               ipAddress: undefined\n\
     \             }\n           }\n        })\n      ]\n    }\n  }\n].forEach((scenario,\
-    \ i) => {\n  const copyMockData = setAllMockDataByAuthMethod('stape', scenario.mockData);\n\
-    \  \n  runCode(copyMockData);\n\n  assertApi('sendHttpRequest').wasNotCalled();\n\
+    \ i) => {\n  const copyMockData = setAllMockDataByEventType('conversion', 'stape',\
+    \ scenario.mockData);\n  \n  runCode(copyMockData);\n\n  assertApi('sendHttpRequest').wasNotCalled();\n\
     \  assertApi('gtmOnSuccess').wasNotCalled();\n  assertApi('gtmOnFailure').wasCalled();\n\
     });"
-- name: Request URL is successfully built and sent
+- name: '[Conversion] Request URL is successfully built and sent'
   code: "[\n  {\n    authMethod: 'stape',\n    expectedRequestUrl: 'https://expectedXGtmIdentifier.expectedXGtmDefaultDomain/stape-api/expectedXGtmApiKey/v2/data-manager/events/ingest'\n\
     \  },\n  {\n    authMethod: 'own',\n    expectedRequestUrl: 'https://datamanager.googleapis.com/v'\
     \ + expectedDataManagerApiVersion + '/events:ingest'\n  }\n].forEach((scenario)\
-    \ => {\n  const copyMockData = setAllMockDataByAuthMethod(scenario.authMethod);\n\
-    \  \n  mock('sendHttpRequest', (requestUrl, requestOptions, requestBody) => {\n\
-    \    assertThat(requestUrl).isEqualTo(scenario.expectedRequestUrl);\n    return\
+    \ => {\n  const copyMockData = setAllMockDataByEventType('conversion', scenario.authMethod);\n\
+    \    \n  mock('sendHttpRequest', (requestUrl, requestOptions, requestBody) =>\
+    \ {\n    assertThat(requestUrl).isEqualTo(scenario.expectedRequestUrl);\n    return\
     \ Promise.create((resolve, reject) => {\n      resolve({ statusCode: 200 });\n\
     \    });\n  });\n  \n  runCode(copyMockData);\n\n  callLater(() => {\n    assertApi('gtmOnSuccess').wasCalled();\n\
-    \    assertApi('gtmOnFailure').wasNotCalled();\n  });\n});\n\n\n"
-- name: Request Options are successfully built and sent
+    \    assertApi('gtmOnFailure').wasNotCalled();\n  });\n});"
+- name: '[Conversion] Request Options are successfully built and sent'
   code: "[\n  {\n    authMethod: 'stape',\n    expectedRequestOptions: {\n      method:\
     \ 'POST',\n      headers: {\n        'Content-Type': 'application/json',\n   \
     \     'x-datamanager-api-version': expectedDataManagerApiVersion\n      },\n \
     \     timeout: 20000\n    }\n  },\n  {\n    authMethod: 'own',\n    expectedRequestOptions:\
     \ {\n      method: 'POST',\n      headers: {\n        'Content-Type': 'application/json'\n\
     \      },\n      authorization: 'googleAuthToken'\n    }\n  }\n].forEach((scenario)\
-    \ => {\n  const copyMockData = setAllMockDataByAuthMethod(scenario.authMethod);\n\
+    \ => {\n  const copyMockData = setAllMockDataByEventType('conversion', scenario.authMethod);\n\
     \  \n  mock('sendHttpRequest', (requestUrl, requestOptions, requestBody) => {\n\
     \    assertThat(requestOptions).isEqualTo(scenario.expectedRequestOptions);\n\
     \    return Promise.create((resolve, reject) => {\n      resolve({ statusCode:\
     \ 200 });\n    });\n  });\n  \n  runCode(copyMockData);\n\n  callLater(() => {\n\
     \    assertApi('gtmOnSuccess').wasCalled();\n    assertApi('gtmOnFailure').wasNotCalled();\n\
     \  });\n});"
-- name: '[Single Event] [Data from auto-mapping] Request is successfully built and
-    sent'
-  code: "setGetAllEventData();\n\nconst copyMockData = setAllMockDataByAuthMethod('stape',\
-    \ {\n  conversionEventMode: 'single',\n  autoMapConversionInformation: true,\n\
-    \  autoMapUserData: true,\n  autoMapEventDeviceInfo: true,\n  autoMapCartData:\
-    \ true\n});\n\n[\n  'transactionId',\n  'currency',\n  'conversionValue',\n  'userDataEmailAddresses',\n\
-    \  'userDataPhoneNumbers',\n  'addressGivenName',\n  'addressFamilyName',\n  'addressRegion',\n\
-    \  'addressPostalCode',\n  'eventDeviceInfoUserAgent',\n  'eventDeviceInfoIpAddress',\n\
+- name: '[Conversion] [Single Event] [Data from auto-mapping] Request is successfully
+    built and sent'
+  code: "const copyMockData = setAllMockDataByEventType('conversion', 'stape', {\n\
+    \  conversionEventMode: 'single',\n  autoMapConversionInformation: true,\n  autoMapUserData:\
+    \ true,\n  autoMapAdIdentifiersSessionAttributes: true,\n  autoMapEventDeviceInfo:\
+    \ true,\n  autoMapCartData: true,\n});\n\n[\n  'transactionId',\n  'currency',\n\
+    \  'conversionValue',\n  'userDataEmailAddresses',\n  'userDataPhoneNumbers',\n\
+    \  'addressGivenName',\n  'addressFamilyName',\n  'addressRegion',\n  'addressPostalCode',\n\
+    \  'adIdentifiersSessionAttributes',\n  'eventDeviceInfoUserAgent',\n  'eventDeviceInfoIpAddress',\n\
     \  'cartDataItems'\n].forEach((key) => Object.delete(copyMockData, key));\n\n\
-    mock('sendHttpRequest', (requestUrl, requestOptions, requestBody) => {\n  const\
-    \ parsedRequestBody = JSON.parse(requestBody);\n  assertThat(parsedRequestBody).isEqualTo({\n\
+    setGetAllEventData();\n\nmock('getCookieValues', (cookieName) => {\n  if (cookieName\
+    \ === '_dm_session_attributes') {\n    return ['sessionAttributesCookie'];\n \
+    \ }\n  return [];\n});\n\nmock('sendHttpRequest', (requestUrl, requestOptions,\
+    \ requestBody) => {\n  const parsedRequestBody = JSON.parse(requestBody);\n  assertThat(parsedRequestBody).isEqualTo({\n\
     \    validateOnly: false,\n    destinations: [\n      {\n        reference: 'productDestinationId',\n\
     \        productDestinationId: 'productDestinationId',\n        operatingAccount:\
     \ {\n          accountType: 'GOOGLE_ADS',\n          accountId: 'operatingAccountId'\n\
@@ -2594,33 +3149,207 @@ scenarios:
     \          gclid: 'gclid',\n          gbraid: 'gbraid',\n          wbraid: 'wbraid',\n\
     \          landingPageDeviceInfo: {\n            userAgent: 'Landing Page User\
     \ Agent',\n            ipAddress: '1.1.1.1'\n          },\n          sessionAttributes:\
-    \ 'Session Attributes'\n        },\n        eventDeviceInfo: { userAgent: 'user_agent',\
-    \ ipAddress: 'ip_override' },\n        userProperties: { customerType: 'NEW',\
-    \ customerValueBucket: 'LOW' },\n        cartData: {\n          items: [\n   \
-    \         { merchantProductId: 'SKU_12345', quantity: '3', unitPrice: 10.01 },\n\
-    \            { merchantProductId: 'SKU_12346', quantity: '2', unitPrice: 21.01\
-    \ }\n          ],\n          merchantId: 'Merchant Center ID',\n          merchantFeedLabel:\
-    \ 'Merchant Center Feed Label',\n          merchantFeedLanguageCode: 'Merchant\
-    \ Center Feed Language Code',\n          transactionDiscount: 123\n        },\n\
-    \        customVariables: [\n          {\n            variable: 'TEST1',\n   \
-    \         value: 'ABC',\n            destinationReferences: ['REFERENCE']\n  \
-    \        },\n          { variable: 'TEST2', value: 'AAAAAAAA' },\n          {\n\
-    \            variable: 'TEST3',\n            value: '123ABC',\n            destinationReferences:\
-    \ ['REFERENCE', 'REFERENCE2']\n          }\n        ],\n        experimentalFields:\
-    \ [{ field: 'ABC', value: 'FOOBAR' }]\n      }\n    ],\n    encoding: 'HEX',\n\
-    \    encryptionInfo: {\n      gcpWrappedKeyInfo: {\n        keyType: 'XCHACHA20_POLY1305',\n\
-    \        wipProvider: '123',\n        kekUri: '123',\n        encryptedDek: '123'\n\
-    \      }\n    }\n  });\n\n  return Promise.create((resolve, reject) => {\n   \
-    \ resolve({ statusCode: 200 });\n  });  \n});\n\nrunCode(copyMockData);\n\ncallLater(()\
-    \ => {\n  assertApi('gtmOnSuccess').wasCalled();\n  assertApi('gtmOnFailure').wasNotCalled();\n\
-    });"
-- name: '[Single Event] [Data from UI fields] Request is successfully built and sent'
-  code: "const copyMockData = setAllMockDataByAuthMethod('stape', {\n  conversionEventMode:\
-    \ 'single'\n});\n\nmock('sendHttpRequest', (requestUrl, requestOptions, requestBody)\
-    \ => {\n  const parsedRequestBody = JSON.parse(requestBody);\n    assertThat(parsedRequestBody).isEqualTo({\n\
-    \    validateOnly: false,\n    destinations: [\n      {\n        reference: 'productDestinationId',\n\
-    \        productDestinationId: 'productDestinationId',\n        operatingAccount:\
-    \ {\n          accountType: 'GOOGLE_ADS',\n          accountId: 'operatingAccountId'\n\
+    \ 'sessionAttributesCookie'\n        },\n        eventDeviceInfo: { userAgent:\
+    \ 'user_agent', ipAddress: 'ip_override' },\n        userProperties: { customerType:\
+    \ 'NEW', customerValueBucket: 'LOW' },\n        cartData: {\n          items:\
+    \ [\n            { merchantProductId: 'SKU_12345', quantity: '3', unitPrice: 10.01\
+    \ },\n            { merchantProductId: 'SKU_12346', quantity: '2', unitPrice:\
+    \ 21.01 }\n          ],\n          merchantId: 'Merchant Center ID',\n       \
+    \   merchantFeedLabel: 'Merchant Center Feed Label',\n          merchantFeedLanguageCode:\
+    \ 'Merchant Center Feed Language Code',\n          transactionDiscount: 123\n\
+    \        },\n        customVariables: [\n          {\n            variable: 'TEST1',\n\
+    \            value: 'ABC',\n            destinationReferences: ['REFERENCE']\n\
+    \          },\n          { variable: 'TEST2', value: 'AAAAAAAA' },\n         \
+    \ {\n            variable: 'TEST3',\n            value: '123ABC',\n          \
+    \  destinationReferences: ['REFERENCE', 'REFERENCE2']\n          }\n        ],\n\
+    \        experimentalFields: [{ field: 'ABC', value: 'FOOBAR' }]\n      }\n  \
+    \  ],\n    encoding: 'HEX',\n    encryptionInfo: {\n      gcpWrappedKeyInfo: {\n\
+    \        keyType: 'XCHACHA20_POLY1305',\n        wipProvider: '123',\n       \
+    \ kekUri: '123',\n        encryptedDek: '123'\n      }\n    }\n  });\n\n  return\
+    \ Promise.create((resolve, reject) => {\n    resolve({ statusCode: 200 });\n \
+    \ });  \n});\n\nrunCode(copyMockData);\n\ncallLater(() => {\n  assertApi('gtmOnSuccess').wasCalled();\n\
+    \  assertApi('gtmOnFailure').wasNotCalled();\n});"
+- name: '[Conversion] [Single Event] [Data from auto-mapping - Click IDs] Request
+    is successfully built and sent'
+  code: "/*\n  Not all the scenarios are tested because when running all the tests\
+    \ via the \"Run Tests\" button, a timeout occurs.\n  If this single test is ran\
+    \ individually, then it passes.\n  \n  The scenarios are left here for future\
+    \ reference.\n[\n  {\n    mock: () => {\n      mock('getCookieValues', (cookieName)\
+    \ => {\n        switch (cookieName) {\n          case '_gcl_aw':\n          case\
+    \ '_gcl_gb':\n            return ['GCL.1767112618.' + cookieName];\n         \
+    \ case '_gcl_ag':\n             return ['2.1.k' + cookieName + '$i1767112627'];\n\
+    \          default:\n            return [];\n        }\n      });\n    },\n  \
+    \  expectedAdIdentifiers: {\n      gclid: '_gcl_aw',\n      gbraid: '_gcl_ag',\n\
+    \      wbraid: '_gcl_gb',\n    }\n  },\n  {\n    mock: () => {\n      mock('getCookieValues',\
+    \ (cookieName) => {\n        switch (cookieName) {\n          case '_gcl_aw':\n\
+    \          case '_gcl_gb':\n            return ['GCL.1767112618.' + cookieName];\n\
+    \          case '_gcl_ag':\n             return ['2.1.k' + cookieName + '$i1767112627'];\n\
+    \          default:\n            return [];\n        }\n      });\n      \n  \
+    \    setGetAllEventData({\n        common_cookie: {\n          _gcl_aw: 'GCL.1767112618.common_cookie_gcl_aw',\n\
+    \          _gcl_ag: '2.1.kcommon_cookie_gcl_ag$i1767112627',\n          _gcl_gb:\
+    \ 'GCL.1767112618.common_cookie_gcl_gb'\n        }\n      });\n    },\n    expectedAdIdentifiers:\
+    \ {\n      gclid: 'common_cookie_gcl_aw',\n      gbraid: 'common_cookie_gcl_ag',\n\
+    \      wbraid: 'common_cookie_gcl_gb',\n    }\n  },\n  {\n    mock: () => {\n\
+    \      mock('getCookieValues', (cookieName) => {\n        switch (cookieName)\
+    \ {\n          case '_gcl_aw':\n          case '_gcl_gb':\n            return\
+    \ ['GCL.1767112618.' + cookieName];\n          case '_gcl_ag':\n             return\
+    \ ['2.1.k' + cookieName + '$i1767112627'];\n          default:\n            return\
+    \ [];\n        }\n      });\n      \n      setGetAllEventData({\n        gcl_aw:\
+    \ 'GCL.1767112618.eventDatagcl_aw',\n        gcl_ag: '2.1.keventDatagcl_ag$i1767112627',\n\
+    \        gcl_gb: 'GCL.1767112618.eventDatagcl_gb',\n        common_cookie: {\n\
+    \          _gcl_aw: 'GCL.1767112618.common_cookie_gcl_aw',\n          _gcl_ag:\
+    \ '2.1.kcommon_cookie_gcl_ag$i1767112627',\n          _gcl_gb: 'GCL.1767112618.common_cookie_gcl_gb'\n\
+    \        }\n      });\n    },\n    expectedAdIdentifiers: {\n      gclid: 'eventDatagcl_aw',\n\
+    \      gbraid: 'eventDatagcl_ag',\n      wbraid: 'eventDatagcl_gb',\n    }\n \
+    \ },\n  {\n    mock: () => {\n      mock('getCookieValues', (cookieName) => {\n\
+    \        switch (cookieName) {\n          case '_gcl_aw':\n          case '_gcl_gb':\n\
+    \            return ['GCL.1767112618.' + cookieName];\n          case '_gcl_ag':\n\
+    \             return ['2.1.k' + cookieName + '$i1767112627'];\n          default:\n\
+    \            return [];\n        }\n      });\n      \n      setGetAllEventData({\n\
+    \        gcl_aw: 'GCL.1767112618.eventDatagcl_aw',\n        gcl_ag: '2.1.keventDatagcl_ag$i1767112627',\n\
+    \        gcl_gb: 'GCL.1767112618.eventDatagcl_gb',\n        _gcl_aw: 'GCL.1767112618.eventData_gcl_aw',\n\
+    \        _gcl_ag: '2.1.keventData_gcl_ag$i1767112627',\n        _gcl_gb: 'GCL.1767112618.eventData_gcl_gb',\n\
+    \        common_cookie: {\n          _gcl_aw: 'GCL.1767112618.common_cookie_gcl_aw',\n\
+    \          _gcl_ag: '2.1.kcommon_cookie_gcl_ag$i1767112627',\n          _gcl_gb:\
+    \ 'GCL.1767112618.common_cookie_gcl_gb'\n        }\n      });\n    },\n    expectedAdIdentifiers:\
+    \ {\n      gclid: 'eventData_gcl_aw',\n      gbraid: 'eventData_gcl_ag',\n   \
+    \   wbraid: 'eventData_gcl_gb',\n    }\n  },\n  \n  {\n    mock: () => {\n   \
+    \   mock('getCookieValues', (cookieName) => {\n        switch (cookieName) {\n\
+    \          case 'FPGCLAW':\n          case 'FPGCLAG':\n          case 'FPGCLGB':\n\
+    \          case '_gcl_ag':\n             return ['2.1.k' + cookieName + '$i1767112627'];\n\
+    \          case '_gcl_aw':\n          case '_gcl_gb':\n            return ['GCL.1767112618.'\
+    \ + cookieName];\n          default:\n            return [];\n        }\n    \
+    \  });\n      \n      setGetAllEventData({\n        gcl_aw: 'GCL.1767112618.eventDatagcl_aw',\n\
+    \        gcl_ag: '2.1.keventDatagcl_ag$i1767112627',\n        gcl_gb: 'GCL.1767112618.eventDatagcl_gb',\n\
+    \        _gcl_aw: 'GCL.1767112618.eventData_gcl_aw',\n        _gcl_ag: '2.1.keventData_gcl_ag$i1767112627',\n\
+    \        _gcl_gb: 'GCL.1767112618.eventData_gcl_gb',\n        common_cookie: {\n\
+    \          _gcl_aw: 'GCL.1767112618.common_cookie_gcl_aw',\n          _gcl_ag:\
+    \ '2.1.kcommon_cookie_gcl_ag$i1767112627',\n          _gcl_gb: 'GCL.1767112618.common_cookie_gcl_gb'\n\
+    \        }\n      });\n    },\n    expectedAdIdentifiers: {\n      gclid: 'FPGCLAW',\n\
+    \      gbraid: 'FPGCLAG',\n      wbraid: 'FPGCLGB',\n    }\n  },\n  {\n    mock:\
+    \ () => {\n      mock('getCookieValues', (cookieName) => {\n        switch (cookieName)\
+    \ {\n          case 'FPGCLAW':\n          case 'FPGCLAG':\n          case 'FPGCLGB':\n\
+    \          case '_gcl_ag':\n             return ['2.1.k' + cookieName + '$i1767112627'];\n\
+    \          case '_gcl_aw':\n          case '_gcl_gb':\n            return ['GCL.1767112618.'\
+    \ + cookieName];\n          default:\n            return [];\n        }\n    \
+    \  });\n      \n      setGetAllEventData({\n        gcl_aw: 'GCL.1767112618.eventDatagcl_aw',\n\
+    \        gcl_ag: '2.1.keventDatagcl_ag$i1767112627',\n        gcl_gb: 'GCL.1767112618.eventDatagcl_gb',\n\
+    \        _gcl_aw: 'GCL.1767112618.eventData_gcl_aw',\n        _gcl_ag: '2.1.keventData_gcl_ag$i1767112627',\n\
+    \        _gcl_gb: 'GCL.1767112618.eventData_gcl_gb',\n        common_cookie: {\n\
+    \          _gcl_aw: 'GCL.1767112618.common_cookie_gcl_aw',\n          _gcl_ag:\
+    \ '2.1.kcommon_cookie_gcl_ag$i1767112627',\n          _gcl_gb: 'GCL.1767112618.common_cookie_gcl_gb',\n\
+    \          FPGCLAW: '2.1.kcommon_cookieFPGCLAW$i1767112627',\n          FPGCLAG:\
+    \ '2.1.kcommon_cookieFPGCLAG$i1767112627',\n          FPGCLGB: '2.1.kcommon_cookieFPGCLGB$i1767112627'\n\
+    \        }\n      });\n    },\n    expectedAdIdentifiers: {\n      gclid: 'common_cookieFPGCLAW',\n\
+    \      gbraid: 'common_cookieFPGCLAG',\n      wbraid: 'common_cookieFPGCLGB',\n\
+    \    }\n  },\n  {\n    mock: () => {\n      mock('getCookieValues', (cookieName)\
+    \ => {\n        switch (cookieName) {\n          case 'FPGCLAW':\n          case\
+    \ 'FPGCLAG':\n          case 'FPGCLGB':\n          case '_gcl_ag':\n         \
+    \    return ['2.1.k' + cookieName + '$i1767112627'];\n          case '_gcl_aw':\n\
+    \          case '_gcl_gb':\n            return ['GCL.1767112618.' + cookieName];\n\
+    \          default:\n            return [];\n        }\n      });\n      \n  \
+    \    setGetAllEventData({\n        gcl_aw: 'GCL.1767112618.eventDatagcl_aw',\n\
+    \        gcl_ag: '2.1.keventDatagcl_ag$i1767112627',\n        gcl_gb: 'GCL.1767112618.eventDatagcl_gb',\n\
+    \        _gcl_aw: 'GCL.1767112618.eventData_gcl_aw',\n        _gcl_ag: '2.1.keventData_gcl_ag$i1767112627',\n\
+    \        _gcl_gb: 'GCL.1767112618.eventData_gcl_gb',\n        FPGCLAW: '2.1.keventDataFPGCLAW$i1767112627',\n\
+    \        FPGCLAG: '2.1.keventDataFPGCLAG$i1767112627',\n        FPGCLGB: '2.1.keventDataFPGCLGB$i1767112627',\n\
+    \        common_cookie: {\n          _gcl_aw: 'GCL.1767112618.common_cookie_gcl_aw',\n\
+    \          _gcl_ag: '2.1.kcommon_cookie_gcl_ag$i1767112627',\n          _gcl_gb:\
+    \ 'GCL.1767112618.common_cookie_gcl_gb',\n          FPGCLAW: '2.1.kcommon_cookieFPGCLAW$i1767112627',\n\
+    \          FPGCLAG: '2.1.kcommon_cookieFPGCLAG$i1767112627',\n          FPGCLGB:\
+    \ '2.1.kcommon_cookieFPGCLGB$i1767112627'\n        }\n      });\n    },\n    expectedAdIdentifiers:\
+    \ {\n      gclid: 'eventDataFPGCLAW',\n      gbraid: 'eventDataFPGCLAG',\n   \
+    \   wbraid: 'eventDataFPGCLGB',\n    }\n  },\n  {\n    mock: () => {\n      mock('getCookieValues',\
+    \ (cookieName) => {\n        switch (cookieName) {\n          case 'FPGCLAW':\n\
+    \          case 'FPGCLAG':\n          case 'FPGCLGB':\n          case '_gcl_ag':\n\
+    \             return ['2.1.k' + cookieName + '$i1767112627'];\n          case\
+    \ '_gcl_aw':\n          case '_gcl_gb':\n            return ['GCL.1767112618.'\
+    \ + cookieName];\n          default:\n            return [];\n        }\n    \
+    \  });\n      setGetAllEventData({\n        page_location: 'https://example.com?gclid=gclidURL&gbraid=gbraidURL&wbraid=wbraidURL',\n\
+    \        \n        gcl_aw: 'GCL.1767112618.eventDatagcl_aw',\n        gcl_ag:\
+    \ '2.1.keventDatagcl_ag$i1767112627',\n        gcl_gb: 'GCL.1767112618.eventDatagcl_gb',\n\
+    \        _gcl_aw: 'GCL.1767112618.eventData_gcl_aw',\n        _gcl_ag: '2.1.keventData_gcl_ag$i1767112627',\n\
+    \        _gcl_gb: 'GCL.1767112618.eventData_gcl_gb',\n        FPGCLAW: '2.1.keventDataFPGCLAW$i1767112627',\n\
+    \        FPGCLAG: '2.1.keventDataFPGCLAG$i1767112627',\n        FPGCLGB: '2.1.keventDataFPGCLGB$i1767112627',\n\
+    \        common_cookie: {\n          _gcl_aw: 'GCL.1767112618.common_cookie_gcl_aw',\n\
+    \          _gcl_ag: '2.1.kcommon_cookie_gcl_ag$i1767112627',\n          _gcl_gb:\
+    \ 'GCL.1767112618.common_cookie_gcl_gb',\n          FPGCLAW: '2.1.kcommon_cookieFPGCLAW$i1767112627',\n\
+    \          FPGCLAG: '2.1.kcommon_cookieFPGCLAG$i1767112627',\n          FPGCLGB:\
+    \ '2.1.kcommon_cookieFPGCLGB$i1767112627'\n        }\n      });\n    },\n    expectedAdIdentifiers:\
+    \ {\n      gclid: 'gclidURL',\n      gbraid: 'gbraidURL',\n      wbraid: 'wbraidURL'\n\
+    \    }\n  },\n  {\n    mock: () => {\n      mock('getCookieValues', (cookieName)\
+    \ => {\n        switch (cookieName) {\n          case 'FPGCLAW':\n          case\
+    \ 'FPGCLAG':\n          case 'FPGCLGB':\n          case '_gcl_ag':\n         \
+    \    return ['2.1.k' + cookieName + '$i1767112627'];\n          case '_gcl_aw':\n\
+    \          case '_gcl_gb':\n            return ['GCL.1767112618.' + cookieName];\n\
+    \          default:\n            return [];\n        }\n      });\n      setGetAllEventData({\n\
+    \        page_location: 'https://example.com?gclid=gclidURL&gbraid=gbraidURL&wbraid=wbraidURL',\n\
+    \        gclid: 'gclid EventData',\n        gbraid: 'gbraid EventData',\n    \
+    \    wbraid: 'wbraid EventData',\n        \n        gcl_aw: 'GCL.1767112618.eventDatagcl_aw',\n\
+    \        gcl_ag: '2.1.keventDatagcl_ag$i1767112627',\n        gcl_gb: 'GCL.1767112618.eventDatagcl_gb',\n\
+    \        _gcl_aw: 'GCL.1767112618.eventData_gcl_aw',\n        _gcl_ag: '2.1.keventData_gcl_ag$i1767112627',\n\
+    \        _gcl_gb: 'GCL.1767112618.eventData_gcl_gb',\n        FPGCLAW: '2.1.keventDataFPGCLAW$i1767112627',\n\
+    \        FPGCLAG: '2.1.keventDataFPGCLAG$i1767112627',\n        FPGCLGB: '2.1.keventDataFPGCLGB$i1767112627',\n\
+    \        common_cookie: {\n          _gcl_aw: 'GCL.1767112618.common_cookie_gcl_aw',\n\
+    \          _gcl_ag: '2.1.kcommon_cookie_gcl_ag$i1767112627',\n          _gcl_gb:\
+    \ 'GCL.1767112618.common_cookie_gcl_gb',\n          FPGCLAW: '2.1.kcommon_cookieFPGCLAW$i1767112627',\n\
+    \          FPGCLAG: '2.1.kcommon_cookieFPGCLAG$i1767112627',\n          FPGCLGB:\
+    \ '2.1.kcommon_cookieFPGCLGB$i1767112627'\n        }\n      });\n    },\n    expectedAdIdentifiers:\
+    \ {\n      gclid: 'gclid EventData',\n      gbraid: 'gbraid EventData',\n    \
+    \  wbraid: 'wbraid EventData'\n    }\n  }\n]\n*/\n\n[\n  {\n    mock: () => {\n\
+    \      mock('getCookieValues', (cookieName) => {\n        switch (cookieName)\
+    \ {\n          case '_gcl_aw':\n          case '_gcl_gb':\n            return\
+    \ ['GCL.1767112618.' + cookieName];\n          case '_gcl_ag':\n             return\
+    \ ['2.1.k' + cookieName + '$i1767112627'];\n          default:\n            return\
+    \ [];\n        }\n      });\n    },\n    expectedAdIdentifiers: {\n      gclid:\
+    \ '_gcl_aw',\n      gbraid: '_gcl_ag',\n      wbraid: '_gcl_gb',\n    }\n  },\n\
+    \  {\n    mock: () => {\n      mock('getCookieValues', (cookieName) => {\n   \
+    \     switch (cookieName) {\n          case 'FPGCLAW':\n          case 'FPGCLAG':\n\
+    \          case 'FPGCLGB':\n          case '_gcl_ag':\n             return ['2.1.k'\
+    \ + cookieName + '$i1767112627'];\n          case '_gcl_aw':\n          case '_gcl_gb':\n\
+    \            return ['GCL.1767112618.' + cookieName];\n          default:\n  \
+    \          return [];\n        }\n      });\n    },\n    expectedAdIdentifiers:\
+    \ {\n      gclid: 'FPGCLAW',\n      gbraid: 'FPGCLAG',\n      wbraid: 'FPGCLGB',\n\
+    \    }\n  },\n  {\n    mock: () => {\n      mock('getCookieValues', (cookieName)\
+    \ => {\n        switch (cookieName) {\n          case 'FPGCLAW':\n          case\
+    \ 'FPGCLAG':\n          case 'FPGCLGB':\n          case '_gcl_ag':\n         \
+    \    return ['2.1.k' + cookieName + '$i1767112627'];\n          case '_gcl_aw':\n\
+    \          case '_gcl_gb':\n            return ['GCL.1767112618.' + cookieName];\n\
+    \          default:\n            return [];\n        }\n      });\n      setGetAllEventData({\n\
+    \        page_location: 'https://example.com?gclid=gclidURL&gbraid=gbraidURL&wbraid=wbraidURL'\n\
+    \      });\n    },\n    expectedAdIdentifiers: {\n      gclid: 'gclidURL',\n \
+    \     gbraid: 'gbraidURL',\n      wbraid: 'wbraidURL'\n    }\n  },\n  {\n    mock:\
+    \ () => {\n      mock('getCookieValues', (cookieName) => {\n        switch (cookieName)\
+    \ {\n          case 'FPGCLAW':\n          case 'FPGCLAG':\n          case 'FPGCLGB':\n\
+    \          case '_gcl_ag':\n             return ['2.1.k' + cookieName + '$i1767112627'];\n\
+    \          case '_gcl_aw':\n          case '_gcl_gb':\n            return ['GCL.1767112618.'\
+    \ + cookieName];\n          default:\n            return [];\n        }\n    \
+    \  });\n      setGetAllEventData({\n        page_location: 'https://example.com?gclid=gclidURL&gbraid=gbraidURL&wbraid=wbraidURL',\n\
+    \        gclid: 'gclid EventData',\n        gbraid: 'gbraid EventData',\n    \
+    \    wbraid: 'wbraid EventData'\n      });\n    },\n    expectedAdIdentifiers:\
+    \ {\n      gclid: 'gclid EventData',\n      gbraid: 'gbraid EventData',\n    \
+    \  wbraid: 'wbraid EventData'\n    }\n  }\n].forEach((scenario) => {\n  const\
+    \ copyMockData = setAllMockDataByEventType('conversion', 'stape', {\n    conversionEventMode:\
+    \ 'single',\n    autoMapAdIdentifiersClickIds: true\n  });\n  \n  [\n    'adIdentifiersGclid',\n\
+    \    'adIdentifiersGbraid',\n    'adIdentifiersWbraid'\n  ].forEach((key) => Object.delete(copyMockData,\
+    \ key));\n  \n  scenario.mock();\n  \n  mock('sendHttpRequest', (requestUrl, requestOptions,\
+    \ requestBody) => {\n    const parsedRequestBody = JSON.parse(requestBody);\n\
+    \    assertThat(parsedRequestBody.events[0].adIdentifiers.gclid).isEqualTo(scenario.expectedAdIdentifiers.gclid);\n\
+    \    assertThat(parsedRequestBody.events[0].adIdentifiers.gbraid).isEqualTo(scenario.expectedAdIdentifiers.gbraid);\n\
+    \    assertThat(parsedRequestBody.events[0].adIdentifiers.wbraid).isEqualTo(scenario.expectedAdIdentifiers.wbraid);\
+    \  \n  \n    return Promise.create((resolve, reject) => {\n      resolve({ statusCode:\
+    \ 200 });\n    });  \n  });\n  \n  runCode(copyMockData);\n  \n  callLater(()\
+    \ => {\n    assertApi('gtmOnSuccess').wasCalled();\n    assertApi('gtmOnFailure').wasNotCalled();\n\
+    \  });\n  \n  cleanup();\n});\n\n"
+- name: '[Conversion] [Single Event] [Data from UI fields] Request is successfully
+    built and sent'
+  code: "const copyMockData = setAllMockDataByEventType('conversion', 'stape', {\n\
+    \  conversionEventMode: 'single'\n});\n\nmock('sendHttpRequest', (requestUrl,\
+    \ requestOptions, requestBody) => {\n  const parsedRequestBody = JSON.parse(requestBody);\n\
+    \    assertThat(parsedRequestBody).isEqualTo({\n    validateOnly: false,\n   \
+    \ destinations: [\n      {\n        reference: 'productDestinationId',\n     \
+    \   productDestinationId: 'productDestinationId',\n        operatingAccount: {\n\
+    \          accountType: 'GOOGLE_ADS',\n          accountId: 'operatingAccountId'\n\
     \        },\n        linkedAccount: { accountType: 'GOOGLE_ADS', accountId: 'linkedAccountId'\
     \ }\n      },\n      {\n        reference: 'productDestinationId1',\n        productDestinationId:\
     \ 'productDestinationId1',\n        operatingAccount: {\n          accountType:\
@@ -2664,13 +3393,13 @@ scenarios:
     \ resolve({ statusCode: 200 });\n  });  \n});\n\nrunCode(copyMockData);\n\ncallLater(()\
     \ => {\n  assertApi('gtmOnSuccess').wasCalled();\n  assertApi('gtmOnFailure').wasNotCalled();\n\
     });"
-- name: '[Multiple Events] [Data from UI fields] Request is successfully built and
-    sent'
-  code: "const copyMockData = setAllMockDataByAuthMethod('stape', {\n  conversionEventMode:\
-    \ 'multiple',\n  conversionEvents: multipleConversionEventsMock\n});\n\nmock('sendHttpRequest',\
-    \ (requestUrl, requestOptions, requestBody) => {\n  const parsedRequestBody =\
-    \ JSON.parse(requestBody);\n  assertThat(parsedRequestBody).isEqualTo({\n    validateOnly:\
-    \ false,\n    destinations: [\n      {\n        reference: 'productDestinationId',\n\
+- name: '[Conversion] [Multiple Events] [Data from UI fields] Request is successfully
+    built and sent'
+  code: "const copyMockData = setAllMockDataByEventType('conversion', 'stape', {\n\
+    \  conversionEventMode: 'multiple',\n  conversionEvents: multipleConversionEventsMock\n\
+    });\n\nmock('sendHttpRequest', (requestUrl, requestOptions, requestBody) => {\n\
+    \  const parsedRequestBody = JSON.parse(requestBody);\n  assertThat(parsedRequestBody).isEqualTo({\n\
+    \    validateOnly: false,\n    destinations: [\n      {\n        reference: 'productDestinationId',\n\
     \        productDestinationId: 'productDestinationId',\n        operatingAccount:\
     \ {\n          accountType: 'GOOGLE_ADS',\n          accountId: 'operatingAccountId'\n\
     \        },\n        linkedAccount: { accountType: 'GOOGLE_ADS', accountId: 'linkedAccountId'\
@@ -2746,86 +3475,34 @@ scenarios:
     \ resolve({ statusCode: 200 });\n  });  \n});\n\nrunCode(copyMockData);\n\ncallLater(()\
     \ => {\n  assertApi('gtmOnSuccess').wasCalled();\n  assertApi('gtmOnFailure').wasNotCalled();\n\
     });"
-- name: '[Request] Should call gtmOnFailure when promise resolves and status code
-    is outside success range, or when the request fails'
+- name: '[Conversion] [Request] Should call gtmOnFailure when promise resolves and
+    status code is outside success range, or when the request fails'
   code: "[\n  {\n    callback: (resolve, reject) => resolve({ statusCode: 500 })\n\
     \  },\n  {\n    callback: (resolve, reject) => reject({ reason: 'Failed' })\n\
-    \  }\n].forEach((scenario) => {\n  const copyMockData = setAllMockDataByAuthMethod('stape');\n\
-    \  \n  mock('sendHttpRequest', (requestUrl, requestOptions, requestBody) => {\n\
-    \    return Promise.create((resolve, reject) => {\n      scenario.callback(resolve,\
+    \  }\n].forEach((scenario) => {\n  const copyMockData = setAllMockDataByEventType('conversion',\
+    \ 'stape');\n  \n  mock('sendHttpRequest', (requestUrl, requestOptions, requestBody)\
+    \ => {\n    return Promise.create((resolve, reject) => {\n      scenario.callback(resolve,\
     \ reject);\n    });  \n  });\n  \n  runCode(copyMockData);\n  \n  callLater(()\
     \ => {\n    assertApi('gtmOnSuccess').wasNotCalled();\n    assertApi('gtmOnFailure').wasCalled();\n\
     \  });\n});"
-- name: '[Hex] Encoding is correctly defined when hashed User Data is already Hex
-    encoded'
-  code: "setGetAllEventData();\n\nconst copyMockData = setAllMockDataByAuthMethod('stape',\
-    \ {\n  conversionEventMode: 'single',\n  userDataEncoding: undefined,\n  autoMapUserData:\
-    \ false,\n  userDataEmailAddresses: '426a1c28c61b7ba258fa3cc300ba7cd3abc11c0d4b585d3ce4a15d6f22d6d363',\n\
-    \  userDataPhoneNumbers: '426a1c28c61b7ba258fa3cc300ba7cd3abc11c0d4b585d3ce4a15d6f22d6d363',\n\
-    \  addUserDataAddress: true,\n  userDataAddressGivenName: '426a1c28c61b7ba258fa3cc300ba7cd3abc11c0d4b585d3ce4a15d6f22d6d363',\n\
-    \  userDataAddressFamilyName: '426a1c28c61b7ba258fa3cc300ba7cd3abc11c0d4b585d3ce4a15d6f22d6d363',\n\
-    \  userDataAddressRegion: '426a1c28c61b7ba258fa3cc300ba7cd3abc11c0d4b585d3ce4a15d6f22d6d363',\n\
-    \  userDataAddressPostalCode: '426a1c28c61b7ba258fa3cc300ba7cd3abc11c0d4b585d3ce4a15d6f22d6d363',\n\
-    });\n\nmock('sendHttpRequest', (requestUrl, requestOptions, requestBody) => {\n\
-    \  const parsedRequestBody = JSON.parse(requestBody);\n  assertThat(parsedRequestBody.encoding).isEqualTo('HEX');\n\
-    \n  return Promise.create((resolve, reject) => {\n    resolve({ statusCode: 200\
-    \ });\n  });  \n});\n\nrunCode(copyMockData);\n\ncallLater(() => {\n  assertApi('gtmOnSuccess').wasCalled();\n\
-    \  assertApi('gtmOnFailure').wasNotCalled();\n});"
-- name: '[Base64] Encoding is correctly defined when hashed User Data is already Base64
-    encoded'
-  code: "setGetAllEventData();\n\nconst copyMockData = setAllMockDataByAuthMethod('stape',\
-    \ {\n  conversionEventMode: 'single',\n  userDataEncoding: undefined,\n  autoMapUserData:\
-    \ false,\n  userDataEmailAddresses: 'osrifrM+43jsL6zoLw/I4luJ2T20MMOXTxBMsVIEx1o=',\n\
-    \  userDataPhoneNumbers: 'osrifrM+43jsL6zoLw/I4luJ2T20MMOXTxBMsVIEx1o=',\n  addUserDataAddress:\
-    \ true,\n  userDataAddressGivenName: 'osrifrM+43jsL6zoLw/I4luJ2T20MMOXTxBMsVIEx1o=',\n\
-    \  userDataAddressFamilyName: 'osrifrM+43jsL6zoLw/I4luJ2T20MMOXTxBMsVIEx1o=',\n\
-    \  userDataAddressRegion: 'osrifrM+43jsL6zoLw/I4luJ2T20MMOXTxBMsVIEx1o=',\n  userDataAddressPostalCode:\
-    \ 'osrifrM+43jsL6zoLw/I4luJ2T20MMOXTxBMsVIEx1o=',\n});\n\nmock('sendHttpRequest',\
-    \ (requestUrl, requestOptions, requestBody) => {\n  const parsedRequestBody =\
-    \ JSON.parse(requestBody);\n  assertThat(parsedRequestBody.encoding).isEqualTo('BASE64');\n\
-    \n  return Promise.create((resolve, reject) => {\n    resolve({ statusCode: 200\
-    \ });\n  });  \n});\n\nrunCode(copyMockData);\n\ncallLater(() => {\n  assertApi('gtmOnSuccess').wasCalled();\n\
-    \  assertApi('gtmOnFailure').wasNotCalled();\n});"
-- name: '[Logs] Should log to console'
-  code: "[\n  // if the 'Always log to console' option is selected\n  { mockData:\
-    \ { logType: 'always' }, expectedDebugMode: true },\n  // if the 'Log during debug\
-    \ and preview' option is selected AND is on preview mode\n  { mockData: { logType:\
-    \ 'debug' }, expectedDebugMode: true },\n].forEach(scenario => {\n  const copyMockData\
-    \ = setAllMockDataByAuthMethod('stape');\n  assign(mockData, scenario.mockData);\n\
-    \  \n  mock('getContainerVersion', () => {\n    return {\n      debugMode: scenario.expectedDebugMode\n\
-    \    };\n  }); \n  \n  mock('logToConsole', (logData) => {\n    const parsedLogData\
-    \ = JSON.parse(logData);\n    requiredConsoleKeys.forEach(p => assertThat(parsedLogData[p]).isDefined());\n\
-    \  });\n  \n  runCode(copyMockData);\n  \n  callLater(() => {\n    assertApi('logToConsole').wasCalled();\n\
-    \    assertApi('gtmOnSuccess').wasCalled();\n    assertApi('gtmOnFailure').wasNotCalled();\n\
-    \  });\n});"
-- name: '[Logs] Should NOT log to console'
-  code: "[\n  // if the 'Log during debug and preview' option is selected AND is NOT\
-    \ on preview mode\n  { mockData: { logType: 'debug' }, expectedDebugMode: false\
-    \ },\n  // if the 'Do not log' option is selected\n  { mockData: { logType: 'no'\
-    \ }, expectedDebugMode: undefined },\n].forEach(scenario => {\n  const copyMockData\
-    \ = setAllMockDataByAuthMethod('stape');\n  assign(mockData, scenario.mockData);\n\
-    \  \n  mock('getContainerVersion', () => {\n    return {\n      debugMode: scenario.expectedDebugMode\n\
-    \    };\n  });\n  \n  runCode(copyMockData);\n\n  callLater(() => {\n    assertApi('logToConsole').wasNotCalled();\n\
-    \    assertApi('gtmOnSuccess').wasCalled();\n    assertApi('gtmOnFailure').wasNotCalled();\n\
-    \  });\n});"
-- name: '[Logs] Should NOT log to BQ, if the ''Do not log to BigQuery'' option is
-    selected'
-  code: "const copyMockData = setAllMockDataByAuthMethod('stape');\ncopyMockData.bigQueryLogType\
-    \ = 'no';\n\n// assertApi doesn't work for 'BigQuery.insert()'.\n// Ref: https://gtm-gear.com/posts/gtm-templates-testing/\n\
-    mockObject('BigQuery', {\n  insert: (connectionInfo, rows, options) => { \n  \
-    \  fail('BigQuery.insert should not have been called.');\n    return Promise.create((resolve,\
-    \ reject) => {\n      resolve();\n    });\n  }\n});\n\nrunCode(copyMockData);\n\
-    \ncallLater(() => {\n  assertApi('gtmOnSuccess').wasCalled();\n  assertApi('gtmOnFailure').wasNotCalled();\n\
-    });"
-- name: '[Logs] Should log to BQ, if the ''Log to BigQuery'' option is selected'
-  code: "const copyMockData = setAllMockDataByAuthMethod('stape');\ncopyMockData.bigQueryLogType\
-    \ = 'always';\n\nmockObject('BigQuery', {\n  insert: (connectionInfo, rows, options)\
-    \ => { \n    assertThat(connectionInfo).isDefined();\n    assertThat(rows).isArray();\n\
-    \    assertThat(rows).hasLength(1);\n    requiredBqKeys.forEach(p => assertThat(rows[0][p]).isDefined());\n\
-    \    assertThat(options).isEqualTo(expectedBqOptions);\n    return Promise.create((resolve,\
-    \ reject) => {\n      resolve();\n    });\n  }\n});\n\nrunCode(copyMockData);\n\
-    \ncallLater(() => {\n  assertApi('gtmOnSuccess').wasCalled();\n  assertApi('gtmOnFailure').wasNotCalled();\n\
-    });"
+- name: '[Conversion] [Request] Encoding is correctly defined when hashed User Data
+    is already encoded'
+  code: "[\n  {\n    mockUserDataString : '426a1c28c61b7ba258fa3cc300ba7cd3abc11c0d4b585d3ce4a15d6f22d6d363',\n\
+    \    expectedEncoding: 'HEX'\n  },\n  {\n    mockUserDataString : 'osrifrM+43jsL6zoLw/I4luJ2T20MMOXTxBMsVIEx1o=',\n\
+    \    expectedEncoding: 'BASE64'\n  }\n].forEach((scenario) => {\n  setGetAllEventData();\n\
+    \  \n  const copyMockData = setAllMockDataByEventType('conversion', 'stape', {\n\
+    \    conversionEventMode: 'single',\n    userDataEncoding: undefined,\n    autoMapUserData:\
+    \ false,\n    userDataEmailAddresses: scenario.mockUserDataString,\n    userDataPhoneNumbers:\
+    \ scenario.mockUserDataString,\n    addUserDataAddress: true,\n    userDataAddressGivenName:\
+    \ scenario.mockUserDataString,\n    userDataAddressFamilyName: scenario.mockUserDataString,\n\
+    \    userDataAddressRegion: scenario.mockUserDataString,\n    userDataAddressPostalCode:\
+    \ scenario.mockUserDataString,\n  });\n\n  mock('sendHttpRequest', (requestUrl,\
+    \ requestOptions, requestBody) => {\n    const parsedRequestBody = JSON.parse(requestBody);\n\
+    \    assertThat(parsedRequestBody.encoding).isEqualTo(scenario.expectedEncoding);\n\
+    \  \n    return Promise.create((resolve, reject) => {\n      resolve({ statusCode:\
+    \ 200 });\n    });  \n  });\n  \n  runCode(copyMockData);\n  \n  callLater(()\
+    \ => {\n    assertApi('gtmOnSuccess').wasCalled();\n    assertApi('gtmOnFailure').wasNotCalled();\n\
+    \  });\n  \n  cleanup();\n});"
 setup: "const Promise = require('Promise');\nconst JSON = require('JSON');\nconst\
   \ makeInteger = require('makeInteger');\nconst Object = require('Object');\nconst\
   \ callLater = require('callLater');\n\nfunction assign() {\n  const target = arguments[0];\n\
@@ -2838,53 +3515,61 @@ setup: "const Promise = require('Promise');\nconst JSON = require('JSON');\ncons
   \ 'tag_name'];\nconst expectedBqOptions = { ignoreUnknownValues: true };\n\nconst\
   \ mockData = {\n  logBigQueryProjectId: expectedBigQuerySettings.logBigQueryProjectId,\n\
   \  logBigQueryDatasetId: expectedBigQuerySettings.logBigQueryDatasetId,\n  logBigQueryTableId:\
-  \ expectedBigQuerySettings.logBigQueryTableId\n};\n\nconst setAllMockDataByAuthMethod\
-  \ = (type, objToBeMerged) => {\n  const base = {\n    validateOnly: false,\n   \
-  \ useOptimisticScenario: false,\n    \n    adUserData: 'CONSENT_GRANTED',\n    adPersonalization:\
-  \ 'CONSENT_DENIED',\n    \n    userDataEncoding: 'HEX',\n    enableUserDataEncryption:\
-  \ true,\n    gcpWrappedKeyType: 'XCHACHA20_POLY1305',\n    gcpWrappedKeyEncryptedDek:\
-  \ '123',\n    gcpWrappedKeyKekUri: '123',\n    gcpWrappedKeyWipProvider: '123',\n\
-  \    conversionEventMode: 'single',\n  \n    autoMapConversionInformation: true,\n\
-  \    transactionId: 'Transaction ID',\n    eventTimestamp: '2014-10-02T15:01:23Z',\n\
-  \    lastUpdatedTimestamp: '2014-10-02T15:01:23Z',\n    currency: 'BRL',\n    conversionValue:\
-  \ '123.45',\n    eventSource: 'WEB',\n  \n    autoMapUserData: true,\n    userDataEmailAddresses:\
-  \ 'google.google.google@gmail.com',\n    userDataPhoneNumbers: '55999999999',\n\
-  \    addUserDataAddress: true,\n    userDataAddressGivenName: 'test',\n    userDataAddressFamilyName:\
-  \ 'test',\n    userDataAddressRegion: 'US',\n    userDataAddressPostalCode: '10001',\n\
-  \  \n    adIdentifiersGclid: 'gclid',\n    adIdentifiersGbraid: 'gbraid',\n    adIdentifiersWbraid:\
-  \ 'wbraid',\n    adIdentifiersLandingPageDeviceInfoUserAgent: 'Landing Page User\
-  \ Agent',\n    adIdentifiersLandingPageDeviceInfoIpAddress: '1.1.1.1',\n    adIdentifiersSessionAttributes:\
-  \ 'Session Attributes',\n  \n    autoMapEventDeviceInfo: true,\n    eventDeviceInfoUserAgent:\
-  \ 'User Agent',\n    eventDeviceInfoIpAddress: '1.1.1.1',\n  \n    userPropertiesCustomerType:\
-  \ 'NEW',\n    userPropertiesCustomerValueBucket: 'LOW',\n  \n    autoMapCartData:\
-  \ true,\n    itemIdKey: 'item_id',\n    cartDataMerchantId: 'Merchant Center ID',\n\
-  \    cartDataMerchantFeedLabel: 'Merchant Center Feed Label',\n    cartDataMerchantFeedLanguageCode:\
-  \ 'Merchant Center Feed Language Code',\n    cartDataTransactionDiscount: '123',\n\
-  \    cartDataItems: [\n      { merchantProductId: 'Merchant Product ID 1', quantity:\
-  \ '1', unitPrice: '123' },\n      { merchantProductId: 'Merchant Product ID 2',\
-  \ quantity: '2', unitPrice: '111' }\n    ],\n  \n    customVariablesList: [\n  \
-  \    { name: 'TEST1', value: 'ABC', destinationReferences: 'REFERENCE' },\n    \
-  \  { name: 'TEST2', value: 'AAAAAAAA', destinationReferences: '' },\n      { name:\
-  \ 'TEST3', value: '123ABC', destinationReferences: ['REFERENCE', 'REFERENCE2'] }\n\
-  \    ],\n  \n    experimentalFieldsList: [{ name: 'ABC', value: 'FOOBAR' }],\n \
-  \ \n    adStorageConsent: 'optional',\n    logType: 'debug',\n    bigQueryLogType:\
-  \ 'no'\n  };\n  \n  const mockDataByAuthType = {\n    stape: {\n      authFlow:\
-  \ 'stape',\n      stapeAuthDestinationsList: [\n        {\n          product: 'GOOGLE_ADS',\n\
-  \          operatingAccountId: 'operatingAccountId',\n          linkedAccountId:\
-  \ 'linkedAccountId',\n          productDestinationId: 'productDestinationId'\n \
-  \       },\n        {\n          product: 'GOOGLE_ADS',\n          operatingAccountId:\
-  \ 'operatingAccountId1',\n          linkedAccountId: 'linkedAccountId1',\n     \
-  \     productDestinationId: 'productDestinationId1'\n        }\n      ]\n    },\n\
-  \    own: {\n      authFlow: 'own',\n      ownAuthDestinationsList: [\n        {\n\
-  \          product: 'GOOGLE_ADS',\n          operatingAccountId: 'operatingAccountId',\n\
-  \          loginAccountId: 'loginAccountId',\n          productDestinationId: 'productDestinationId'\n\
-  \        },\n        {\n          product: 'GOOGLE_ADS',\n          operatingAccountId:\
-  \ 'operatingAccountId1',\n          loginAccountId: 'loginAccountId1',\n       \
-  \   productDestinationId: 'productDestinationId1'\n        }\n      ]\n    }\n \
-  \ };\n  \n  \n  return assign(JSON.parse(JSON.stringify(mockData)), base, mockDataByAuthType[type],\
-  \ objToBeMerged || {});\n};\n\nconst setGetAllEventData = (objToBeMerged) => {\n\
-  \  mock('getAllEventData', assign({\n    'x-ga-protocol_version': '2',\n    'x-ga-measurement_id':\
-  \ 'G-123ABC',\n    'x-ga-gtm_version': '45je55e1za200',\n    'x-ga-page_id': 1747422523211,\n\
+  \ expectedBigQuerySettings.logBigQueryTableId\n};\n\nconst cleanup = () => {\n \
+  \ mock('getAllEventData', {});\n  mock('getCookieValues', []);\n};\n\nconst setAllMockDataByEventType\
+  \ = (eventType, authType, objToBeMerged) => {\n  const mockDataByAuthType = {\n\
+  \    stape: {\n      authFlow: 'stape',\n      stapeAuthDestinationsList: [\n  \
+  \      {\n          product: 'GOOGLE_ADS',\n          operatingAccountId: 'operatingAccountId',\n\
+  \          linkedAccountId: 'linkedAccountId',\n          productDestinationId:\
+  \ 'productDestinationId'\n        },\n        {\n          product: 'GOOGLE_ADS',\n\
+  \          operatingAccountId: 'operatingAccountId1',\n          linkedAccountId:\
+  \ 'linkedAccountId1',\n          productDestinationId: 'productDestinationId1'\n\
+  \        }\n      ]\n    },\n    own: {\n      authFlow: 'own',\n      ownAuthDestinationsList:\
+  \ [\n        {\n          product: 'GOOGLE_ADS',\n          operatingAccountId:\
+  \ 'operatingAccountId',\n          loginAccountId: 'loginAccountId',\n         \
+  \ productDestinationId: 'productDestinationId'\n        },\n        {\n        \
+  \  product: 'GOOGLE_ADS',\n          operatingAccountId: 'operatingAccountId1',\n\
+  \          loginAccountId: 'loginAccountId1',\n          productDestinationId: 'productDestinationId1'\n\
+  \        }\n      ]\n    }\n  };\n  \n  const mockDataByEventType = {\n    conversion:\
+  \ {\n      eventType: 'conversion',\n      \n      validateOnly: false,\n      useOptimisticScenario:\
+  \ false,\n      \n      adUserData: 'CONSENT_GRANTED',\n      adPersonalization:\
+  \ 'CONSENT_DENIED',\n      \n      userDataEncoding: 'HEX',\n      enableUserDataEncryption:\
+  \ true,\n      gcpWrappedKeyType: 'XCHACHA20_POLY1305',\n      gcpWrappedKeyEncryptedDek:\
+  \ '123',\n      gcpWrappedKeyKekUri: '123',\n      gcpWrappedKeyWipProvider: '123',\n\
+  \      conversionEventMode: 'single',\n    \n      autoMapConversionInformation:\
+  \ true,\n      transactionId: 'Transaction ID',\n      eventTimestamp: '2014-10-02T15:01:23Z',\n\
+  \      lastUpdatedTimestamp: '2014-10-02T15:01:23Z',\n      currency: 'BRL',\n \
+  \     conversionValue: '123.45',\n      eventSource: 'WEB',\n    \n      autoMapUserData:\
+  \ true,\n      userDataEmailAddresses: 'google.google.google@gmail.com',\n     \
+  \ userDataPhoneNumbers: '55999999999',\n      addUserDataAddress: true,\n      userDataAddressGivenName:\
+  \ 'test',\n      userDataAddressFamilyName: 'test',\n      userDataAddressRegion:\
+  \ 'US',\n      userDataAddressPostalCode: '10001',\n    \n      autoMapAdIdentifiersClickIds:\
+  \ false,\n      adIdentifiersGclid: 'gclid',\n      adIdentifiersGbraid: 'gbraid',\n\
+  \      adIdentifiersWbraid: 'wbraid',\n      autoMapAdIdentifiersSessionAttributes:\
+  \ false,\n      adIdentifiersLandingPageDeviceInfoUserAgent: 'Landing Page User\
+  \ Agent',\n      adIdentifiersLandingPageDeviceInfoIpAddress: '1.1.1.1',\n     \
+  \ adIdentifiersSessionAttributes: 'Session Attributes',\n    \n      autoMapEventDeviceInfo:\
+  \ true,\n      eventDeviceInfoUserAgent: 'User Agent',\n      eventDeviceInfoIpAddress:\
+  \ '1.1.1.1',\n    \n      userPropertiesCustomerType: 'NEW',\n      userPropertiesCustomerValueBucket:\
+  \ 'LOW',\n    \n      autoMapCartData: true,\n      itemIdKey: 'item_id',\n    \
+  \  cartDataMerchantId: 'Merchant Center ID',\n      cartDataMerchantFeedLabel: 'Merchant\
+  \ Center Feed Label',\n      cartDataMerchantFeedLanguageCode: 'Merchant Center\
+  \ Feed Language Code',\n      cartDataTransactionDiscount: '123',\n      cartDataItems:\
+  \ [\n        { merchantProductId: 'Merchant Product ID 1', quantity: '1', unitPrice:\
+  \ '123' },\n        { merchantProductId: 'Merchant Product ID 2', quantity: '2',\
+  \ unitPrice: '111' }\n      ],\n    \n      customVariablesList: [\n        { name:\
+  \ 'TEST1', value: 'ABC', destinationReferences: 'REFERENCE' },\n        { name:\
+  \ 'TEST2', value: 'AAAAAAAA', destinationReferences: '' },\n        { name: 'TEST3',\
+  \ value: '123ABC', destinationReferences: ['REFERENCE', 'REFERENCE2'] }\n      ],\n\
+  \    \n      experimentalFieldsList: [{ name: 'ABC', value: 'FOOBAR' }],\n    \n\
+  \      adStorageConsent: 'optional',\n      logType: 'debug',\n      bigQueryLogType:\
+  \ 'no'\n    },\n    pageview: {\n      eventType: 'pageview',\n      \n      cookieExpiration:\
+  \ 90,\n      cookieDomain: 'auto',\n      cookieSameSite: 'none',\n      cookieHttpOnly:\
+  \ true,\n      adStorageConsent: 'optional'\n    }\n  };\n  \n  return assign(JSON.parse(JSON.stringify(mockData)),\
+  \ mockDataByEventType[eventType], mockDataByAuthType[authType] || {}, objToBeMerged\
+  \ || {});\n};\n\nconst setGetAllEventData = (objToBeMerged) => {\n  mock('getAllEventData',\
+  \ assign({\n    'x-ga-protocol_version': '2',\n    'x-ga-measurement_id': 'G-123ABC',\n\
+  \    'x-ga-gtm_version': '45je55e1za200',\n    'x-ga-page_id': 1747422523211,\n\
   \    'x-ga-gcd': '13l3l3l3l1l1',\n    'x-ga-npa': '0',\n    'x-ga-dma': '0',\n \
   \   'x-ga-mp2-tag_exp':\n      '101509157~103116025~103130498~103130500~103136993~103136995~103200001~103207802~103211513~103233427~103252644~103252646~103263073~103301114~103301116',\n\
   \    client_id: 'AUJctU7H7hBB/aMuhE4pKwGu5DWDdklg5abyyyn8i/I=.1747154479',\n   \
