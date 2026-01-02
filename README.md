@@ -103,7 +103,7 @@ This section allows you to send any additional key-value pairs for custom report
 * [Data Manager API for Conversion Events](https://developers.google.com/data-manager/api/reference/rest/v1/events)
 * [Conversion Event definition](https://developers.google.com/data-manager/api/reference/rest/v1/events/ingest#Event)
 * [User Identifiers Normalization Guidelines](https://developers.google.com/data-manager/api/get-started/formatting)
-* Session Attributes: [1](https://support.google.com/google-ads/answer/16194756?hl=en) and [2](https://developers.google.com/data-manager/api/reference/rest/v1/events/ingest#AdIdentifiers)
+* Session Attributes: [[1]](https://support.google.com/google-ads/answer/16194756?hl=en) and [[2]](https://developers.google.com/data-manager/api/reference/rest/v1/events/ingest#AdIdentifiers)
 
 ## Open Source
 The **Google Conversion Events Tag for GTM Server-Side** is developed and maintained by the [Stape Team](https://stape.io/) under the Apache 2.0 license.
