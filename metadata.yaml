@@ -1,6 +1,8 @@
 homepage: 'https://stape.io/'
 documentation: 'https://github.com/stape-io/google-conversion-events-tag'
 versions:
+  - sha: b16541f8e11a5fbe6c6979c4173f497543ad9679
+    changeNotes: Added support for automatic parsing of Click IDs and Session Attributes. Added Pageview event for setting the Session Attributes cookie.
   - sha: 8675caf206bd0f04c83ba9b3977fcfd5e3f76fcd
     changeNotes: Added missing User Data and Ad Identifiers validation before dispatching the event.
   - sha: 1e7c4c34ba986bdea6aac365d4ee302c8a1d5246

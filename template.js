@@ -1,7 +1,11 @@
 const BigQuery = require('BigQuery');
+const computeEffectiveTldPlusOne = require('computeEffectiveTldPlusOne');
+const createRegex = require('createRegex');
 const encodeUriComponent = require('encodeUriComponent');
 const getAllEventData = require('getAllEventData');
 const getContainerVersion = require('getContainerVersion');
+const getCookieValues = require('getCookieValues');
+const getEventData = require('getEventData');
 const getGoogleAuth = require('getGoogleAuth');
 const getRequestHeader = require('getRequestHeader');
 const getTimestampMillis = require('getTimestampMillis');
@@ -12,9 +16,12 @@ const makeInteger = require('makeInteger');
 const makeNumber = require('makeNumber');
 const makeString = require('makeString');
 const Math = require('Math');
+const parseUrl = require('parseUrl');
 const Object = require('Object');
 const sendHttpRequest = require('sendHttpRequest');
+const setCookie = require('setCookie');
 const sha256Sync = require('sha256Sync');
+const toBase64 = require('toBase64');
 
 /*==============================================================================
 ==============================================================================*/
@@ -27,22 +34,18 @@ if (shouldExitEarly(data, eventData)) {
   return data.gtmOnSuccess();
 }
 
-const mappedData = getDataForConversionEventsUpload(data, eventData);
+const actionHandlers = {
+  pageview: handlePageViewEvent,
+  conversion: handleConversionEvent
+};
 
-const invalidFields = validateMappedData(mappedData);
-if (invalidFields) {
-  log({
-    Name: 'GoogleConversionEvent',
-    Type: 'Message',
-    EventName: 'ConversionEvent',
-    Message: 'Request was not sent.',
-    Reason: invalidFields
-  });
-
+const handler = actionHandlers[data.eventType || 'conversion'];
+if (handler) {
+  const error = handler(data, eventData);
+  if (error) return;
+} else {
   return data.gtmOnFailure();
 }
-
-sendRequest(data, mappedData, apiVersion);
 
 if (useOptimisticScenario) {
   return data.gtmOnSuccess();
@@ -52,53 +55,83 @@ if (useOptimisticScenario) {
   Vendor related functions
 ==============================================================================*/
 
-function validateMappedData(mappedData) {
-  const conversionEvents = mappedData.events;
+function createSessionAttributesBase64String(sessionAttributes) {
+  let sessionAttributesBase64 = toBase64(JSON.stringify(sessionAttributes));
 
-  if (getType(conversionEvents) !== 'array' || conversionEvents.length === 0) {
-    return 'At least 1 Conversion Event must be specified.';
+  // Attempt to reduce the payload size if it exceeds the 4000-character limit.
+  const keysToRemove = ['landing_page_referrer', 'landing_page_user_agent'];
+  for (const key of keysToRemove) {
+    if (sessionAttributesBase64.length <= 4000) break;
+    sessionAttributes[key] = undefined;
+    sessionAttributesBase64 = toBase64(JSON.stringify(sessionAttributes));
+  }
+  if (sessionAttributesBase64.length > 4000) return;
+
+  const plusSignRegex = createRegex('\\+', 'g');
+  const forwardSlashRegex = createRegex('\\/', 'g');
+  const equalSignSuffixRegex = createRegex('=+$', 'g');
+  return sessionAttributesBase64
+    .replace(plusSignRegex, '-')
+    .replace(forwardSlashRegex, '_')
+    .replace(equalSignSuffixRegex, '');
+}
+
+function handlePageViewEvent(data, eventData) {
+  const url = getUrl(eventData);
+  if (!url) {
+    data.gtmOnSuccess();
+    return;
   }
 
-  const doesNotHaveUserData = conversionEvents.some((e) => {
+  // Ref: https://support.google.com/google-ads/answer/16194756
+
+  const urlSearchParams = parseUrl(url).searchParams;
+  const urlSearchParamsKeys = Object.keys(urlSearchParams);
+  const hasAdsParams = urlSearchParamsKeys.some((key) => {
     return (
-      getType(e.userData) !== 'object' ||
-      getType(e.userData.userIdentifiers) !== 'array' ||
-      e.userData.userIdentifiers.length === 0 ||
-      e.userData.userIdentifiers.some((i) => {
-        const userIdentifierIsObject = getType(i) === 'object';
-        const userIdentifierKey = userIdentifierIsObject ? Object.keys(i)[0] : undefined;
-        const userIdentifierValue = userIdentifierIsObject ? Object.values(i)[0] : undefined;
-        return (
-          !hasProps(i) ||
-          !userIdentifierValue ||
-          (userIdentifierKey === 'address' &&
-            (!hasProps(userIdentifierValue) || Object.values(userIdentifierValue).some((v) => !v)))
-        );
-      })
+      (key.indexOf('gad_') === 0 || key === 'gclid' || key === 'gbraid') && urlSearchParams[key]
     );
   });
 
-  const doesNotHaveAdIdentifiers = conversionEvents.some((e) => {
-    const adIdentifierEntries =
-      getType(e.adIdentifiers) === 'object' ? Object.entries(e.adIdentifiers) : undefined;
-    return (
-      getType(e.adIdentifiers) !== 'object' ||
-      !hasProps(e.adIdentifiers) ||
-      adIdentifierEntries.every((keyValue) => {
-        const key = keyValue[0];
-        const value = keyValue[1];
-        return (
-          !value ||
-          (key === 'landingPageDeviceInfo' &&
-            (!hasProps(value) || Object.values(value).every((v) => !v)))
-        );
-      })
-    );
-  });
-
-  if (doesNotHaveUserData && doesNotHaveAdIdentifiers) {
-    return 'At least 1 Ad Identifier or User Data must be specified.';
+  if (!hasAdsParams) {
+    data.gtmOnSuccess();
+    return;
   }
+
+  const sessionAttributes = {};
+  urlSearchParamsKeys.forEach((key) => {
+    if (key.indexOf('gad_') === 0) sessionAttributes[key] = urlSearchParams[key];
+  });
+  sessionAttributes.session_start_time_usec = makeString(getTimestampMillis() * 1000);
+  if (eventData.page_location) sessionAttributes.landing_page_url = eventData.page_location;
+  if (eventData.page_referrer) sessionAttributes.landing_page_referrer = eventData.page_referrer;
+  if (eventData.user_agent) sessionAttributes.landing_page_user_agent = eventData.user_agent;
+
+  let sessionAttributesBase64 = createSessionAttributesBase64String(sessionAttributes);
+  if (!sessionAttributesBase64) {
+    log({
+      Name: 'GoogleConversionEvent',
+      Type: 'Message',
+      EventName: 'PageviewEvent',
+      Message: 'Cookie was not set.',
+      Reason: 'Session attributes base64 cookie is bigger than 4000 characters.'
+    });
+    data.gtmOnFailure();
+    return true;
+  }
+
+  const cookieOptions = {
+    domain: getCookieDomain(data),
+    samesite: data.cookieSameSite || 'none',
+    path: '/',
+    secure: true,
+    httpOnly: !!data.cookieHttpOnly,
+    'max-age': 60 * 60 * 24 * (makeInteger(data.cookieExpiration) || 90)
+  };
+  setCookie('_dm_session_attributes', sessionAttributesBase64, cookieOptions, false);
+
+  data.gtmOnSuccess();
+  return;
 }
 
 function addDestinationsData(data, mappedData) {
@@ -337,12 +370,28 @@ function addUserData(data, eventData, conversionEvent) {
   return conversionEvent;
 }
 
-function addAdIdentifiers(data, conversionEvent) {
+function addAdIdentifiers(data, eventData, conversionEvent) {
   const adIdentifiers = {};
+
+  if (isUIFieldTrue(data.autoMapAdIdentifiersClickIds)) {
+    const clickIds = getClickIds(eventData);
+    if (clickIds.gclid) adIdentifiers.gclid = clickIds.gclid;
+    if (clickIds.gbraid) adIdentifiers.gbraid = clickIds.gbraid;
+    if (clickIds.wbraid) adIdentifiers.wbraid = clickIds.wbraid;
+  }
 
   if (data.adIdentifiersGclid) adIdentifiers.gclid = data.adIdentifiersGclid;
   if (data.adIdentifiersGbraid) adIdentifiers.gbraid = data.adIdentifiersGbraid;
   if (data.adIdentifiersWbraid) adIdentifiers.wbraid = data.adIdentifiersWbraid;
+
+  if (isUIFieldTrue(data.autoMapAdIdentifiersSessionAttributes)) {
+    const commonCookie = eventData.common_cookie || {};
+    const sessionAttributes =
+      eventData.session_attributes ||
+      commonCookie._dm_session_attributes ||
+      getCookieValues('_dm_session_attributes')[0];
+    if (sessionAttributes) adIdentifiers.sessionAttributes = sessionAttributes;
+  }
 
   if (data.adIdentifiersLandingPageDeviceInfoUserAgent) {
     adIdentifiers.landingPageDeviceInfo = adIdentifiers.landingPageDeviceInfo || {};
@@ -497,7 +546,7 @@ function addConversionEventsData(data, eventData, mappedData) {
 
     addConversionInformation(data, eventData, conversionEvent);
     addUserData(data, eventData, conversionEvent);
-    addAdIdentifiers(data, conversionEvent);
+    addAdIdentifiers(data, eventData, conversionEvent);
     addEventDeviceInformation(data, eventData, conversionEvent);
     addUserProperties(data, conversionEvent);
     addCartData(data, eventData, conversionEvent);
@@ -625,6 +674,67 @@ function hashDataIfNeeded(mappedData) {
   return mappedData;
 }
 
+function getClickIds(eventData) {
+  const parseClickIdFromCookieValue = (cookieValue, cookieType) => {
+    if (getType(cookieValue) !== 'string') return;
+    if (cookieType === 'server') {
+      const cookieValueMatch = cookieValue.match('\\.k(.+)\\$i');
+      return cookieValueMatch ? cookieValueMatch[1] : undefined;
+    } else if (cookieType === 'js') {
+      const cookieValueSplit = cookieValue.split('.');
+      return cookieValueSplit[cookieValueSplit.length - 1];
+    }
+  };
+
+  const urlSearchParams = (parseUrl(getUrl(eventData)) || {}).searchParams || {};
+  const commonCookie = eventData.common_cookie || {};
+
+  return {
+    gclid:
+      eventData.gclid ||
+      urlSearchParams.gclid ||
+      parseClickIdFromCookieValue(
+        eventData.FPGCLAW || commonCookie.FPGCLAW || getCookieValues('FPGCLAW')[0],
+        'server'
+      ) ||
+      parseClickIdFromCookieValue(
+        eventData._gcl_aw ||
+          eventData.gcl_aw ||
+          commonCookie._gcl_aw ||
+          getCookieValues('_gcl_aw')[0],
+        'js'
+      ),
+    gbraid:
+      eventData.gbraid ||
+      urlSearchParams.gbraid ||
+      parseClickIdFromCookieValue(
+        eventData.FPGCLAG || commonCookie.FPGCLAG || getCookieValues('FPGCLAG')[0],
+        'server'
+      ) ||
+      parseClickIdFromCookieValue(
+        eventData._gcl_ag ||
+          eventData.gcl_ag ||
+          commonCookie._gcl_ag ||
+          getCookieValues('_gcl_ag')[0],
+        'server' // '_gcl_ag' follows the Server format
+      ),
+    wbraid:
+      eventData.wbraid ||
+      urlSearchParams.wbraid ||
+      parseClickIdFromCookieValue(
+        eventData.FPGCLGB || commonCookie.FPGCLGB || getCookieValues('FPGCLGB')[0],
+        'server'
+      ) ||
+      parseClickIdFromCookieValue(
+        eventData._gcl_gb ||
+          eventData.gcl_gb ||
+          commonCookie._gcl_gb ||
+          getCookieValues('_gcl_gb')[0],
+        'js'
+      )
+  };
+}
+
 function generateRequestUrl(data, apiVersion) {
   if (data.authFlow === 'own') {
     return 'https://datamanager.googleapis.com/v' + apiVersion + '/events:ingest';
@@ -730,6 +840,75 @@ function sendRequest(data, mappedData, apiVersion) {
     });
 }
 
+function validateMappedData(mappedData) {
+  const conversionEvents = mappedData.events;
+
+  if (getType(conversionEvents) !== 'array' || conversionEvents.length === 0) {
+    return 'At least 1 Conversion Event must be specified.';
+  }
+
+  const doesNotHaveUserData = conversionEvents.some((e) => {
+    return (
+      getType(e.userData) !== 'object' ||
+      getType(e.userData.userIdentifiers) !== 'array' ||
+      e.userData.userIdentifiers.length === 0 ||
+      e.userData.userIdentifiers.some((i) => {
+        const userIdentifierIsObject = getType(i) === 'object';
+        const userIdentifierKey = userIdentifierIsObject ? Object.keys(i)[0] : undefined;
+        const userIdentifierValue = userIdentifierIsObject ? Object.values(i)[0] : undefined;
+        return (
+          !hasProps(i) ||
+          !userIdentifierValue ||
+          (userIdentifierKey === 'address' &&
+            (!hasProps(userIdentifierValue) || Object.values(userIdentifierValue).some((v) => !v)))
+        );
+      })
+    );
+  });
+
+  const doesNotHaveAdIdentifiers = conversionEvents.some((e) => {
+    const adIdentifierEntries =
+      getType(e.adIdentifiers) === 'object' ? Object.entries(e.adIdentifiers) : undefined;
+    return (
+      getType(e.adIdentifiers) !== 'object' ||
+      !hasProps(e.adIdentifiers) ||
+      adIdentifierEntries.every((keyValue) => {
+        const key = keyValue[0];
+        const value = keyValue[1];
+        return (
+          !value ||
+          (key === 'landingPageDeviceInfo' &&
+            (!hasProps(value) || Object.values(value).every((v) => !v)))
+        );
+      })
+    );
+  });
+
+  if (doesNotHaveUserData && doesNotHaveAdIdentifiers) {
+    return 'At least 1 Ad Identifier or User Data must be specified.';
+  }
+}
+
+function handleConversionEvent(data, eventData) {
+  const mappedData = getDataForConversionEventsUpload(data, eventData);
+
+  const invalidOrMissingFields = validateMappedData(mappedData);
+  if (invalidOrMissingFields) {
+    log({
+      Name: 'GoogleConversionEvent',
+      Type: 'Message',
+      EventName: 'ConversionEvent',
+      Message: 'Request was not sent.',
+      Reason: invalidOrMissingFields
+    });
+
+    data.gtmOnFailure();
+    return true;
+  }
+
+  sendRequest(data, mappedData, apiVersion);
+}
+
 /*==============================================================================
   Helpers
 ==============================================================================*/
@@ -737,10 +916,21 @@ function sendRequest(data, mappedData, apiVersion) {
 function shouldExitEarly(data, eventData) {
   if (!isConsentGivenOrNotRequired(data, eventData)) return true;
 
-  const url = eventData.page_location || getRequestHeader('referer');
+  const url = getUrl(data);
   if (url && url.lastIndexOf('https://gtm-msr.appspot.com/', 0) === 0) return true;
 
   return false;
+}
+
+function getUrl(eventData) {
+  return eventData.page_location || eventData.page_referrer || getRequestHeader('referer');
+}
+
+function getCookieDomain(data) {
+  return !data.cookieDomain || data.cookieDomain === 'auto'
+    ? computeEffectiveTldPlusOne(getEventData('page_location') || getRequestHeader('referer')) ||
+        'auto'
+    : data.cookieDomain;
 }
 
 function enc(data) {
