@@ -1,6 +1,8 @@
 homepage: 'https://stape.io/'
 documentation: 'https://github.com/stape-io/google-conversion-events-tag'
 versions:
+  - sha: c8a13d0527902d2abacf52a5277926bd664778dc
+    changeNotes: Enhanced validation for Destination fields.
   - sha: b16541f8e11a5fbe6c6979c4173f497543ad9679
     changeNotes: Added support for automatic parsing of Click IDs and Session Attributes. Added Pageview event for setting the Session Attributes cookie.
   - sha: 8675caf206bd0f04c83ba9b3977fcfd5e3f76fcd
