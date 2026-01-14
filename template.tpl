@@ -236,6 +236,9 @@ ___TEMPLATE_PARAMETERS___
                 "valueValidators": [
                   {
                     "type": "NON_EMPTY"
+                  },
+                  {
+                    "type": "POSITIVE_NUMBER"
                   }
                 ]
               }
@@ -310,6 +313,9 @@ ___TEMPLATE_PARAMETERS___
                 "valueValidators": [
                   {
                     "type": "NON_EMPTY"
+                  },
+                  {
+                    "type": "POSITIVE_NUMBER"
                   }
                 ]
               }
@@ -1062,7 +1068,7 @@ ___TEMPLATE_PARAMETERS___
                 "name": "cartDataItems",
                 "displayName": "Items",
                 "simpleValueType": true,
-                "help": "The list of items associated with the event. Each item is an object in the list with the following properties: \u003ci\u003emerchantProductId\u003c/i\u003e, \u003ci\u003equantity\u003c/i\u003e and \u003ci\u003eunitPrice\u003c/i\u003e.\n\u003cbr/\u003e\n\u003ca href\u003d\"https://developers.google.com/data-manager/api/reference/rest/v1/events/ingest#item\"\u003eLearn more\u003c/a\u003e."
+                "help": "The list of items associated with the event. Each item is an object in the list with the following properties: \u003ci\u003eitemId\u003c/i\u003e, \u003ci\u003emerchantProductId\u003c/i\u003e, \u003ci\u003equantity\u003c/i\u003e and \u003ci\u003eunitPrice\u003c/i\u003e.\n\u003cbr/\u003e\n\u003ca href\u003d\"https://developers.google.com/data-manager/api/reference/rest/v1/events/ingest#item\"\u003eLearn more\u003c/a\u003e."
               }
             ]
           },
@@ -1797,7 +1803,11 @@ function addCartData(data, eventData, conversionEvent) {
       const itemIdKey = data.itemIdKey ? data.itemIdKey : 'item_id';
       cartData.items = eventData.items.map((i) => {
         const item = {};
-        if (i[itemIdKey]) item.merchantProductId = makeString(i[itemIdKey]);
+        if (i[itemIdKey]) {
+          const itemId = makeString(i[itemIdKey]);
+          item.merchantProductId = itemId;
+          item.itemId = itemId;
+        }
         if (i.quantity) item.quantity = makeString(i.quantity);
         if (isValidValue(i.price)) item.unitPrice = makeNumber(i.price);
         return item;
@@ -1823,8 +1833,9 @@ function addCartData(data, eventData, conversionEvent) {
     cartData.items = data.cartDataItems.map((i) => {
       const item = {};
       if (i.merchantProductId) item.merchantProductId = makeString(i.merchantProductId);
+      if (i.itemId) item.itemId = makeString(i.itemId);
       if (i.quantity) item.quantity = makeString(i.quantity);
-      if (i.unitPrice) item.unitPrice = makeNumber(i.unitPrice);
+      if (isValidValue(i.unitPrice)) item.unitPrice = makeNumber(i.unitPrice);
       return item;
     });
   }
@@ -2027,53 +2038,39 @@ function getClickIds(eventData) {
       return cookieValueSplit[cookieValueSplit.length - 1];
     }
   };
-
+  const getClickIdValueFromSources = (clickIdName, eventData, urlSearchParams) => {
+    const commonCookie = eventData.common_cookie || {};
+    const clickIdNameMapping = {
+      gclid: { server: 'FPGCLAW', js: '_gcl_aw' },
+      gbraid: { server: 'FPGCLAG', js: '_gcl_ag' },
+      wbraid: { server: 'FPGCLGB', js: '_gcl_gb' }
+    };
+    const serverCookieName = clickIdNameMapping[clickIdName].server;
+    const jsCookieName = clickIdNameMapping[clickIdName].js;
+    return (
+      eventData[clickIdName] ||
+      urlSearchParams[clickIdName] ||
+      parseClickIdFromCookieValue(
+        eventData[serverCookieName] ||
+          commonCookie[serverCookieName] ||
+          getCookieValues(serverCookieName)[0],
+        'server'
+      ) ||
+      parseClickIdFromCookieValue(
+        eventData[jsCookieName] ||
+          eventData[jsCookieName.substring(1)] ||
+          commonCookie[jsCookieName] ||
+          getCookieValues(jsCookieName)[0],
+        clickIdName === 'gbraid' ? 'server' : 'js' // '_gcl_ag' follows the Server format
+      )
+    );
+  };
   const urlSearchParams = (parseUrl(getUrl(eventData)) || {}).searchParams || {};
-  const commonCookie = eventData.common_cookie || {};
 
   return {
-    gclid:
-      eventData.gclid ||
-      urlSearchParams.gclid ||
-      parseClickIdFromCookieValue(
-        eventData.FPGCLAW || commonCookie.FPGCLAW || getCookieValues('FPGCLAW')[0],
-        'server'
-      ) ||
-      parseClickIdFromCookieValue(
-        eventData._gcl_aw ||
-          eventData.gcl_aw ||
-          commonCookie._gcl_aw ||
-          getCookieValues('_gcl_aw')[0],
-        'js'
-      ),
-    gbraid:
-      eventData.gbraid ||
-      urlSearchParams.gbraid ||
-      parseClickIdFromCookieValue(
-        eventData.FPGCLAG || commonCookie.FPGCLAG || getCookieValues('FPGCLAG')[0],
-        'server'
-      ) ||
-      parseClickIdFromCookieValue(
-        eventData._gcl_ag ||
-          eventData.gcl_ag ||
-          commonCookie._gcl_ag ||
-          getCookieValues('_gcl_ag')[0],
-        'server' // '_gcl_ag' follows the Server format
-      ),
-    wbraid:
-      eventData.wbraid ||
-      urlSearchParams.wbraid ||
-      parseClickIdFromCookieValue(
-        eventData.FPGCLGB || commonCookie.FPGCLGB || getCookieValues('FPGCLGB')[0],
-        'server'
-      ) ||
-      parseClickIdFromCookieValue(
-        eventData._gcl_gb ||
-          eventData.gcl_gb ||
-          commonCookie._gcl_gb ||
-          getCookieValues('_gcl_gb')[0],
-        'js'
-      )
+    gclid: getClickIdValueFromSources('gclid', eventData, urlSearchParams),
+    gbraid: getClickIdValueFromSources('gbraid', eventData, urlSearchParams),
+    wbraid: getClickIdValueFromSources('wbraid', eventData, urlSearchParams)
   };
 }
 
@@ -2228,6 +2225,27 @@ function validateMappedData(mappedData) {
 
   if (doesNotHaveUserData && doesNotHaveAdIdentifiers) {
     return 'At least 1 Ad Identifier or User Data must be specified.';
+  }
+
+  const destinations = mappedData.destinations;
+  const validationKeys = [
+    'productDestinationId',
+    'reference',
+    'operatingAccount.accountId',
+    'linkedAccount.accountId',
+    'loginAccount.accountId'
+  ];
+  for (let i = 0; i < destinations.length; i++) {
+    const destination = destinations[i];
+    for (let j = 0; j < validationKeys.length; j++) {
+      const key = validationKeys[j];
+      const parts = key.split('.');
+      if (parts.length > 1 && !destination[parts[0]]) continue;
+      const value = parts.reduce((acc, part) => acc && acc[part], destination);
+      if (!isValidValue(value) || value === 'undefined') {
+        return 'destinations[' + i + '].' + key + ' is invalid.';
+      }
+    }
   }
 }
 
@@ -3152,23 +3170,24 @@ scenarios:
     \ 'sessionAttributesCookie'\n        },\n        eventDeviceInfo: { userAgent:\
     \ 'user_agent', ipAddress: 'ip_override' },\n        userProperties: { customerType:\
     \ 'NEW', customerValueBucket: 'LOW' },\n        cartData: {\n          items:\
-    \ [\n            { merchantProductId: 'SKU_12345', quantity: '3', unitPrice: 10.01\
-    \ },\n            { merchantProductId: 'SKU_12346', quantity: '2', unitPrice:\
-    \ 21.01 }\n          ],\n          merchantId: 'Merchant Center ID',\n       \
-    \   merchantFeedLabel: 'Merchant Center Feed Label',\n          merchantFeedLanguageCode:\
-    \ 'Merchant Center Feed Language Code',\n          transactionDiscount: 123\n\
-    \        },\n        customVariables: [\n          {\n            variable: 'TEST1',\n\
-    \            value: 'ABC',\n            destinationReferences: ['REFERENCE']\n\
-    \          },\n          { variable: 'TEST2', value: 'AAAAAAAA' },\n         \
-    \ {\n            variable: 'TEST3',\n            value: '123ABC',\n          \
-    \  destinationReferences: ['REFERENCE', 'REFERENCE2']\n          }\n        ],\n\
-    \        experimentalFields: [{ field: 'ABC', value: 'FOOBAR' }]\n      }\n  \
-    \  ],\n    encoding: 'HEX',\n    encryptionInfo: {\n      gcpWrappedKeyInfo: {\n\
-    \        keyType: 'XCHACHA20_POLY1305',\n        wipProvider: '123',\n       \
-    \ kekUri: '123',\n        encryptedDek: '123'\n      }\n    }\n  });\n\n  return\
-    \ Promise.create((resolve, reject) => {\n    resolve({ statusCode: 200 });\n \
-    \ });  \n});\n\nrunCode(copyMockData);\n\ncallLater(() => {\n  assertApi('gtmOnSuccess').wasCalled();\n\
-    \  assertApi('gtmOnFailure').wasNotCalled();\n});"
+    \ [\n            { itemId: 'SKU_12345', merchantProductId: 'SKU_12345', quantity:\
+    \ '3', unitPrice: 10.01 },\n            { itemId: 'SKU_12346', merchantProductId:\
+    \ 'SKU_12346', quantity: '2', unitPrice: 21.01 }\n          ],\n          merchantId:\
+    \ 'Merchant Center ID',\n          merchantFeedLabel: 'Merchant Center Feed Label',\n\
+    \          merchantFeedLanguageCode: 'Merchant Center Feed Language Code',\n \
+    \         transactionDiscount: 123\n        },\n        customVariables: [\n \
+    \         {\n            variable: 'TEST1',\n            value: 'ABC',\n     \
+    \       destinationReferences: ['REFERENCE']\n          },\n          { variable:\
+    \ 'TEST2', value: 'AAAAAAAA' },\n          {\n            variable: 'TEST3',\n\
+    \            value: '123ABC',\n            destinationReferences: ['REFERENCE',\
+    \ 'REFERENCE2']\n          }\n        ],\n        experimentalFields: [{ field:\
+    \ 'ABC', value: 'FOOBAR' }]\n      }\n    ],\n    encoding: 'HEX',\n    encryptionInfo:\
+    \ {\n      gcpWrappedKeyInfo: {\n        keyType: 'XCHACHA20_POLY1305',\n    \
+    \    wipProvider: '123',\n        kekUri: '123',\n        encryptedDek: '123'\n\
+    \      }\n    }\n  });\n\n  return Promise.create((resolve, reject) => {\n   \
+    \ resolve({ statusCode: 200 });\n  });  \n});\n\nrunCode(copyMockData);\n\ncallLater(()\
+    \ => {\n  assertApi('gtmOnSuccess').wasCalled();\n  assertApi('gtmOnFailure').wasNotCalled();\n\
+    });"
 - name: '[Conversion] [Single Event] [Data from auto-mapping - Click IDs] Request
     is successfully built and sent'
   code: "/*\n  Not all the scenarios are tested because when running all the tests\
@@ -3377,22 +3396,22 @@ scenarios:
     \ Center ID',\n          merchantFeedLabel: 'Merchant Center Feed Label',\n  \
     \        merchantFeedLanguageCode: 'Merchant Center Feed Language Code',\n   \
     \       transactionDiscount: 123,\n          items: [\n            {\n       \
-    \       merchantProductId: 'Merchant Product ID 1',\n              quantity: '1',\n\
-    \              unitPrice: 123\n            },\n            {\n              merchantProductId:\
-    \ 'Merchant Product ID 2',\n              quantity: '2',\n              unitPrice:\
-    \ 111\n            }\n          ]\n        },\n        customVariables: [\n  \
-    \        {\n            variable: 'TEST1',\n            value: 'ABC',\n      \
-    \      destinationReferences: ['REFERENCE']\n          },\n          { variable:\
-    \ 'TEST2', value: 'AAAAAAAA' },\n          {\n            variable: 'TEST3',\n\
-    \            value: '123ABC',\n            destinationReferences: ['REFERENCE',\
-    \ 'REFERENCE2']\n          }\n        ],\n        experimentalFields: [{ field:\
-    \ 'ABC', value: 'FOOBAR' }]\n      }\n    ],\n    encoding: 'HEX',\n    encryptionInfo:\
-    \ {\n      gcpWrappedKeyInfo: {\n        keyType: 'XCHACHA20_POLY1305',\n    \
-    \    wipProvider: '123',\n        kekUri: '123',\n        encryptedDek: '123'\n\
-    \      }\n    }\n  });\n\n  return Promise.create((resolve, reject) => {\n   \
-    \ resolve({ statusCode: 200 });\n  });  \n});\n\nrunCode(copyMockData);\n\ncallLater(()\
-    \ => {\n  assertApi('gtmOnSuccess').wasCalled();\n  assertApi('gtmOnFailure').wasNotCalled();\n\
-    });"
+    \       itemId: 'Product ID 1',\n              merchantProductId: 'Product ID\
+    \ 1',\n              quantity: '1',\n              unitPrice: 123\n          \
+    \  },\n            {\n              itemId: 'Product ID 2',\n              merchantProductId:\
+    \ 'Product ID 2',\n              quantity: '2',\n              unitPrice: 111\n\
+    \            }\n          ]\n        },\n        customVariables: [\n        \
+    \  {\n            variable: 'TEST1',\n            value: 'ABC',\n            destinationReferences:\
+    \ ['REFERENCE']\n          },\n          { variable: 'TEST2', value: 'AAAAAAAA'\
+    \ },\n          {\n            variable: 'TEST3',\n            value: '123ABC',\n\
+    \            destinationReferences: ['REFERENCE', 'REFERENCE2']\n          }\n\
+    \        ],\n        experimentalFields: [{ field: 'ABC', value: 'FOOBAR' }]\n\
+    \      }\n    ],\n    encoding: 'HEX',\n    encryptionInfo: {\n      gcpWrappedKeyInfo:\
+    \ {\n        keyType: 'XCHACHA20_POLY1305',\n        wipProvider: '123',\n   \
+    \     kekUri: '123',\n        encryptedDek: '123'\n      }\n    }\n  });\n\n \
+    \ return Promise.create((resolve, reject) => {\n    resolve({ statusCode: 200\
+    \ });\n  });  \n});\n\nrunCode(copyMockData);\n\ncallLater(() => {\n  assertApi('gtmOnSuccess').wasCalled();\n\
+    \  assertApi('gtmOnFailure').wasNotCalled();\n});"
 - name: '[Conversion] [Multiple Events] [Data from UI fields] Request is successfully
     built and sent'
   code: "const copyMockData = setAllMockDataByEventType('conversion', 'stape', {\n\
@@ -3430,20 +3449,21 @@ scenarios:
     \ Center ID',\n          merchantFeedLabel: 'Merchant Center Feed Label',\n  \
     \        merchantFeedLanguageCode: 'Merchant Center Feed Language Code',\n   \
     \       transactionDiscount: 123,\n          items: [\n            {\n       \
-    \       merchantProductId: 'Merchant Product ID 1',\n              quantity: '1',\n\
-    \              unitPrice: 123\n            },\n            {\n              merchantProductId:\
-    \ 'Merchant Product ID 2',\n              quantity: '2',\n              unitPrice:\
-    \ 111\n            }\n          ]\n        },\n        customVariables: [\n  \
-    \        {\n            variable: 'TEST1',\n            value: 'ABC',\n      \
-    \      destinationReferences: ['REFERENCE']\n          },\n          { variable:\
-    \ 'TEST2', value: 'AAAAAAAA' },\n          {\n            variable: 'TEST3',\n\
-    \            value: '123ABC',\n            destinationReferences: ['REFERENCE',\
-    \ 'REFERENCE2']\n          }\n        ],\n        experimentalFields: [{ field:\
-    \ 'ABC', value: 'FOOBAR' }]\n      },\n      {\n        transactionId: 'Transaction\
-    \ ID 2',\n        eventTimestamp: '2014-10-02T15:01:23Z',\n        lastUpdatedTimestamp:\
-    \ '2014-10-02T15:01:23Z',\n        currency: 'BRL',\n        conversionValue:\
-    \ 1,\n        eventSource: 'WEB',\n        userData: {\n          userIdentifiers:\
-    \ [\n            {\n              emailAddress:\n                '74790a65960d58724ba244c376e2bb6cbdd39f6c67d122760b319d51d11813a9'\n\
+    \       itemId: 'Product ID 1',\n              merchantProductId: 'Product ID\
+    \ 1',\n              quantity: '1',\n              unitPrice: 123\n          \
+    \  },\n            {\n              itemId: 'Product ID 2',\n              merchantProductId:\
+    \ 'Product ID 2',\n              quantity: '2',\n              unitPrice: 111\n\
+    \            }\n          ]\n        },\n        customVariables: [\n        \
+    \  {\n            variable: 'TEST1',\n            value: 'ABC',\n            destinationReferences:\
+    \ ['REFERENCE']\n          },\n          { variable: 'TEST2', value: 'AAAAAAAA'\
+    \ },\n          {\n            variable: 'TEST3',\n            value: '123ABC',\n\
+    \            destinationReferences: ['REFERENCE', 'REFERENCE2']\n          }\n\
+    \        ],\n        experimentalFields: [{ field: 'ABC', value: 'FOOBAR' }]\n\
+    \      },\n      {\n        transactionId: 'Transaction ID 2',\n        eventTimestamp:\
+    \ '2014-10-02T15:01:23Z',\n        lastUpdatedTimestamp: '2014-10-02T15:01:23Z',\n\
+    \        currency: 'BRL',\n        conversionValue: 1,\n        eventSource: 'WEB',\n\
+    \        userData: {\n          userIdentifiers: [\n            {\n          \
+    \    emailAddress:\n                '74790a65960d58724ba244c376e2bb6cbdd39f6c67d122760b319d51d11813a9'\n\
     \            },\n            {\n              phoneNumber:\n                '92effd108fc091e55b0239ffc94d867e649d45c28c3de6918ec1edcb0723602c'\n\
     \            },\n            {\n              address: {\n                givenName:\n\
     \                  '9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08',\n\
@@ -3459,22 +3479,22 @@ scenarios:
     \ Center ID',\n          merchantFeedLabel: 'Merchant Center Feed Label',\n  \
     \        merchantFeedLanguageCode: 'Merchant Center Feed Language Code',\n   \
     \       transactionDiscount: 123,\n          items: [\n            {\n       \
-    \       merchantProductId: 'Merchant Product ID 1',\n              quantity: '1',\n\
-    \              unitPrice: 123\n            },\n            {\n              merchantProductId:\
-    \ 'Merchant Product ID 2',\n              quantity: '2',\n              unitPrice:\
-    \ 111\n            }\n          ]\n        },\n        customVariables: [\n  \
-    \        {\n            variable: 'TEST1',\n            value: 'ABC',\n      \
-    \      destinationReferences: ['REFERENCE']\n          },\n          { variable:\
-    \ 'TEST2', value: 'AAAAAAAA' },\n          {\n            variable: 'TEST3',\n\
-    \            value: '123ABC',\n            destinationReferences: ['REFERENCE',\
-    \ 'REFERENCE2']\n          }\n        ],\n        experimentalFields: [{ field:\
-    \ 'ABC', value: 'FOOBAR' }]\n      }\n    ],\n    encoding: 'HEX',\n    encryptionInfo:\
-    \ {\n      gcpWrappedKeyInfo: {\n        keyType: 'XCHACHA20_POLY1305',\n    \
-    \    wipProvider: '123',\n        kekUri: '123',\n        encryptedDek: '123'\n\
-    \      }\n    }\n  });\n\n  return Promise.create((resolve, reject) => {\n   \
-    \ resolve({ statusCode: 200 });\n  });  \n});\n\nrunCode(copyMockData);\n\ncallLater(()\
-    \ => {\n  assertApi('gtmOnSuccess').wasCalled();\n  assertApi('gtmOnFailure').wasNotCalled();\n\
-    });"
+    \       itemId: 'Product ID 1',\n              merchantProductId: 'Product ID\
+    \ 1',\n              quantity: '1',\n              unitPrice: 123\n          \
+    \  },\n            {\n              itemId: 'Product ID 2',\n              merchantProductId:\
+    \ 'Product ID 2',\n              quantity: '2',\n              unitPrice: 111\n\
+    \            }\n          ]\n        },\n        customVariables: [\n        \
+    \  {\n            variable: 'TEST1',\n            value: 'ABC',\n            destinationReferences:\
+    \ ['REFERENCE']\n          },\n          { variable: 'TEST2', value: 'AAAAAAAA'\
+    \ },\n          {\n            variable: 'TEST3',\n            value: '123ABC',\n\
+    \            destinationReferences: ['REFERENCE', 'REFERENCE2']\n          }\n\
+    \        ],\n        experimentalFields: [{ field: 'ABC', value: 'FOOBAR' }]\n\
+    \      }\n    ],\n    encoding: 'HEX',\n    encryptionInfo: {\n      gcpWrappedKeyInfo:\
+    \ {\n        keyType: 'XCHACHA20_POLY1305',\n        wipProvider: '123',\n   \
+    \     kekUri: '123',\n        encryptedDek: '123'\n      }\n    }\n  });\n\n \
+    \ return Promise.create((resolve, reject) => {\n    resolve({ statusCode: 200\
+    \ });\n  });  \n});\n\nrunCode(copyMockData);\n\ncallLater(() => {\n  assertApi('gtmOnSuccess').wasCalled();\n\
+    \  assertApi('gtmOnFailure').wasNotCalled();\n});"
 - name: '[Conversion] [Request] Should call gtmOnFailure when promise resolves and
     status code is outside success range, or when the request fails'
   code: "[\n  {\n    callback: (resolve, reject) => resolve({ statusCode: 500 })\n\
@@ -3555,23 +3575,23 @@ setup: "const Promise = require('Promise');\nconst JSON = require('JSON');\ncons
   \  cartDataMerchantId: 'Merchant Center ID',\n      cartDataMerchantFeedLabel: 'Merchant\
   \ Center Feed Label',\n      cartDataMerchantFeedLanguageCode: 'Merchant Center\
   \ Feed Language Code',\n      cartDataTransactionDiscount: '123',\n      cartDataItems:\
-  \ [\n        { merchantProductId: 'Merchant Product ID 1', quantity: '1', unitPrice:\
-  \ '123' },\n        { merchantProductId: 'Merchant Product ID 2', quantity: '2',\
-  \ unitPrice: '111' }\n      ],\n    \n      customVariablesList: [\n        { name:\
-  \ 'TEST1', value: 'ABC', destinationReferences: 'REFERENCE' },\n        { name:\
-  \ 'TEST2', value: 'AAAAAAAA', destinationReferences: '' },\n        { name: 'TEST3',\
-  \ value: '123ABC', destinationReferences: ['REFERENCE', 'REFERENCE2'] }\n      ],\n\
-  \    \n      experimentalFieldsList: [{ name: 'ABC', value: 'FOOBAR' }],\n    \n\
-  \      adStorageConsent: 'optional',\n      logType: 'debug',\n      bigQueryLogType:\
-  \ 'no'\n    },\n    pageview: {\n      eventType: 'pageview',\n      \n      cookieExpiration:\
-  \ 90,\n      cookieDomain: 'auto',\n      cookieSameSite: 'none',\n      cookieHttpOnly:\
-  \ true,\n      adStorageConsent: 'optional'\n    }\n  };\n  \n  return assign(JSON.parse(JSON.stringify(mockData)),\
-  \ mockDataByEventType[eventType], mockDataByAuthType[authType] || {}, objToBeMerged\
-  \ || {});\n};\n\nconst setGetAllEventData = (objToBeMerged) => {\n  mock('getAllEventData',\
-  \ assign({\n    'x-ga-protocol_version': '2',\n    'x-ga-measurement_id': 'G-123ABC',\n\
-  \    'x-ga-gtm_version': '45je55e1za200',\n    'x-ga-page_id': 1747422523211,\n\
-  \    'x-ga-gcd': '13l3l3l3l1l1',\n    'x-ga-npa': '0',\n    'x-ga-dma': '0',\n \
-  \   'x-ga-mp2-tag_exp':\n      '101509157~103116025~103130498~103130500~103136993~103136995~103200001~103207802~103211513~103233427~103252644~103252646~103263073~103301114~103301116',\n\
+  \ [\n        { itemId: 'Product ID 1', merchantProductId: 'Product ID 1', quantity:\
+  \ '1', unitPrice: '123' },\n        { itemId: 'Product ID 2', merchantProductId:\
+  \ 'Product ID 2', quantity: '2', unitPrice: '111' }\n      ],\n    \n      customVariablesList:\
+  \ [\n        { name: 'TEST1', value: 'ABC', destinationReferences: 'REFERENCE' },\n\
+  \        { name: 'TEST2', value: 'AAAAAAAA', destinationReferences: '' },\n    \
+  \    { name: 'TEST3', value: '123ABC', destinationReferences: ['REFERENCE', 'REFERENCE2']\
+  \ }\n      ],\n    \n      experimentalFieldsList: [{ name: 'ABC', value: 'FOOBAR'\
+  \ }],\n    \n      adStorageConsent: 'optional',\n      logType: 'debug',\n    \
+  \  bigQueryLogType: 'no'\n    },\n    pageview: {\n      eventType: 'pageview',\n\
+  \      \n      cookieExpiration: 90,\n      cookieDomain: 'auto',\n      cookieSameSite:\
+  \ 'none',\n      cookieHttpOnly: true,\n      adStorageConsent: 'optional'\n   \
+  \ }\n  };\n  \n  return assign(JSON.parse(JSON.stringify(mockData)), mockDataByEventType[eventType],\
+  \ mockDataByAuthType[authType] || {}, objToBeMerged || {});\n};\n\nconst setGetAllEventData\
+  \ = (objToBeMerged) => {\n  mock('getAllEventData', assign({\n    'x-ga-protocol_version':\
+  \ '2',\n    'x-ga-measurement_id': 'G-123ABC',\n    'x-ga-gtm_version': '45je55e1za200',\n\
+  \    'x-ga-page_id': 1747422523211,\n    'x-ga-gcd': '13l3l3l3l1l1',\n    'x-ga-npa':\
+  \ '0',\n    'x-ga-dma': '0',\n    'x-ga-mp2-tag_exp':\n      '101509157~103116025~103130498~103130500~103136993~103136995~103200001~103207802~103211513~103233427~103252644~103252646~103263073~103301114~103301116',\n\
   \    client_id: 'AUJctU7H7hBB/aMuhE4pKwGu5DWDdklg5abyyyn8i/I=.1747154479',\n   \
   \ 'x-ga-ecid': '1294673677',\n    language: 'en-us',\n    screen_resolution: '1512x982',\n\
   \    event_location: { country: 'BR', region: 'SP' },\n    event_id: '101509157~103116025~103130498',\n\
@@ -3636,18 +3656,19 @@ setup: "const Promise = require('Promise');\nconst JSON = require('JSON');\ncons
   \ 'LOW' },\n    cartData: {\n      merchantId: 'Merchant Center ID',\n      merchantFeedLabel:\
   \ 'Merchant Center Feed Label',\n      merchantFeedLanguageCode: 'Merchant Center\
   \ Feed Language Code',\n      transactionDiscount: 123,\n      items: [\n      \
-  \  {\n          merchantProductId: 'Merchant Product ID 1',\n          quantity:\
-  \ '1',\n          unitPrice: 123\n        },\n        {\n          merchantProductId:\
-  \ 'Merchant Product ID 2',\n          quantity: '2',\n          unitPrice: 111\n\
-  \        }\n      ]\n    },\n    customVariables: [\n      {\n        variable:\
-  \ 'TEST1',\n        value: 'ABC',\n        destinationReferences: ['REFERENCE']\n\
-  \      },\n      { variable: 'TEST2', value: 'AAAAAAAA' },\n      {\n        variable:\
-  \ 'TEST3',\n        value: '123ABC',\n        destinationReferences: ['REFERENCE',\
-  \ 'REFERENCE2']\n      }\n    ],\n    experimentalFields: [{ field: 'ABC', value:\
-  \ 'FOOBAR' }]\n  },\n  {\n    transactionId: 'Transaction ID 2',\n    eventTimestamp:\
-  \ '2014-10-02T15:01:23Z',\n    lastUpdatedTimestamp: '2014-10-02T15:01:23Z',\n \
-  \   currency: 'BRL',\n    conversionValue: 1,\n    eventSource: 'WEB',\n    userData:\
-  \ {\n      userIdentifiers: [\n        {\n          emailAddress:\n            '74790a65960d58724ba244c376e2bb6cbdd39f6c67d122760b319d51d11813a9'\n\
+  \  {\n          itemId: 'Product ID 1',\n          merchantProductId: 'Product ID\
+  \ 1',\n          quantity: '1',\n          unitPrice: 123\n        },\n        {\n\
+  \          itemId: 'Product ID 2',\n          merchantProductId: 'Product ID 2',\n\
+  \          quantity: '2',\n          unitPrice: 111\n        }\n      ]\n    },\n\
+  \    customVariables: [\n      {\n        variable: 'TEST1',\n        value: 'ABC',\n\
+  \        destinationReferences: ['REFERENCE']\n      },\n      { variable: 'TEST2',\
+  \ value: 'AAAAAAAA' },\n      {\n        variable: 'TEST3',\n        value: '123ABC',\n\
+  \        destinationReferences: ['REFERENCE', 'REFERENCE2']\n      }\n    ],\n \
+  \   experimentalFields: [{ field: 'ABC', value: 'FOOBAR' }]\n  },\n  {\n    transactionId:\
+  \ 'Transaction ID 2',\n    eventTimestamp: '2014-10-02T15:01:23Z',\n    lastUpdatedTimestamp:\
+  \ '2014-10-02T15:01:23Z',\n    currency: 'BRL',\n    conversionValue: 1,\n    eventSource:\
+  \ 'WEB',\n    userData: {\n      userIdentifiers: [\n        {\n          emailAddress:\n\
+  \            '74790a65960d58724ba244c376e2bb6cbdd39f6c67d122760b319d51d11813a9'\n\
   \        },\n        {\n          phoneNumber:\n            '92effd108fc091e55b0239ffc94d867e649d45c28c3de6918ec1edcb0723602c'\n\
   \        },\n        {\n          address: {\n            givenName:\n         \
   \     'test',\n            familyName:\n              'test',\n            regionCode:\
@@ -3660,15 +3681,15 @@ setup: "const Promise = require('Promise');\nconst JSON = require('JSON');\ncons
   \ 'LOW' },\n    cartData: {\n      merchantId: 'Merchant Center ID',\n      merchantFeedLabel:\
   \ 'Merchant Center Feed Label',\n      merchantFeedLanguageCode: 'Merchant Center\
   \ Feed Language Code',\n      transactionDiscount: 123,\n      items: [\n      \
-  \  {\n          merchantProductId: 'Merchant Product ID 1',\n          quantity:\
-  \ '1',\n          unitPrice: 123\n        },\n        {\n          merchantProductId:\
-  \ 'Merchant Product ID 2',\n          quantity: '2',\n          unitPrice: 111\n\
-  \        }\n      ]\n    },\n    customVariables: [\n      {\n        variable:\
-  \ 'TEST1',\n        value: 'ABC',\n        destinationReferences: ['REFERENCE']\n\
-  \      },\n      { variable: 'TEST2', value: 'AAAAAAAA' },\n      {\n        variable:\
-  \ 'TEST3',\n        value: '123ABC',\n        destinationReferences: ['REFERENCE',\
-  \ 'REFERENCE2']\n      }\n    ],\n    experimentalFields: [{ field: 'ABC', value:\
-  \ 'FOOBAR' }]\n  }\n];"
+  \  {\n          itemId: 'Product ID 1',\n          merchantProductId: 'Product ID\
+  \ 1',\n          quantity: '1',\n          unitPrice: 123\n        },\n        {\n\
+  \          itemId: 'Product ID 2',\n          merchantProductId: 'Product ID 2',\n\
+  \          quantity: '2',\n          unitPrice: 111\n        }\n      ]\n    },\n\
+  \    customVariables: [\n      {\n        variable: 'TEST1',\n        value: 'ABC',\n\
+  \        destinationReferences: ['REFERENCE']\n      },\n      { variable: 'TEST2',\
+  \ value: 'AAAAAAAA' },\n      {\n        variable: 'TEST3',\n        value: '123ABC',\n\
+  \        destinationReferences: ['REFERENCE', 'REFERENCE2']\n      }\n    ],\n \
+  \   experimentalFields: [{ field: 'ABC', value: 'FOOBAR' }]\n  }\n];"
 
 
 ___NOTES___

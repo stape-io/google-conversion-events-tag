@@ -455,7 +455,11 @@ function addCartData(data, eventData, conversionEvent) {
       const itemIdKey = data.itemIdKey ? data.itemIdKey : 'item_id';
       cartData.items = eventData.items.map((i) => {
         const item = {};
-        if (i[itemIdKey]) item.merchantProductId = makeString(i[itemIdKey]);
+        if (i[itemIdKey]) {
+          const itemId = makeString(i[itemIdKey]);
+          item.merchantProductId = itemId;
+          item.itemId = itemId;
+        }
         if (i.quantity) item.quantity = makeString(i.quantity);
         if (isValidValue(i.price)) item.unitPrice = makeNumber(i.price);
         return item;
@@ -481,8 +485,9 @@ function addCartData(data, eventData, conversionEvent) {
     cartData.items = data.cartDataItems.map((i) => {
       const item = {};
       if (i.merchantProductId) item.merchantProductId = makeString(i.merchantProductId);
+      if (i.itemId) item.itemId = makeString(i.itemId);
       if (i.quantity) item.quantity = makeString(i.quantity);
-      if (i.unitPrice) item.unitPrice = makeNumber(i.unitPrice);
+      if (isValidValue(i.unitPrice)) item.unitPrice = makeNumber(i.unitPrice);
       return item;
     });
   }
@@ -685,53 +690,39 @@ function getClickIds(eventData) {
       return cookieValueSplit[cookieValueSplit.length - 1];
     }
   };
-
+  const getClickIdValueFromSources = (clickIdName, eventData, urlSearchParams) => {
+    const commonCookie = eventData.common_cookie || {};
+    const clickIdNameMapping = {
+      gclid: { server: 'FPGCLAW', js: '_gcl_aw' },
+      gbraid: { server: 'FPGCLAG', js: '_gcl_ag' },
+      wbraid: { server: 'FPGCLGB', js: '_gcl_gb' }
+    };
+    const serverCookieName = clickIdNameMapping[clickIdName].server;
+    const jsCookieName = clickIdNameMapping[clickIdName].js;
+    return (
+      eventData[clickIdName] ||
+      urlSearchParams[clickIdName] ||
+      parseClickIdFromCookieValue(
+        eventData[serverCookieName] ||
+          commonCookie[serverCookieName] ||
+          getCookieValues(serverCookieName)[0],
+        'server'
+      ) ||
+      parseClickIdFromCookieValue(
+        eventData[jsCookieName] ||
+          eventData[jsCookieName.substring(1)] ||
+          commonCookie[jsCookieName] ||
+          getCookieValues(jsCookieName)[0],
+        clickIdName === 'gbraid' ? 'server' : 'js' // '_gcl_ag' follows the Server format
+      )
+    );
+  };
   const urlSearchParams = (parseUrl(getUrl(eventData)) || {}).searchParams || {};
-  const commonCookie = eventData.common_cookie || {};
 
   return {
-    gclid:
-      eventData.gclid ||
-      urlSearchParams.gclid ||
-      parseClickIdFromCookieValue(
-        eventData.FPGCLAW || commonCookie.FPGCLAW || getCookieValues('FPGCLAW')[0],
-        'server'
-      ) ||
-      parseClickIdFromCookieValue(
-        eventData._gcl_aw ||
-          eventData.gcl_aw ||
-          commonCookie._gcl_aw ||
-          getCookieValues('_gcl_aw')[0],
-        'js'
-      ),
-    gbraid:
-      eventData.gbraid ||
-      urlSearchParams.gbraid ||
-      parseClickIdFromCookieValue(
-        eventData.FPGCLAG || commonCookie.FPGCLAG || getCookieValues('FPGCLAG')[0],
-        'server'
-      ) ||
-      parseClickIdFromCookieValue(
-        eventData._gcl_ag ||
-          eventData.gcl_ag ||
-          commonCookie._gcl_ag ||
-          getCookieValues('_gcl_ag')[0],
-        'server' // '_gcl_ag' follows the Server format
-      ),
-    wbraid:
-      eventData.wbraid ||
-      urlSearchParams.wbraid ||
-      parseClickIdFromCookieValue(
-        eventData.FPGCLGB || commonCookie.FPGCLGB || getCookieValues('FPGCLGB')[0],
-        'server'
-      ) ||
-      parseClickIdFromCookieValue(
-        eventData._gcl_gb ||
-          eventData.gcl_gb ||
-          commonCookie._gcl_gb ||
-          getCookieValues('_gcl_gb')[0],
-        'js'
-      )
+    gclid: getClickIdValueFromSources('gclid', eventData, urlSearchParams),
+    gbraid: getClickIdValueFromSources('gbraid', eventData, urlSearchParams),
+    wbraid: getClickIdValueFromSources('wbraid', eventData, urlSearchParams)
   };
 }
 
@@ -886,6 +877,27 @@ function validateMappedData(mappedData) {
 
   if (doesNotHaveUserData && doesNotHaveAdIdentifiers) {
     return 'At least 1 Ad Identifier or User Data must be specified.';
+  }
+
+  const destinations = mappedData.destinations;
+  const validationKeys = [
+    'productDestinationId',
+    'reference',
+    'operatingAccount.accountId',
+    'linkedAccount.accountId',
+    'loginAccount.accountId'
+  ];
+  for (let i = 0; i < destinations.length; i++) {
+    const destination = destinations[i];
+    for (let j = 0; j < validationKeys.length; j++) {
+      const key = validationKeys[j];
+      const parts = key.split('.');
+      if (parts.length > 1 && !destination[parts[0]]) continue;
+      const value = parts.reduce((acc, part) => acc && acc[part], destination);
+      if (!isValidValue(value) || value === 'undefined') {
+        return 'destinations[' + i + '].' + key + ' is invalid.';
+      }
+    }
   }
 }
 

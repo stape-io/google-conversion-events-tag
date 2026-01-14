@@ -99,6 +99,7 @@ This section allows you to send any additional key-value pairs for custom report
 * **Logging**: Configure console and/or BigQuery logging for debugging and monitoring requests and responses.
 
 ## Useful Resources
+* [Step-by-step guide on how to configure Google Conversion Events Tag](https://stape.io/helpdesk/documentation/configure-google-conversion-events-tag)
 * [Stape's Data Manager API Connection](https://stape.io/solutions/data-manager-api-connection)
 * [Data Manager API for Conversion Events](https://developers.google.com/data-manager/api/reference/rest/v1/events)
 * [Conversion Event definition](https://developers.google.com/data-manager/api/reference/rest/v1/events/ingest#Event)
