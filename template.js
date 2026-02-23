@@ -135,32 +135,36 @@ function handlePageViewEvent(data, eventData) {
 }
 
 function addDestinationsData(data, mappedData) {
+  const normalizeIds = (id) => {
+    return replaceAll(makeString(id), '[^0-9]', '');
+  };
+
   const destinations = [];
   const accountsAndDestinationsFromUI =
     data.stapeAuthDestinationsList || data.ownAuthDestinationsList; // Mutually exclusive.
 
   accountsAndDestinationsFromUI.forEach((row) => {
-    const productDestinationId = makeString(row.productDestinationId);
+    const productDestinationId = normalizeIds(row.productDestinationId);
     const destination = {
       reference: productDestinationId,
       productDestinationId: productDestinationId,
       operatingAccount: {
         accountType: row.product,
-        accountId: makeString(row.operatingAccountId)
+        accountId: normalizeIds(row.operatingAccountId)
       }
     };
 
     if (data.authFlow === 'stape' && row.linkedAccountId) {
       destination.linkedAccount = {
         accountType: row.product,
-        accountId: makeString(row.linkedAccountId)
+        accountId: normalizeIds(row.linkedAccountId)
       };
     }
 
     if (data.authFlow === 'own' && row.loginAccountId) {
       destination.loginAccount = {
         accountType: row.product,
-        accountId: makeString(row.loginAccountId)
+        accountId: normalizeIds(row.loginAccountId)
       };
     }
 
@@ -178,7 +182,22 @@ function addConsentData(data, mappedData) {
 
   consentTypes.forEach((consentType) => {
     if (!data[consentType]) return;
-    consent[consentType] = data[consentType];
+    switch (makeString(data[consentType])) {
+      case 'CONSENT_GRANTED':
+      case 'true':
+      case 'granted':
+        consent[consentType] = 'CONSENT_GRANTED';
+        break;
+      case 'CONSENT_DENIED':
+      case 'false':
+      case 'denied':
+        consent[consentType] = 'CONSENT_DENIED';
+        break;
+      case 'CONSENT_STATUS_UNSPECIFIED':
+        consent[consentType] = 'CONSENT_STATUS_UNSPECIFIED';
+      default:
+        return;
+    }
     mappedData.consent = consent;
   });
 
@@ -561,7 +580,8 @@ function addConversionEventsData(data, eventData, mappedData) {
     mappedData.events = [conversionEvent];
   } else if (
     data.conversionEventMode === 'multiple' &&
-    getType(data.conversionEvents) === 'array'
+    getType(data.conversionEvents) === 'array' &&
+    data.conversionEvents.length > 0
   ) {
     mappedData.events = data.conversionEvents;
   }
@@ -838,12 +858,12 @@ function validateMappedData(mappedData) {
     return 'At least 1 Conversion Event must be specified.';
   }
 
-  const doesNotHaveUserData = conversionEvents.some((e) => {
+  const isUserDataAbsent = (event) => {
     return (
-      getType(e.userData) !== 'object' ||
-      getType(e.userData.userIdentifiers) !== 'array' ||
-      e.userData.userIdentifiers.length === 0 ||
-      e.userData.userIdentifiers.some((i) => {
+      getType(event.userData) !== 'object' ||
+      getType(event.userData.userIdentifiers) !== 'array' ||
+      event.userData.userIdentifiers.length === 0 ||
+      event.userData.userIdentifiers.some((i) => {
         const userIdentifierIsObject = getType(i) === 'object';
         const userIdentifierKey = userIdentifierIsObject ? Object.keys(i)[0] : undefined;
         const userIdentifierValue = userIdentifierIsObject ? Object.values(i)[0] : undefined;
@@ -855,14 +875,13 @@ function validateMappedData(mappedData) {
         );
       })
     );
-  });
-
-  const doesNotHaveAdIdentifiers = conversionEvents.some((e) => {
+  };
+  const isAdIdentifiersAbsent = (event) => {
     const adIdentifierEntries =
-      getType(e.adIdentifiers) === 'object' ? Object.entries(e.adIdentifiers) : undefined;
+      getType(event.adIdentifiers) === 'object' ? Object.entries(event.adIdentifiers) : undefined;
     return (
-      getType(e.adIdentifiers) !== 'object' ||
-      !hasProps(e.adIdentifiers) ||
+      getType(event.adIdentifiers) !== 'object' ||
+      !hasProps(event.adIdentifiers) ||
       adIdentifierEntries.every((keyValue) => {
         const key = keyValue[0];
         const value = keyValue[1];
@@ -873,13 +892,30 @@ function validateMappedData(mappedData) {
         );
       })
     );
+  };
+  const doesNotHaveMatchData = conversionEvents.some((event) => {
+    return isUserDataAbsent(event) && isAdIdentifiersAbsent(event);
   });
-
-  if (doesNotHaveUserData && doesNotHaveAdIdentifiers) {
+  if (doesNotHaveMatchData) {
     return 'At least 1 Ad Identifier or User Data must be specified.';
   }
 
+  const rfc3339Regex = '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}.+';
+  const isTimestampFormatInvalid = conversionEvents.some((event) => {
+    return ['eventTimestamp', 'lastUpdatedTimestamp'].some((key) => {
+      return event[key] && (getType(event[key]) !== 'string' || !event[key].match(rfc3339Regex));
+    });
+  });
+  if (isTimestampFormatInvalid) {
+    return 'Timestamp format is invalid.';
+  }
+
   const destinations = mappedData.destinations;
+  const destinationsLengthLimit = 10;
+  if (destinations.length > destinationsLengthLimit) {
+    return 'Destinations list length must be at most ' + destinationsLengthLimit + '.';
+  }
+
   const validationKeys = [
     'productDestinationId',
     'reference',
@@ -894,7 +930,7 @@ function validateMappedData(mappedData) {
       const parts = key.split('.');
       if (parts.length > 1 && !destination[parts[0]]) continue;
       const value = parts.reduce((acc, part) => acc && acc[part], destination);
-      if (!isValidValue(value) || value === 'undefined') {
+      if (!isValidValue(value) || ['undefined', 'null'].indexOf(value) !== -1) {
         return 'destinations[' + i + '].' + key + ' is invalid.';
       }
     }
@@ -946,7 +982,8 @@ function getCookieDomain(data) {
 }
 
 function enc(data) {
-  return encodeUriComponent(makeString(data || ''));
+  if (['null', 'undefined'].indexOf(getType(data)) !== -1) data = '';
+  return encodeUriComponent(makeString(data));
 }
 
 function hasProps(obj) {
@@ -996,7 +1033,7 @@ function getConversionDateTime(timestamp) {
   if (!timestamp) return convertTimestampToRFC(getTimestampMillis());
 
   let timestampInt = makeInteger(timestamp);
-  if (timestampInt && getType(timestampInt) === 'number') {
+  if (getType(timestampInt) === 'number' && timestampInt > 0) {
     const timestampString = makeString(timestamp);
     // This will be false only in 2286, when timestamps in seconds starts to have 11 digits.
     timestampInt = timestampString.length === 10 ? timestamp * 1000 : timestamp;
@@ -1077,7 +1114,13 @@ function convertTimestampToRFC(timestamp) {
 
 function isValidValue(value) {
   const valueType = getType(value);
-  return valueType !== 'null' && valueType !== 'undefined' && value !== '';
+  return valueType !== 'null' && valueType !== 'undefined' && value !== '' && value === value;
+}
+
+function replaceAll(str, find, replace) {
+  if (getType(str) !== 'string') return str;
+  const regex = createRegex(find, 'g');
+  return str.replace(regex, replace);
 }
 
 function isUIFieldTrue(field) {
