@@ -172,7 +172,6 @@ ___TEMPLATE_PARAMETERS___
       {
         "type": "GROUP",
         "name": "destinationsGroup",
-        "displayName": "",
         "subParams": [
           {
             "type": "SIMPLE_TABLE",
@@ -253,6 +252,13 @@ ___TEMPLATE_PARAMETERS___
             "valueValidators": [
               {
                 "type": "NON_EMPTY"
+              },
+              {
+                "type": "TABLE_ROW_COUNT",
+                "args": [
+                  1,
+                  10
+                ]
               }
             ],
             "newRowButtonText": "Add Conversion Event",
@@ -330,13 +336,19 @@ ___TEMPLATE_PARAMETERS___
             "valueValidators": [
               {
                 "type": "NON_EMPTY"
+              },
+              {
+                "type": "TABLE_ROW_COUNT",
+                "args": [
+                  1,
+                  10
+                ]
               }
             ],
             "newRowButtonText": "Add Conversion Event",
             "help": "\u003cb\u003eProduct\u003c/b\u003e: The Product the Conversion belongs to.\n\u003cbr/\u003e\u003cbr/\u003e\n\u003cb\u003eOperating Customer ID\u003c/b\u003e: The \u003ci\u003eAccount ID\u003c/i\u003e (without hyphens) of the account (Google Ads account, DV360 account etc.) that will receive the conversion events. \u003ca href\u003d\"https://developers.google.com/data-manager/api/reference/rest/v1/Destination\"\u003eLearn more\u003c/a\u003e.\n\u003cbr/\u003e\u003cbr/\u003e\n\u003cb\u003eCustomer ID\u003c/b\u003e: The \u003ci\u003eAccount ID\u003c/i\u003e of the account (Google Ads account, DV360 account etc.) used for authorization (without hyphens) when making the API request.\n\u003cbr/\u003e\nIf your credentials are for access to a \u003ci\u003eManager Account\u003c/i\u003e that has the \u003ci\u003eOperating Account\u003c/i\u003e as one of its subaccounts, set the \u003ci\u003eCustomer ID\u003c/i\u003e to the ID of the \u003ci\u003eManager Account\u003c/i\u003e.\n\u003cbr/\u003e\nIf your credentials are for the account that is the \u003ci\u003eOperating Account\u003c/i\u003e, you don\u0027t need to set \u003ci\u003eCustomer ID\u003c/i\u003e.\n\u003cbr/\u003e\nLearn more: \u003ca href\u003d\"https://developers.google.com/data-manager/api/reference/rest/v1/Destination\"\u003e[1]\u003c/a\u003e and \u003ca href\u003d\"https://developers.google.com/data-manager/api/get-started/quickstart/send-events?persona\u003dadvertiser#prepare_a_destination\"\u003e[2]\u003c/a\u003e.\n\u003cbr/\u003e\u003cbr/\u003e\n\u003cb\u003eConversion Event ID\u003c/b\u003e: The ID of the conversion you want to interact with.\n\u003cbr/\u003e\nYou can find it by going to the \u003ci\u003eGoogle Ads account \u003e Goals \u003e Conversions \u003e Summary \u003e Access the desired Conversion Action\u003c/i\u003e. After you click on the Conversion Action, the ID is on the \u003cb\u003ectId\u003c/b\u003e URL query parameter on your browser.\n\u003cbr/\u003e"
           }
-        ],
-        "groupStyle": "NO_ZIPPY"
+        ]
       },
       {
         "type": "SELECT",
@@ -407,7 +419,7 @@ ___TEMPLATE_PARAMETERS___
               }
             ],
             "simpleValueType": true,
-            "help": "This represents consent to Ad User Data.",
+            "help": "This represents consent to Ad User Data. \n\u003cbr/\u003e\nWhen passing the value using a variable, make sure to return the exact strings as defined in the drop-down: \u003ci\u003eCONSENT_GRANTED\u003c/i\u003e, \u003ci\u003eCONSENT_DENIED\u003c/i\u003e and \u003ci\u003eCONSENT_STATUS_UNSPECIFIED\u003c/i\u003e.",
             "notSetText": "(not set)"
           },
           {
@@ -430,7 +442,7 @@ ___TEMPLATE_PARAMETERS___
               }
             ],
             "simpleValueType": true,
-            "help": "This represents consent to Ad Personalization.",
+            "help": "This represents consent to Ad Personalization.\n\u003cbr/\u003e\nWhen passing the value using a variable, make sure to return the exact strings as defined in the drop-down: \u003ci\u003eCONSENT_GRANTED\u003c/i\u003e, \u003ci\u003eCONSENT_DENIED\u003c/i\u003e and \u003ci\u003eCONSENT_STATUS_UNSPECIFIED\u003c/i\u003e.",
             "notSetText": "(not set)"
           }
         ]
@@ -559,7 +571,7 @@ ___TEMPLATE_PARAMETERS___
             "selectItems": [
               {
                 "value": "single",
-                "displayValue": "Single Conversion Event"
+                "displayValue": "Single Conversion Event (Recommended)"
               },
               {
                 "value": "multiple",
@@ -668,7 +680,7 @@ ___TEMPLATE_PARAMETERS___
                 "name": "transactionId",
                 "displayName": "Transaction/Order ID",
                 "simpleValueType": true,
-                "help": "\u003cb\u003eOptional\u003c/b\u003e when sending offline conversion or enhanced conversion for leads.\n\u003cbr/\u003e\n\u003cb\u003eRequired\u003c/b\u003e when sending offline conversion as an additional data source to boost performance and data strength of an online conversion.\n\u003cbr/\u003e\n\u003ca href\u003d\"https://developers.google.com/data-manager/api/devguides/events\"\u003eLearn more.\u003c/a\u003e\n\u003cbr/\u003e\u003cbr/\u003e\nThe unique identifier for this event."
+                "help": "The unique identifier for this event.\n\u003cbr/\u003e\u003cbr/\u003e\n\u003cb\u003eOptional\u003c/b\u003e when sending offline conversion or enhanced conversion for leads.\n\u003cbr/\u003e\n\u003cb\u003eRequired\u003c/b\u003e when sending offline conversion as an additional data source to boost performance and data strength of an online conversion.\n\u003cbr/\u003e\u003cbr/\u003e\n\u003ca href\u003d\"https://developers.google.com/data-manager/api/devguides/events\"\u003eLearn more.\u003c/a\u003e"
               },
               {
                 "type": "TEXT",
@@ -1483,32 +1495,36 @@ function handlePageViewEvent(data, eventData) {
 }
 
 function addDestinationsData(data, mappedData) {
+  const normalizeIds = (id) => {
+    return replaceAll(makeString(id), '[^0-9]', '');
+  };
+
   const destinations = [];
   const accountsAndDestinationsFromUI =
     data.stapeAuthDestinationsList || data.ownAuthDestinationsList; // Mutually exclusive.
 
   accountsAndDestinationsFromUI.forEach((row) => {
-    const productDestinationId = makeString(row.productDestinationId);
+    const productDestinationId = normalizeIds(row.productDestinationId);
     const destination = {
       reference: productDestinationId,
       productDestinationId: productDestinationId,
       operatingAccount: {
         accountType: row.product,
-        accountId: makeString(row.operatingAccountId)
+        accountId: normalizeIds(row.operatingAccountId)
       }
     };
 
     if (data.authFlow === 'stape' && row.linkedAccountId) {
       destination.linkedAccount = {
         accountType: row.product,
-        accountId: makeString(row.linkedAccountId)
+        accountId: normalizeIds(row.linkedAccountId)
       };
     }
 
     if (data.authFlow === 'own' && row.loginAccountId) {
       destination.loginAccount = {
         accountType: row.product,
-        accountId: makeString(row.loginAccountId)
+        accountId: normalizeIds(row.loginAccountId)
       };
     }
 
@@ -1526,7 +1542,22 @@ function addConsentData(data, mappedData) {
 
   consentTypes.forEach((consentType) => {
     if (!data[consentType]) return;
-    consent[consentType] = data[consentType];
+    switch (makeString(data[consentType])) {
+      case 'CONSENT_GRANTED':
+      case 'true':
+      case 'granted':
+        consent[consentType] = 'CONSENT_GRANTED';
+        break;
+      case 'CONSENT_DENIED':
+      case 'false':
+      case 'denied':
+        consent[consentType] = 'CONSENT_DENIED';
+        break;
+      case 'CONSENT_STATUS_UNSPECIFIED':
+        consent[consentType] = 'CONSENT_STATUS_UNSPECIFIED';
+      default:
+        return;
+    }
     mappedData.consent = consent;
   });
 
@@ -1909,7 +1940,8 @@ function addConversionEventsData(data, eventData, mappedData) {
     mappedData.events = [conversionEvent];
   } else if (
     data.conversionEventMode === 'multiple' &&
-    getType(data.conversionEvents) === 'array'
+    getType(data.conversionEvents) === 'array' &&
+    data.conversionEvents.length > 0
   ) {
     mappedData.events = data.conversionEvents;
   }
@@ -2186,12 +2218,12 @@ function validateMappedData(mappedData) {
     return 'At least 1 Conversion Event must be specified.';
   }
 
-  const doesNotHaveUserData = conversionEvents.some((e) => {
+  const isUserDataAbsent = (event) => {
     return (
-      getType(e.userData) !== 'object' ||
-      getType(e.userData.userIdentifiers) !== 'array' ||
-      e.userData.userIdentifiers.length === 0 ||
-      e.userData.userIdentifiers.some((i) => {
+      getType(event.userData) !== 'object' ||
+      getType(event.userData.userIdentifiers) !== 'array' ||
+      event.userData.userIdentifiers.length === 0 ||
+      event.userData.userIdentifiers.some((i) => {
         const userIdentifierIsObject = getType(i) === 'object';
         const userIdentifierKey = userIdentifierIsObject ? Object.keys(i)[0] : undefined;
         const userIdentifierValue = userIdentifierIsObject ? Object.values(i)[0] : undefined;
@@ -2203,14 +2235,13 @@ function validateMappedData(mappedData) {
         );
       })
     );
-  });
-
-  const doesNotHaveAdIdentifiers = conversionEvents.some((e) => {
+  };
+  const isAdIdentifiersAbsent = (event) => {
     const adIdentifierEntries =
-      getType(e.adIdentifiers) === 'object' ? Object.entries(e.adIdentifiers) : undefined;
+      getType(event.adIdentifiers) === 'object' ? Object.entries(event.adIdentifiers) : undefined;
     return (
-      getType(e.adIdentifiers) !== 'object' ||
-      !hasProps(e.adIdentifiers) ||
+      getType(event.adIdentifiers) !== 'object' ||
+      !hasProps(event.adIdentifiers) ||
       adIdentifierEntries.every((keyValue) => {
         const key = keyValue[0];
         const value = keyValue[1];
@@ -2221,13 +2252,30 @@ function validateMappedData(mappedData) {
         );
       })
     );
+  };
+  const doesNotHaveMatchData = conversionEvents.some((event) => {
+    return isUserDataAbsent(event) && isAdIdentifiersAbsent(event);
   });
-
-  if (doesNotHaveUserData && doesNotHaveAdIdentifiers) {
+  if (doesNotHaveMatchData) {
     return 'At least 1 Ad Identifier or User Data must be specified.';
   }
 
+  const rfc3339Regex = '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}.+';
+  const isTimestampFormatInvalid = conversionEvents.some((event) => {
+    return ['eventTimestamp', 'lastUpdatedTimestamp'].some((key) => {
+      return event[key] && (getType(event[key]) !== 'string' || !event[key].match(rfc3339Regex));
+    });
+  });
+  if (isTimestampFormatInvalid) {
+    return 'Timestamp format is invalid.';
+  }
+
   const destinations = mappedData.destinations;
+  const destinationsLengthLimit = 10;
+  if (destinations.length > destinationsLengthLimit) {
+    return 'Destinations list length must be at most ' + destinationsLengthLimit + '.';
+  }
+
   const validationKeys = [
     'productDestinationId',
     'reference',
@@ -2242,7 +2290,7 @@ function validateMappedData(mappedData) {
       const parts = key.split('.');
       if (parts.length > 1 && !destination[parts[0]]) continue;
       const value = parts.reduce((acc, part) => acc && acc[part], destination);
-      if (!isValidValue(value) || value === 'undefined') {
+      if (!isValidValue(value) || ['undefined', 'null'].indexOf(value) !== -1) {
         return 'destinations[' + i + '].' + key + ' is invalid.';
       }
     }
@@ -2294,7 +2342,8 @@ function getCookieDomain(data) {
 }
 
 function enc(data) {
-  return encodeUriComponent(makeString(data || ''));
+  if (['null', 'undefined'].indexOf(getType(data)) !== -1) data = '';
+  return encodeUriComponent(makeString(data));
 }
 
 function hasProps(obj) {
@@ -2344,7 +2393,7 @@ function getConversionDateTime(timestamp) {
   if (!timestamp) return convertTimestampToRFC(getTimestampMillis());
 
   let timestampInt = makeInteger(timestamp);
-  if (timestampInt && getType(timestampInt) === 'number') {
+  if (getType(timestampInt) === 'number' && timestampInt > 0) {
     const timestampString = makeString(timestamp);
     // This will be false only in 2286, when timestamps in seconds starts to have 11 digits.
     timestampInt = timestampString.length === 10 ? timestamp * 1000 : timestamp;
@@ -2425,7 +2474,13 @@ function convertTimestampToRFC(timestamp) {
 
 function isValidValue(value) {
   const valueType = getType(value);
-  return valueType !== 'null' && valueType !== 'undefined' && value !== '';
+  return valueType !== 'null' && valueType !== 'undefined' && value !== '' && value === value;
+}
+
+function replaceAll(str, find, replace) {
+  if (getType(str) !== 'string') return str;
+  const regex = createRegex(find, 'g');
+  return str.replace(regex, replace);
 }
 
 function isUIFieldTrue(field) {
@@ -3030,78 +3085,118 @@ scenarios:
     \ 'eyJnYWRfc291cmNlIjoiMSIsImdhZF9jYW1wYWlnbmlkIjoiMTIzMTIzIiwic2Vzc2lvbl9zdGFydF90aW1lX3VzZWMiOiIxNzQ3OTQ1ODMwNDU2MDAwIiwibGFuZGluZ19wYWdlX3VybCI6Imh0dHBzOi8vZXhhbXBsZS5jb20vP2dhZF9zb3VyY2U9MSZnYWRfY2FtcGFpZ25pZD0xMjMxMjMmZ2NsaWQ9Z2NsaWQiLCJsYW5kaW5nX3BhZ2VfcmVmZXJyZXIiOiJodHRwczovL2dvb2dsZS5jb20iLCJsYW5kaW5nX3BhZ2VfdXNlcl9hZ2VudCI6InVzZXJfYWdlbnQifQ',\
     \ scenario.expectedCookieOptions, false);\n  assertApi('gtmOnSuccess').wasCalled();\n\
     \  assertApi('gtmOnFailure').wasNotCalled();\n});"
-- name: '[Conversion] Request must not be sent if Conversions Events, or Ad Identifiers
-    and User Data are missing'
+- name: '[Conversion] Request must not be sent if validations fail'
   code: "const conversionEventBaseMock = JSON.parse(JSON.stringify(multipleConversionEventsMock[0]));\n\
     \n[\n  {\n    description: 'No conversion event is specified - undefined',\n \
-    \   mockData: {\n      conversionEventMode: 'multiple',\n      conversionEvents:\
-    \ undefined\n    }\n  },\n  {\n    description: 'No conversion event is specified\
-    \ - empty array',\n    mockData: {\n      conversionEventMode: 'multiple',\n \
-    \     conversionEvents: []\n    }\n  },\n  {\n    description: 'No Ad Identifiers\
-    \ and User Data',\n    mockData: {\n      conversionEventMode: 'multiple',\n \
-    \     conversionEvents: [\n        assign({}, conversionEventBaseMock, {\n   \
-    \       userData: undefined,\n          adIdentifiers: undefined\n        })\n\
-    \      ]\n    }\n  },\n  {\n    description: 'No Ad Identifiers and User Data',\n\
-    \    mockData: {\n      conversionEventMode: 'multiple',\n      conversionEvents:\
-    \ [\n        assign({}, conversionEventBaseMock, {\n          userData: {},\n\
-    \          adIdentifiers: undefined\n        })\n      ]\n    }\n  },\n  {\n \
-    \   description: 'No Ad Identifiers and User Data',\n    mockData: {\n      conversionEventMode:\
+    \   auth: 'stape',\n    mockData: {\n      conversionEventMode: 'multiple',\n\
+    \      conversionEvents: undefined\n    }\n  },\n  {\n    description: 'No conversion\
+    \ event is specified - empty array',\n    auth: 'stape',\n    mockData: {\n  \
+    \    conversionEventMode: 'multiple',\n      conversionEvents: []\n    }\n  },\n\
+    \  {\n    description: 'No Ad Identifiers and User Data - both are explicitly\
+    \ undefined',\n    auth: 'stape',\n    mockData: {\n      conversionEventMode:\
     \ 'multiple',\n      conversionEvents: [\n        assign({}, conversionEventBaseMock,\
-    \ {\n          userData: { userIdentifiers: undefined },\n          adIdentifiers:\
+    \ {\n          userData: undefined,\n          adIdentifiers: undefined\n    \
+    \    })\n      ]\n    }\n  },\n  {\n    description: 'No Ad Identifiers and User\
+    \ Data - userData is an empty object',\n    auth: 'stape',\n    mockData: {\n\
+    \      conversionEventMode: 'multiple',\n      conversionEvents: [\n        assign({},\
+    \ conversionEventBaseMock, {\n          userData: {},\n          adIdentifiers:\
     \ undefined\n        })\n      ]\n    }\n  },\n  {\n    description: 'No Ad Identifiers\
-    \ and User Data',\n    mockData: {\n      conversionEventMode: 'multiple',\n \
-    \     conversionEvents: [\n        assign({}, conversionEventBaseMock, {\n   \
-    \       userData: { userIdentifiers: [] },\n          adIdentifiers: undefined\n\
+    \ and User Data - userIdentifiers is undefined',\n    auth: 'stape',\n    mockData:\
+    \ {\n      conversionEventMode: 'multiple',\n      conversionEvents: [\n     \
+    \   assign({}, conversionEventBaseMock, {\n          userData: { userIdentifiers:\
+    \ undefined },\n          adIdentifiers: undefined\n        })\n      ]\n    }\n\
+    \  },\n  {\n    description: 'No Ad Identifiers and User Data - userIdentifiers\
+    \ is an empty array',\n    auth: 'stape',\n    mockData: {\n      conversionEventMode:\
+    \ 'multiple',\n      conversionEvents: [\n        assign({}, conversionEventBaseMock,\
+    \ {\n          userData: { userIdentifiers: [] },\n          adIdentifiers: undefined\n\
     \        })\n      ]\n    }\n  },\n  {\n    description: 'No Ad Identifiers and\
-    \ User Data',\n    mockData: {\n      conversionEventMode: 'multiple',\n     \
-    \ conversionEvents: [\n        assign({}, conversionEventBaseMock, {\n       \
-    \   userData: { userIdentifiers: ['test'] },\n          adIdentifiers: undefined\n\
-    \        })\n      ]\n    }\n  },\n  {\n    description: 'No Ad Identifiers and\
-    \ User Data',\n    mockData: {\n      conversionEventMode: 'multiple',\n     \
-    \ conversionEvents: [\n        assign({}, conversionEventBaseMock, {\n       \
-    \   userData: { userIdentifiers: [{}] },\n          adIdentifiers: undefined\n\
-    \        })\n      ]\n    }\n  },\n  {\n    description: 'No Ad Identifiers and\
-    \ User Data',\n    mockData: {\n      conversionEventMode: 'multiple',\n     \
-    \ conversionEvents: [\n        assign({}, conversionEventBaseMock, {\n       \
-    \   userData: { userIdentifiers: [{ emailAddress: undefined }] },\n          adIdentifiers:\
+    \ User Data - userIdentifiers contains an invalid string element',\n    auth:\
+    \ 'stape',\n    mockData: {\n      conversionEventMode: 'multiple',\n      conversionEvents:\
+    \ [\n        assign({}, conversionEventBaseMock, {\n          userData: { userIdentifiers:\
+    \ ['test'] },\n          adIdentifiers: undefined\n        })\n      ]\n    }\n\
+    \  },\n  {\n    description: 'No Ad Identifiers and User Data - userIdentifiers\
+    \ contains an empty object',\n    auth: 'stape',\n    mockData: {\n      conversionEventMode:\
+    \ 'multiple',\n      conversionEvents: [\n        assign({}, conversionEventBaseMock,\
+    \ {\n          userData: { userIdentifiers: [{}] },\n          adIdentifiers:\
     \ undefined\n        })\n      ]\n    }\n  },\n  {\n    description: 'No Ad Identifiers\
-    \ and User Data',\n    mockData: {\n      conversionEventMode: 'multiple',\n \
-    \     conversionEvents: [\n        assign({}, conversionEventBaseMock, {\n   \
-    \       userData: { userIdentifiers: [{ address: undefined }] },\n          adIdentifiers:\
-    \ undefined\n        })\n      ]\n    }\n  },\n  {\n    description: 'No Ad Identifiers\
-    \ and User Data',\n    mockData: {\n      conversionEventMode: 'multiple',\n \
-    \     conversionEvents: [\n        assign({}, conversionEventBaseMock, {\n   \
-    \       userData: { userIdentifiers: [{ address: {} }] },\n          adIdentifiers:\
-    \ undefined\n        })\n      ]\n    }\n  },\n  {\n    description: 'No Ad Identifiers\
-    \ and User Data',\n    mockData: {\n      conversionEventMode: 'multiple',\n \
-    \     conversionEvents: [\n        assign({}, conversionEventBaseMock, {\n   \
-    \       userData: { userIdentifiers: [{ address: { givenName: undefined } }] },\n\
-    \          adIdentifiers: undefined\n        })\n      ]\n    }\n  },\n  {\n \
-    \   description: 'No Ad Identifiers and User Data',\n    mockData: {\n      conversionEventMode:\
+    \ and User Data - emailAddress inside userIdentifiers is undefined',\n    auth:\
+    \ 'stape',\n    mockData: {\n      conversionEventMode: 'multiple',\n      conversionEvents:\
+    \ [\n        assign({}, conversionEventBaseMock, {\n          userData: { userIdentifiers:\
+    \ [{ emailAddress: undefined }] },\n          adIdentifiers: undefined\n     \
+    \   })\n      ]\n    }\n  },\n  {\n    description: 'No Ad Identifiers and User\
+    \ Data - address inside userIdentifiers is undefined',\n    auth: 'stape',\n \
+    \   mockData: {\n      conversionEventMode: 'multiple',\n      conversionEvents:\
+    \ [\n        assign({}, conversionEventBaseMock, {\n          userData: { userIdentifiers:\
+    \ [{ address: undefined }] },\n          adIdentifiers: undefined\n        })\n\
+    \      ]\n    }\n  },\n  {\n    description: 'No Ad Identifiers and User Data\
+    \ - address inside userIdentifiers is an empty object',\n    auth: 'stape',\n\
+    \    mockData: {\n      conversionEventMode: 'multiple',\n      conversionEvents:\
+    \ [\n        assign({}, conversionEventBaseMock, {\n          userData: { userIdentifiers:\
+    \ [{ address: {} }] },\n          adIdentifiers: undefined\n        })\n     \
+    \ ]\n    }\n  },\n  {\n    description: 'No Ad Identifiers and User Data - givenName\
+    \ inside address is undefined',\n    auth: 'stape',\n    mockData: {\n      conversionEventMode:\
+    \ 'multiple',\n      conversionEvents: [\n        assign({}, conversionEventBaseMock,\
+    \ {\n          userData: { userIdentifiers: [{ address: { givenName: undefined\
+    \ } }] },\n          adIdentifiers: undefined\n        })\n      ]\n    }\n  },\n\
+    \  {\n    description: 'No Ad Identifiers and User Data - adIdentifiers is an\
+    \ empty object',\n    auth: 'stape',\n    mockData: {\n      conversionEventMode:\
     \ 'multiple',\n      conversionEvents: [\n        assign({}, conversionEventBaseMock,\
     \ {\n          userData: undefined,\n          adIdentifiers: {}\n        })\n\
-    \      ]\n    }\n  },\n  {\n    description: 'No Ad Identifiers and User Data',\n\
-    \    mockData: {\n      conversionEventMode: 'multiple',\n      conversionEvents:\
+    \      ]\n    }\n  },\n  {\n    description: 'No Ad Identifiers and User Data\
+    \ - all adIdentifier fields are strictly undefined',\n    auth: 'stape',\n   \
+    \ mockData: {\n      conversionEventMode: 'multiple',\n      conversionEvents:\
     \ [\n        assign({}, conversionEventBaseMock, {\n          userData: undefined,\n\
     \          adIdentifiers: {\n             gclid: undefined,\n             gbraid:\
     \ undefined,\n             wbraid: undefined,\n             sessionAttributes:\
     \ undefined,\n             landingPageDeviceInfo: undefined\n           }\n  \
     \      })\n      ]\n    }\n  },\n  {\n    description: 'No Ad Identifiers and\
-    \ User Data',\n    mockData: {\n      conversionEventMode: 'multiple',\n     \
-    \ conversionEvents: [\n        assign({}, conversionEventBaseMock, {\n       \
-    \   userData: undefined,\n          adIdentifiers: {\n             gclid: undefined,\n\
-    \             gbraid: undefined,\n             wbraid: undefined,\n          \
-    \   sessionAttributes: undefined,\n             landingPageDeviceInfo: {}\n  \
-    \         }\n        })\n      ]\n    }\n  },\n  {\n    description: 'No Ad Identifiers\
-    \ and User Data',\n    mockData: {\n      conversionEventMode: 'multiple',\n \
-    \     conversionEvents: [\n        assign({}, conversionEventBaseMock, {\n   \
-    \       userData: undefined,\n          adIdentifiers: {\n             gclid:\
-    \ undefined,\n             gbraid: undefined,\n             wbraid: undefined,\n\
-    \             sessionAttributes: undefined,\n             landingPageDeviceInfo:\
-    \ {\n               userAgent: undefined,\n               ipAddress: undefined\n\
-    \             }\n           }\n        })\n      ]\n    }\n  }\n].forEach((scenario,\
-    \ i) => {\n  const copyMockData = setAllMockDataByEventType('conversion', 'stape',\
-    \ scenario.mockData);\n  \n  runCode(copyMockData);\n\n  assertApi('sendHttpRequest').wasNotCalled();\n\
+    \ User Data - landingPageDeviceInfo is an empty object',\n    auth: 'stape',\n\
+    \    mockData: {\n      conversionEventMode: 'multiple',\n      conversionEvents:\
+    \ [\n        assign({}, conversionEventBaseMock, {\n          userData: undefined,\n\
+    \          adIdentifiers: {\n             gclid: undefined,\n             gbraid:\
+    \ undefined,\n             wbraid: undefined,\n             sessionAttributes:\
+    \ undefined,\n             landingPageDeviceInfo: {}\n           }\n        })\n\
+    \      ]\n    }\n  },\n  {\n    description: 'No Ad Identifiers and User Data\
+    \ - properties inside landingPageDeviceInfo are undefined',\n    auth: 'stape',\n\
+    \    mockData: {\n      conversionEventMode: 'multiple',\n      conversionEvents:\
+    \ [\n        assign({}, conversionEventBaseMock, {\n          userData: undefined,\n\
+    \          adIdentifiers: {\n             gclid: undefined,\n             gbraid:\
+    \ undefined,\n             wbraid: undefined,\n             sessionAttributes:\
+    \ undefined,\n             landingPageDeviceInfo: {\n               userAgent:\
+    \ undefined,\n               ipAddress: undefined\n             }\n          \
+    \ }\n        })\n      ]\n    }\n  },\n  {\n    description: 'Invalid Timestamp\
+    \ format - eventTimestamp missing offset (Z or +/-)',\n    auth: 'stape',\n  \
+    \  mockData: {\n      conversionEventMode: 'single',\n      eventTimestamp: '2014-10-02T15:01:23'\n\
+    \    }\n  },\n  {\n    description: 'Invalid Timestamp format - eventTimestamp\
+    \ is negative integer',\n    auth: 'stape',\n    mockData: {\n      conversionEventMode:\
+    \ 'single',\n      eventTimestamp: -123123\n    }\n  },\n  {\n    description:\
+    \ 'Invalid Timestamp format - eventTimestamp is object',\n    auth: 'stape',\n\
+    \    mockData: {\n      conversionEventMode: 'single',\n      eventTimestamp:\
+    \ {}\n    }\n  },\n  {\n    description: 'Invalid Timestamp format - lastUpdatedTimestamp\
+    \ is \"undefinedZ\"',\n    auth: 'stape',\n    mockData: {\n      conversionEventMode:\
+    \ 'single',\n      lastUpdatedTimestamp: 'undefinedZ'\n    }\n  },  \n  {\n  \
+    \  description: 'Invalid Destination ID fields - productDestinationId is the string\
+    \ \"null\"',\n    auth: 'stape',\n    mockData: {\n      conversionEventMode:\
+    \ 'single',\n      stapeAuthDestinationsList: [\n        {\n          product:\
+    \ 'GOOGLE_ADS',\n          operatingAccountId: '123-213-123',\n          linkedAccountId:\
+    \ '123-213-123',\n          productDestinationId: 'null'\n        }\n      ]\n\
+    \    }\n  },\n  {\n    description: 'Invalid Destination ID fields - linkedAccountId\
+    \ contains letters (\"abcde\")',\n    auth: 'stape',\n    mockData: {\n      conversionEventMode:\
+    \ 'single',\n      stapeAuthDestinationsList: [\n        {\n          product:\
+    \ 'GOOGLE_ADS',\n          operatingAccountId: '123-213-123',\n          linkedAccountId:\
+    \ 'abcde',\n          productDestinationId: '123-213-123'\n        }\n      ]\n\
+    \    }\n  },\n  {\n    description: 'Invalid Destination ID fields - operatingAccountId\
+    \ is an empty string',\n    auth: 'stape',\n    mockData: {\n      conversionEventMode:\
+    \ 'single',\n      stapeAuthDestinationsList: [\n        {\n          product:\
+    \ 'GOOGLE_ADS',\n          operatingAccountId: '',\n          linkedAccountId:\
+    \ '123-213-123',\n          productDestinationId: '123-213-123'\n        }\n \
+    \     ]\n    }\n  },\n  {\n    description: 'Invalid Destination ID fields - loginAccountId\
+    \ is the string \"undefined\"',\n    auth: 'own',\n    mockData: {\n      conversionEventMode:\
+    \ 'single',\n      stapeAuthDestinationsList: [\n        {\n          product:\
+    \ 'GOOGLE_ADS',\n          operatingAccountId: '123-213-123',\n          loginAccountId:\
+    \ 'undefined',\n          productDestinationId: '123-213-123'\n        }\n   \
+    \   ]\n    }\n  }\n].forEach((scenario) => {\n  const copyMockData = setAllMockDataByEventType('conversion',\
+    \ scenario.auth, scenario.mockData);\n  \n  runCode(copyMockData);\n\n  assertApi('sendHttpRequest').wasNotCalled();\n\
     \  assertApi('gtmOnSuccess').wasNotCalled();\n  assertApi('gtmOnFailure').wasCalled();\n\
     });"
 - name: '[Conversion] Request URL is successfully built and sent'
@@ -3133,8 +3228,8 @@ scenarios:
   code: "const copyMockData = setAllMockDataByEventType('conversion', 'stape', {\n\
     \  conversionEventMode: 'single',\n  autoMapConversionInformation: true,\n  autoMapUserData:\
     \ true,\n  autoMapAdIdentifiersSessionAttributes: true,\n  autoMapEventDeviceInfo:\
-    \ true,\n  autoMapCartData: true,\n});\n\n[\n  'transactionId',\n  'currency',\n\
-    \  'conversionValue',\n  'userDataEmailAddresses',\n  'userDataPhoneNumbers',\n\
+    \ true,\n  autoMapCartData: true,\n});\n\n[\n  'transactionId',\n  'eventTimestamp',\n\
+    \  'currency',\n  'conversionValue',\n  'userDataEmailAddresses',\n  'userDataPhoneNumbers',\n\
     \  'addressGivenName',\n  'addressFamilyName',\n  'addressRegion',\n  'addressPostalCode',\n\
     \  'adIdentifiersSessionAttributes',\n  'eventDeviceInfoUserAgent',\n  'eventDeviceInfoIpAddress',\n\
     \  'cartDataItems'\n].forEach((key) => Object.delete(copyMockData, key));\n\n\
@@ -3142,21 +3237,19 @@ scenarios:
     \ === '_dm_session_attributes') {\n    return ['sessionAttributesCookie'];\n \
     \ }\n  return [];\n});\n\nmock('sendHttpRequest', (requestUrl, requestOptions,\
     \ requestBody) => {\n  const parsedRequestBody = JSON.parse(requestBody);\n  assertThat(parsedRequestBody).isEqualTo({\n\
-    \    validateOnly: false,\n    destinations: [\n      {\n        reference: 'productDestinationId',\n\
-    \        productDestinationId: 'productDestinationId',\n        operatingAccount:\
-    \ {\n          accountType: 'GOOGLE_ADS',\n          accountId: 'operatingAccountId'\n\
-    \        },\n        linkedAccount: { accountType: 'GOOGLE_ADS', accountId: 'linkedAccountId'\
-    \ }\n      },\n      {\n        reference: 'productDestinationId1',\n        productDestinationId:\
-    \ 'productDestinationId1',\n        operatingAccount: {\n          accountType:\
-    \ 'GOOGLE_ADS',\n          accountId: 'operatingAccountId1'\n        },\n    \
-    \    linkedAccount: { accountType: 'GOOGLE_ADS', accountId: 'linkedAccountId1'\
-    \ }\n      }\n    ],\n    consent: {\n      adUserData: 'CONSENT_GRANTED',\n \
-    \     adPersonalization: 'CONSENT_DENIED'\n    },\n    events: [\n      {\n  \
-    \      transactionId: 'transaction_id',\n        currency: 'BRL',\n        conversionValue:\
-    \ 123.45,\n        eventTimestamp: '2014-10-02T15:01:23Z',\n        lastUpdatedTimestamp:\
-    \ '2014-10-02T15:01:23Z',\n        eventSource: 'WEB',\n        userData: {\n\
-    \          userIdentifiers: [\n            {\n              emailAddress:\n  \
-    \              'ddffdce54594d729a13068951750239a1943c295a5f89349b5cf69744d4a1ba2'\n\
+    \    validateOnly: false,\n    destinations: [\n      {\n        reference: '3',\n\
+    \        productDestinationId: '3',\n        operatingAccount: {\n          accountType:\
+    \ 'GOOGLE_ADS',\n          accountId: '1'\n        },\n        linkedAccount:\
+    \ { accountType: 'GOOGLE_ADS', accountId: '2' }\n      },\n      {\n        reference:\
+    \ '33',\n        productDestinationId: '33',\n        operatingAccount: {\n  \
+    \        accountType: 'GOOGLE_ADS',\n          accountId: '11'\n        },\n \
+    \       linkedAccount: { accountType: 'GOOGLE_ADS', accountId: '22' }\n      }\n\
+    \    ],\n    consent: {\n      adUserData: 'CONSENT_GRANTED',\n      adPersonalization:\
+    \ 'CONSENT_DENIED'\n    },\n    events: [\n      {\n        transactionId: 'transaction_id',\n\
+    \        currency: 'BRL',\n        conversionValue: 123.45,\n        eventTimestamp:\
+    \ '2025-05-22T20:30:30+00:00',\n        lastUpdatedTimestamp: '2014-10-02T15:01:23Z',\n\
+    \        eventSource: 'WEB',\n        userData: {\n          userIdentifiers:\
+    \ [\n            {\n              emailAddress:\n                'ddffdce54594d729a13068951750239a1943c295a5f89349b5cf69744d4a1ba2'\n\
     \            },\n            {\n              emailAddress:\n                'afea90f78a2e604dc6cc5d7826ffdd2bfbab612a0c1222acf8df173319b7e809'\n\
     \            },\n            {\n              phoneNumber:\n                'c698c0b85d32cbcf5033ada58f34de87d4f7415efaf5a8d1c1e9e63393dcc85e'\n\
     \            },\n            {\n              address: {\n                givenName:\n\
@@ -3366,17 +3459,15 @@ scenarios:
     \  conversionEventMode: 'single'\n});\n\nmock('sendHttpRequest', (requestUrl,\
     \ requestOptions, requestBody) => {\n  const parsedRequestBody = JSON.parse(requestBody);\n\
     \    assertThat(parsedRequestBody).isEqualTo({\n    validateOnly: false,\n   \
-    \ destinations: [\n      {\n        reference: 'productDestinationId',\n     \
-    \   productDestinationId: 'productDestinationId',\n        operatingAccount: {\n\
-    \          accountType: 'GOOGLE_ADS',\n          accountId: 'operatingAccountId'\n\
-    \        },\n        linkedAccount: { accountType: 'GOOGLE_ADS', accountId: 'linkedAccountId'\
-    \ }\n      },\n      {\n        reference: 'productDestinationId1',\n        productDestinationId:\
-    \ 'productDestinationId1',\n        operatingAccount: {\n          accountType:\
-    \ 'GOOGLE_ADS',\n          accountId: 'operatingAccountId1'\n        },\n    \
-    \    linkedAccount: { accountType: 'GOOGLE_ADS', accountId: 'linkedAccountId1'\
-    \ }\n      }\n    ],\n    consent: {\n      adUserData: 'CONSENT_GRANTED',\n \
-    \     adPersonalization: 'CONSENT_DENIED'\n    },\n    events: [\n      {\n  \
-    \      transactionId: 'Transaction ID',\n        eventTimestamp: '2014-10-02T15:01:23Z',\n\
+    \ destinations: [\n      {\n        reference: '3',\n        productDestinationId:\
+    \ '3',\n        operatingAccount: {\n          accountType: 'GOOGLE_ADS',\n  \
+    \        accountId: '1'\n        },\n        linkedAccount: { accountType: 'GOOGLE_ADS',\
+    \ accountId: '2' }\n      },\n      {\n        reference: '33',\n        productDestinationId:\
+    \ '33',\n        operatingAccount: {\n          accountType: 'GOOGLE_ADS',\n \
+    \         accountId: '11'\n        },\n        linkedAccount: { accountType: 'GOOGLE_ADS',\
+    \ accountId: '22' }\n      }\n    ],\n    consent: {\n      adUserData: 'CONSENT_GRANTED',\n\
+    \      adPersonalization: 'CONSENT_DENIED'\n    },\n    events: [\n      {\n \
+    \       transactionId: 'Transaction ID',\n        eventTimestamp: '2014-10-02T15:01:23Z',\n\
     \        lastUpdatedTimestamp: '2014-10-02T15:01:23Z',\n        currency: 'BRL',\n\
     \        conversionValue: 123.45,\n        eventSource: 'WEB',\n        userData:\
     \ {\n          userIdentifiers: [\n            {\n              emailAddress:\n\
@@ -3418,19 +3509,17 @@ scenarios:
     \  conversionEventMode: 'multiple',\n  conversionEvents: multipleConversionEventsMock\n\
     });\n\nmock('sendHttpRequest', (requestUrl, requestOptions, requestBody) => {\n\
     \  const parsedRequestBody = JSON.parse(requestBody);\n  assertThat(parsedRequestBody).isEqualTo({\n\
-    \    validateOnly: false,\n    destinations: [\n      {\n        reference: 'productDestinationId',\n\
-    \        productDestinationId: 'productDestinationId',\n        operatingAccount:\
-    \ {\n          accountType: 'GOOGLE_ADS',\n          accountId: 'operatingAccountId'\n\
-    \        },\n        linkedAccount: { accountType: 'GOOGLE_ADS', accountId: 'linkedAccountId'\
-    \ }\n      },\n      {\n        reference: 'productDestinationId1',\n        productDestinationId:\
-    \ 'productDestinationId1',\n        operatingAccount: {\n          accountType:\
-    \ 'GOOGLE_ADS',\n          accountId: 'operatingAccountId1'\n        },\n    \
-    \    linkedAccount: { accountType: 'GOOGLE_ADS', accountId: 'linkedAccountId1'\
-    \ }\n      }\n    ],\n    consent: {\n      adUserData: 'CONSENT_GRANTED',\n \
-    \     adPersonalization: 'CONSENT_DENIED'\n    },\n    events: [\n      {\n  \
-    \      destionationReference: 'productDestinationId1',\n        transactionId:\
-    \ 'Transaction ID 1',\n        eventTimestamp: '2014-10-02T15:01:23Z',\n     \
-    \   lastUpdatedTimestamp: '2014-10-02T15:01:23Z',\n        currency: 'BRL',\n\
+    \    validateOnly: false,\n    destinations: [\n      {\n        reference: '3',\n\
+    \        productDestinationId: '3',\n        operatingAccount: {\n          accountType:\
+    \ 'GOOGLE_ADS',\n          accountId: '1'\n        },\n        linkedAccount:\
+    \ { accountType: 'GOOGLE_ADS', accountId: '2' }\n      },\n      {\n        reference:\
+    \ '33',\n        productDestinationId: '33',\n        operatingAccount: {\n  \
+    \        accountType: 'GOOGLE_ADS',\n          accountId: '11'\n        },\n \
+    \       linkedAccount: { accountType: 'GOOGLE_ADS', accountId: '22' }\n      }\n\
+    \    ],\n    consent: {\n      adUserData: 'CONSENT_GRANTED',\n      adPersonalization:\
+    \ 'CONSENT_DENIED'\n    },\n    events: [\n      {\n        destinationReference:\
+    \ '3',\n        transactionId: 'Transaction ID 1',\n        eventTimestamp: '2014-10-02T15:01:23Z',\n\
+    \        lastUpdatedTimestamp: '2014-10-02T15:01:23Z',\n        currency: 'BRL',\n\
     \        conversionValue: 123.45,\n        eventSource: 'WEB',\n        userData:\
     \ {\n          userIdentifiers: [\n            {\n              emailAddress:\n\
     \                'ddffdce54594d729a13068951750239a1943c295a5f89349b5cf69744d4a1ba2'\n\
@@ -3539,17 +3628,15 @@ setup: "const Promise = require('Promise');\nconst JSON = require('JSON');\ncons
   \ mock('getAllEventData', {});\n  mock('getCookieValues', []);\n};\n\nconst setAllMockDataByEventType\
   \ = (eventType, authType, objToBeMerged) => {\n  const mockDataByAuthType = {\n\
   \    stape: {\n      authFlow: 'stape',\n      stapeAuthDestinationsList: [\n  \
-  \      {\n          product: 'GOOGLE_ADS',\n          operatingAccountId: 'operatingAccountId',\n\
-  \          linkedAccountId: 'linkedAccountId',\n          productDestinationId:\
-  \ 'productDestinationId'\n        },\n        {\n          product: 'GOOGLE_ADS',\n\
-  \          operatingAccountId: 'operatingAccountId1',\n          linkedAccountId:\
-  \ 'linkedAccountId1',\n          productDestinationId: 'productDestinationId1'\n\
-  \        }\n      ]\n    },\n    own: {\n      authFlow: 'own',\n      ownAuthDestinationsList:\
+  \      {\n          product: 'GOOGLE_ADS',\n          operatingAccountId: '1',\n\
+  \          linkedAccountId: '2',\n          productDestinationId: '3'\n        },\n\
+  \        {\n          product: 'GOOGLE_ADS',\n          operatingAccountId: '11',\n\
+  \          linkedAccountId: '22',\n          productDestinationId: '33'\n      \
+  \  }\n      ]\n    },\n    own: {\n      authFlow: 'own',\n      ownAuthDestinationsList:\
   \ [\n        {\n          product: 'GOOGLE_ADS',\n          operatingAccountId:\
-  \ 'operatingAccountId',\n          loginAccountId: 'loginAccountId',\n         \
-  \ productDestinationId: 'productDestinationId'\n        },\n        {\n        \
-  \  product: 'GOOGLE_ADS',\n          operatingAccountId: 'operatingAccountId1',\n\
-  \          loginAccountId: 'loginAccountId1',\n          productDestinationId: 'productDestinationId1'\n\
+  \ '1',\n          loginAccountId: '2',\n          productDestinationId: '3'\n  \
+  \      },\n        {\n          product: 'GOOGLE_ADS',\n          operatingAccountId:\
+  \ '11',\n          loginAccountId: '22',\n          productDestinationId: '33'\n\
   \        }\n      ]\n    }\n  };\n  \n  const mockDataByEventType = {\n    conversion:\
   \ {\n      eventType: 'conversion',\n      \n      validateOnly: false,\n      useOptimisticScenario:\
   \ false,\n      \n      adUserData: 'CONSENT_GRANTED',\n      adPersonalization:\
@@ -3639,13 +3726,13 @@ setup: "const Promise = require('Promise');\nconst JSON = require('JSON');\ncons
   \ (header === 'x-gtm-default-domain') return 'expectedXGtmDefaultDomain';\n  else\
   \ if (header === 'x-gtm-api-key') return 'expectedXGtmApiKey';\n});\n\nmock('getGoogleAuth',\
   \ 'googleAuthToken');\n\nmock('getTimestampMillis', 1747945830456);\n\nconst multipleConversionEventsMock\
-  \ = [\n  {\n    destionationReference: 'productDestinationId1',\n    transactionId:\
-  \ 'Transaction ID 1',\n    eventTimestamp: '2014-10-02T15:01:23Z',\n    lastUpdatedTimestamp:\
-  \ '2014-10-02T15:01:23Z',\n    currency: 'BRL',\n    conversionValue: 123.45,\n\
-  \    eventSource: 'WEB',\n    userData: {\n      userIdentifiers: [\n        {\n\
-  \          emailAddress:\n            'test1@example.net'\n        },\n        {\n\
-  \          phoneNumber:\n            '+55199999999'\n        },\n        {\n   \
-  \       address: {\n            givenName:\n              '9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08',\n\
+  \ = [\n  {\n    destinationReference: '3',\n    transactionId: 'Transaction ID 1',\n\
+  \    eventTimestamp: '2014-10-02T15:01:23Z',\n    lastUpdatedTimestamp: '2014-10-02T15:01:23Z',\n\
+  \    currency: 'BRL',\n    conversionValue: 123.45,\n    eventSource: 'WEB',\n \
+  \   userData: {\n      userIdentifiers: [\n        {\n          emailAddress:\n\
+  \            'test1@example.net'\n        },\n        {\n          phoneNumber:\n\
+  \            '+55199999999'\n        },\n        {\n          address: {\n     \
+  \       givenName:\n              '9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08',\n\
   \            familyName:\n              '9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08',\n\
   \            regionCode: 'US',\n            postalCode: '10001'\n          }\n \
   \       }\n      ]\n    },\n    adIdentifiers: {\n      gclid: 'gclid',\n      gbraid:\
