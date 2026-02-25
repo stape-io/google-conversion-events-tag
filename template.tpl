@@ -1093,28 +1093,31 @@ ___TEMPLATE_PARAMETERS___
               {
                 "type": "LABEL",
                 "name": "customVariablesGroupLabel",
-                "displayName": "\u003ca href\u003d\"https://developers.google.com/data-manager/api/reference/rest/v1/events/ingest#customvariable\"\u003eLearn more\u003c/a\u003e about Custom Variables.\n\u003cbr/\u003e\nIn the optional \u003ci\u003eDestination References\u003c/i\u003e column, you may leave it blank, or specify either a single reference or an array of references.\n\u003cbr/\u003e\u003cbr/\u003e"
+                "displayName": "\u003ca href\u003d\"https://developers.google.com/data-manager/api/reference/rest/v1/events/ingest#customvariable\"\u003eLearn more\u003c/a\u003e about Custom Variables.\n\u003cbr/\u003e\n\u003ca href\u003d\"https://github.com/stape-io/google-conversion-events-tag?tab\u003dreadme-ov-file#how-to-obtain-the-variable-id\"\u003eLearn more\u003c/a\u003e about how to obtain the \u003ci\u003eCustom Variable ID\u003c/i\u003e.\n\u003cbr/\u003e\nIn the optional \u003ci\u003eDestination References\u003c/i\u003e column, you may leave it blank, or specify either a single reference or an array of references.\n\u003cbr/\u003e\u003cbr/\u003e"
               },
               {
                 "type": "SIMPLE_TABLE",
                 "name": "customVariablesList",
-                "displayName": "",
                 "simpleTableColumns": [
                   {
                     "defaultValue": "",
-                    "displayName": "Variable Name",
+                    "displayName": "Custom Variable ID",
                     "name": "name",
                     "type": "TEXT",
                     "isUnique": true,
                     "valueValidators": [
                       {
                         "type": "NON_EMPTY"
+                      },
+                      {
+                        "type": "POSITIVE_NUMBER"
                       }
-                    ]
+                    ],
+                    "valueHint": "123456"
                   },
                   {
                     "defaultValue": "",
-                    "displayName": "Variable Value",
+                    "displayName": "Custom Variable Value",
                     "name": "value",
                     "type": "TEXT",
                     "valueValidators": [
@@ -1130,7 +1133,7 @@ ___TEMPLATE_PARAMETERS___
                     "type": "TEXT"
                   }
                 ],
-                "newRowButtonText": "Add Variable"
+                "newRowButtonText": "Add Custom Variable"
               }
             ]
           },
@@ -1881,7 +1884,7 @@ function addCustomVariables(data, conversionEvent) {
 
   if (data.customVariablesList) {
     data.customVariablesList.forEach((d) => {
-      if (!isValidValue(d.value)) return;
+      if (!isValidValue(d.name) || !isValidValue(d.value)) return;
 
       const customVariable = { variable: makeString(d.name), value: makeString(d.value) };
 
