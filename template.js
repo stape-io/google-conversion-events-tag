@@ -521,7 +521,7 @@ function addCustomVariables(data, conversionEvent) {
 
   if (data.customVariablesList) {
     data.customVariablesList.forEach((d) => {
-      if (!isValidValue(d.value)) return;
+      if (!isValidValue(d.name) || !isValidValue(d.value)) return;
 
       const customVariable = { variable: makeString(d.name), value: makeString(d.value) };
 
