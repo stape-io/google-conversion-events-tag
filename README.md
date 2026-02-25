@@ -44,6 +44,8 @@ This mode sets the `_dm_session_attributes` cookie containing a base64 JSON enco
 ### Conversion
 This mode sends the conversion event.
 
+---
+
 #### Destination Accounts and Conversion Events
 This is where you define which Google Ads accounts and specific conversion actions will receive the data.
 -   **Product**: The Google product to send data to (currently Google Ads).
@@ -51,21 +53,29 @@ This is where you define which Google Ads accounts and specific conversion actio
 -   **Customer ID**: The ID of the account used for authorization (e.g., an MCC account). If the operating account is the same as the authorizing account, this can be the same.
 -   **Conversion Event ID**: The unique ID for the conversion action in Google Ads.
 
+---
+
 #### Conversion Event Mode
 You can send data in two ways:
 -   **Single Conversion Event**: Configure the parameters for a single conversion directly in the tag's UI fields.
 -   **Multiple Conversion Events**: Provide a complete, pre-formatted JSON array containing data for up to 2000 conversion events. This is useful for batch uploads.
+
+---
 
 #### Conversion Information
 This section contains the core details of the conversion.
 -   **Parameters**: Includes `Transaction/Order ID`, `Event Timestamp`, `Currency`, and `Conversion Value`.
     -   **Auto-mapping**: If enabled, the tag will attempt to automatically populate these fields from the incoming event data (e.g., `transaction_id`, `currency`, `value`).
 
+---
+
 #### User Data
 This section is crucial for matching the conversion to a user. You can provide multiple identifiers to improve match rates.
 -   **Identifiers**: Includes `Email Address(es)`, `Phone Number(s)`, and `User Address` (First Name, Last Name, Region, Postal Code).
     -   **Auto-mapping**: If enabled, the tag will automatically pull user data from common event data keys (e.g., `user_data.email`).
 -   **Hashing & Normalization**: The tag automatically normalizes and SHA-256 hashes user identifiers if they are provided in plain text, following Google's formatting guidelines.
+
+---
 
 #### Ad Identifiers
 This section allows you to send click identifiers for attribution. It's as important as the User Data parameters for matching the conversion to a user.
@@ -74,21 +84,113 @@ This section allows you to send click identifiers for attribution. It's as impor
 -   **Landing Page Parameters and Session Attributes**: `Landing Page User Agent`, `Landing Page IP Address` and `Session Attributes`
     -   **Auto-mapping**: If enabled, the tag will automatically pull Session Attributes from, in this order: `session_attributes` Event Data value > `_dm_session_attributes` Common Cookie value > `_dm_session_attributes` cookie set by the Pageview event of this tag.
 
+---
+
 #### Device Information
 You can include device details for the conversion event.
 -   **Parameters**: `User Agent` and `IP Address`.
+
+---
 
 #### User Properties
 This section provides more context about the customer.
 -   **Parameters**: `Customer Type` (New, Returning, or Re-engaged) and `Customer Value Bucket` (Low, Medium, or High).
 
+---
+
 #### Cart Data
 This section allows for sending product-level details for e-commerce transactions.
 -   **Parameters**: `Merchant Center ID`, `Feed Label`, `Feed Language Code`, `Transaction Discount`, and a list of `Items` with their ID, quantity, and price.
 
+---
+
 #### Custom Variables
 This section allows you to send any additional key-value pairs for custom reporting.
--   **Parameters**: A list of `Variable Name`, `Variable Value`, and optional `Destination References`.
+-   **Parameters**: A list of `Variable ID`, `Variable Value`, and optional `Destination References`.
+
+##### How to obtain the `Variable ID`
+<details>
+    <summary>⬇️ Click to expand ⬇️</summary>
+    <br/>
+
+There are 2 simple ways to obtain the Custom Variable ID.
+
+**1 - Using Scripts in Google Ads UI**
+
+1. Open Google Ads.
+2. Go to _Tools > Bulk Actions > Scripts_. Tip: use the search bar at the top.
+3. Click the `+` button to a new script and give it a descriptive name.
+4. Paste this code in the script code block:
+```js
+function main() {
+const query = `
+    SELECT
+    conversion_custom_variable.id,
+    conversion_custom_variable.name,
+    conversion_custom_variable.tag,
+    conversion_custom_variable.status
+    FROM conversion_custom_variable
+`;
+
+const searchResults = AdsApp.search(query);
+
+console.log('------------------------------------------------------------------------------------------------------');
+console.log('# CUSTOM VARIABLES INFORMATION #');
+console.log('------------------------------------------------------------------------------------------------------');
+console.log(
+    'NAME'.padEnd(30) + ' | ' +
+    'TAG STRING'.padEnd(20) + ' | ' +
+    'STATUS'.padEnd(18) + ' | ' +
+    'ID (Use this in GTM!)'
+);
+console.log('------------------------------------------------------------------------------------------------------');
+
+let count = 0;
+while (searchResults.hasNext()) {
+    const row = searchResults.next().conversionCustomVariable;
+    const status = row.status;
+    const name = row.name.padEnd(30);
+    const tag = row.tag.padEnd(20);
+    const id = row.id;
+    console.log(`${name} | ${tag} | ${status.padEnd(18)} | ${id}`);
+    count++;
+}
+
+if (count === 0) console.log('No custom variables found in this account.');
+
+console.log('------------------------------------------------------------------------------------------------------');
+}
+```
+5. Give it the requested permissions through the `Authorize` button.
+6. Click `Preview`. There's no need to click `Run`.
+7. Go to the `Logs` tab. This is where the **Custom Variable ID** will show up.
+
+    Example:
+
+    ![Google Ads script logs](https://github.com/user-attachments/assets/018a102c-53d2-4476-aa95-c15ea0cdbebd)
+
+8. Use the **Custom Variable ID** in the `Variable ID` field of the tag **Custom Variables** section.
+
+**2 - Using DevTools**
+
+1. Open Google Ads.
+2. Go to _Goals > Conversions > Custom Variables_. Tip: use the search bar at the top.
+3. Open DevTools and go to the Network tab.
+4. In the Network tab, search for `ConversionCustomVariableService/List`.
+6. Reload the Custom Variables page.
+7. The Network panel should display a request (filtered by the filter added in step 4).
+8. Click on this request and go to the `Response` tab.
+9. The Custom Variable information will be in the array value of the key named `"1"`. Each item in the array is a custom variable.
+10. The **Custom Variable ID** is the key `"1"` inside the object. The Custom Variable Name is the key `"4"`.
+
+    Example:
+
+    ![Google Ads DevTools](https://github.com/user-attachments/assets/47c3001b-51aa-40bc-b11f-04d3c3654ef8)
+
+11. Use the **Custom Variable ID** in the `Variable ID` field of the tag **Custom Variables** section.
+</details>
+
+---
 
 ### Advanced Options
 
