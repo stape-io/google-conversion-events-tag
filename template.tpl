@@ -397,7 +397,7 @@ ___TEMPLATE_PARAMETERS___
           {
             "type": "LABEL",
             "name": "requestLevelConsentGroupLabel",
-            "displayName": "Request-level consent to apply to all users in the request.\n\u003cbr/\u003e\nUser-level consent overrides request-level consent, and can be specified for each conversion event when sending data to \u003ci\u003eMultiple Conversion Events\u003c/i\u003e in the \u003cb\u003eConversion Events\u003c/b\u003e section."
+            "displayName": "Request-level consent to apply to all users in the request.\n\u003cbr/\u003e\nUser-level consent overrides request-level consent, and can be specified for each conversion event when sending data to \u003ci\u003eMultiple Conversion Events\u003c/i\u003e in the \u003cb\u003eConversion Events\u003c/b\u003e section.\n\u003cbr/\u003e\u003cbr/\u003e"
           },
           {
             "type": "SELECT",
@@ -721,7 +721,7 @@ ___TEMPLATE_PARAMETERS___
               {
                 "type": "LABEL",
                 "name": "userDataGroupLabel",
-                "displayName": "When sending User Data Identifiers, \u003cb\u003eat least one\u003c/b\u003e of User Email Address(es), User Phone Number(s) or User Address must be specified.\n\u003cbr/\u003e\nThe total number of User Data identifiers must not exceed 10 items."
+                "displayName": "When sending User Data Identifiers, \u003cb\u003eat least one\u003c/b\u003e of User Email Address(es), User Phone Number(s) or User Address must be specified.\nThe total number of User Data identifiers must not exceed 10 items.\n\u003cbr/\u003e\n❗ Ensure you have accepted the \u003ca href\u003d\"https://support.google.com/adspolicy/answer/7475709\"\u003e\u003cb\u003eCustomer Data Terms\u003c/b\u003e\u003c/a\u003e and enabled \u003cb\u003eEnhanced Conversions\u003c/b\u003e and \u003cb\u003eEnhanced Conversions for Leads\u003c/b\u003e in Google Ads (\u003ci\u003eGoals \u003e Conversions \u003e Settings\u003c/i\u003e). These settings must be active for the destination account and its manager (MCC) account, if applicable.\n\u003cbr/\u003e\u003cbr/\u003e"
               },
               {
                 "type": "SELECT",
