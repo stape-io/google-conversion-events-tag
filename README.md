@@ -27,7 +27,10 @@ The tag is designed to handle both single and multiple conversion event uploads 
         1.  Set up your **Destination Accounts and Conversion Events**, specifying the Advertising Accounts Customer IDs and the corresponding Conversion Event IDs you want to send data to.
         2.  Choose your **Conversion Event Mode**: `Single` to configure one event's data through the UI, or `Multiple` to manually provide a pre-formatted array of events.
         3.  Configure the **Conversion Information**, **User Data**, and other relevant parameter groups. The tag can auto-map many of these fields from a standard GA4 or e-commerce data layer.
-4.  Add a trigger to fire the tag on the appropriate server-side events (e.g., a `page_view` event or a `purchase` event).
+            > ❗ If using Enhanced Conversions (user email address, user phone number etc.), ensure you do the following in Google Ads (_Goals > Conversions > Settings_). These settings must be active for the destination account and its manager (MCC) account, if applicable:
+            >    1.  Accept the [Customer Data Terms](https://support.google.com/adspolicy/answer/7475709).
+            >    2.  Enable **Enhanced Conversions** and **Enhanced Conversions for Leads**.
+        4.  Add a trigger to fire the tag on the appropriate server-side events (e.g., a `page_view` event or a `purchase` event).
 
 ## Event Types
 
