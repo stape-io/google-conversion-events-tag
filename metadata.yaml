@@ -1,6 +1,8 @@
 homepage: 'https://stape.io/'
 documentation: 'https://github.com/stape-io/google-conversion-events-tag'
 versions:
+  - sha: e4085d7d5695446146cba3f2cdbb41b2e0325422
+    changeNotes: Added normalization to Consent values received from variables.
   - sha: 0edcc7ff01f0c5a58d2e973e5681e20edcec3f05
     changeNotes: Added requirements explanation for Enhanced Conversions.
   - sha: a66aac119946c0cff0b0eb87d4c83c2c8253eca1

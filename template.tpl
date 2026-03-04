@@ -419,7 +419,7 @@ ___TEMPLATE_PARAMETERS___
               }
             ],
             "simpleValueType": true,
-            "help": "This represents consent to Ad User Data. \n\u003cbr/\u003e\nWhen passing the value using a variable, make sure to return the exact strings as defined in the drop-down: \u003ci\u003eCONSENT_GRANTED\u003c/i\u003e, \u003ci\u003eCONSENT_DENIED\u003c/i\u003e and \u003ci\u003eCONSENT_STATUS_UNSPECIFIED\u003c/i\u003e.",
+            "help": "This represents consent to Ad User Data. \n\u003cbr/\u003e\u003cbr/\u003e\nWhen passing the value using a variable, make sure to return the exact strings (case insensitive) as defined below: \n\u003cul\u003e\n\u003cli\u003eFor consent granted: \u003ci\u003eCONSENT_GRANTED\u003c/i\u003e, \u003ci\u003eGRANTED\u003c/i\u003e or \u003ci\u003eTRUE\u003c/i\u003e\u003c/li\u003e\n\u003cli\u003eFor consent denied: \u003ci\u003eCONSENT_DENIED\u003c/i\u003e, \u003ci\u003eDENIED\u003c/i\u003e or \u003ci\u003eFALSE\u003c/i\u003e\u003c/li\u003e\n\u003cli\u003eFor consent unknown: \u003ci\u003eCONSENT_STATUS_UNSPECIFIED\u003c/i\u003e\u003c/li\u003e\n\u003c/ul\u003e",
             "notSetText": "(not set)"
           },
           {
@@ -442,7 +442,7 @@ ___TEMPLATE_PARAMETERS___
               }
             ],
             "simpleValueType": true,
-            "help": "This represents consent to Ad Personalization.\n\u003cbr/\u003e\nWhen passing the value using a variable, make sure to return the exact strings as defined in the drop-down: \u003ci\u003eCONSENT_GRANTED\u003c/i\u003e, \u003ci\u003eCONSENT_DENIED\u003c/i\u003e and \u003ci\u003eCONSENT_STATUS_UNSPECIFIED\u003c/i\u003e.",
+            "help": "This represents consent to Ad Personalization.\n\u003cbr/\u003e\u003cbr/\u003e\nWhen passing the value using a variable, make sure to return the exact strings (case insensitive) as defined below: \n\u003cul\u003e\n\u003cli\u003eFor consent granted: \u003ci\u003eCONSENT_GRANTED\u003c/i\u003e, \u003ci\u003eGRANTED\u003c/i\u003e or \u003ci\u003eTRUE\u003c/i\u003e\u003c/li\u003e\n\u003cli\u003eFor consent denied: \u003ci\u003eCONSENT_DENIED\u003c/i\u003e, \u003ci\u003eDENIED\u003c/i\u003e or \u003ci\u003eFALSE\u003c/i\u003e\u003c/li\u003e\n\u003cli\u003eFor consent unknown: \u003ci\u003eCONSENT_STATUS_UNSPECIFIED\u003c/i\u003e\u003c/li\u003e\n\u003c/ul\u003e",
             "notSetText": "(not set)"
           }
         ]
@@ -1545,15 +1545,15 @@ function addConsentData(data, mappedData) {
 
   consentTypes.forEach((consentType) => {
     if (!data[consentType]) return;
-    switch (makeString(data[consentType])) {
+    switch (makeString(data[consentType]).toUpperCase()) {
       case 'CONSENT_GRANTED':
-      case 'true':
-      case 'granted':
+      case 'TRUE':
+      case 'GRANTED':
         consent[consentType] = 'CONSENT_GRANTED';
         break;
       case 'CONSENT_DENIED':
-      case 'false':
-      case 'denied':
+      case 'FALSE':
+      case 'DENIED':
         consent[consentType] = 'CONSENT_DENIED';
         break;
       case 'CONSENT_STATUS_UNSPECIFIED':

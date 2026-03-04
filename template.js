@@ -182,15 +182,15 @@ function addConsentData(data, mappedData) {
 
   consentTypes.forEach((consentType) => {
     if (!data[consentType]) return;
-    switch (makeString(data[consentType])) {
+    switch (makeString(data[consentType]).toUpperCase()) {
       case 'CONSENT_GRANTED':
-      case 'true':
-      case 'granted':
+      case 'TRUE':
+      case 'GRANTED':
         consent[consentType] = 'CONSENT_GRANTED';
         break;
       case 'CONSENT_DENIED':
-      case 'false':
-      case 'denied':
+      case 'FALSE':
+      case 'DENIED':
         consent[consentType] = 'CONSENT_DENIED';
         break;
       case 'CONSENT_STATUS_UNSPECIFIED':
