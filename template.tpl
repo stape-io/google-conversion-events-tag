@@ -1273,13 +1273,6 @@ ___TEMPLATE_PARAMETERS___
         "simpleValueType": true,
         "defaultValue": "debug"
       }
-    ],
-    "enablingConditions": [
-      {
-        "paramName": "eventType",
-        "paramValue": "pageview",
-        "type": "NOT_EQUALS"
-      }
     ]
   },
   {
@@ -1347,13 +1340,6 @@ ___TEMPLATE_PARAMETERS___
           }
         ]
       }
-    ],
-    "enablingConditions": [
-      {
-        "paramName": "eventType",
-        "paramValue": "pageview",
-        "type": "NOT_EQUALS"
-      }
     ]
   }
 ]
@@ -1389,7 +1375,7 @@ const toBase64 = require('toBase64');
 /*==============================================================================
 ==============================================================================*/
 
-const apiVersion = '1';
+const API_VERSION = '1';
 const eventData = getAllEventData();
 const useOptimisticScenario = isUIFieldTrue(data.useOptimisticScenario);
 
@@ -1476,7 +1462,7 @@ function handlePageViewEvent(data, eventData) {
       Name: 'GoogleConversionEvent',
       Type: 'Message',
       EventName: 'PageviewEvent',
-      Message: 'Cookie was not set.',
+      Message: '⚠️ [WARNING] Cookie was not set.',
       Reason: 'Session attributes base64 cookie is bigger than 4000 characters.'
     });
     data.gtmOnFailure();
@@ -2273,6 +2259,19 @@ function validateMappedData(mappedData) {
     return 'Timestamp format is invalid.';
   }
 
+  const isTransactionIdInvalid = conversionEvents.some((event) => {
+    return (
+      event.transactionId &&
+      (event.transactionId.length === 1 ||
+        ['123', '1234', 'null', 'undefined', 'none', 'transactionId', 'transaction_id'].indexOf(
+          event.transactionId
+        ) !== -1)
+    );
+  });
+  if (isTransactionIdInvalid) {
+    return 'Transaction ID value is invalid.';
+  }
+
   const destinations = mappedData.destinations;
   const destinationsLengthLimit = 10;
   if (destinations.length > destinationsLengthLimit) {
@@ -2309,7 +2308,7 @@ function handleConversionEvent(data, eventData) {
       Name: 'GoogleConversionEvent',
       Type: 'Message',
       EventName: 'ConversionEvent',
-      Message: 'Request was not sent.',
+      Message: '🛑 [ERROR] Request was not sent.',
       Reason: invalidOrMissingFields
     });
 
@@ -2317,7 +2316,7 @@ function handleConversionEvent(data, eventData) {
     return true;
   }
 
-  sendRequest(data, mappedData, apiVersion);
+  sendRequest(data, mappedData, API_VERSION);
 }
 
 /*==============================================================================
@@ -3177,8 +3176,32 @@ scenarios:
     \    mockData: {\n      conversionEventMode: 'single',\n      eventTimestamp:\
     \ {}\n    }\n  },\n  {\n    description: 'Invalid Timestamp format - lastUpdatedTimestamp\
     \ is \"undefinedZ\"',\n    auth: 'stape',\n    mockData: {\n      conversionEventMode:\
-    \ 'single',\n      lastUpdatedTimestamp: 'undefinedZ'\n    }\n  },  \n  {\n  \
-    \  description: 'Invalid Destination ID fields - productDestinationId is the string\
+    \ 'single',\n      lastUpdatedTimestamp: 'undefinedZ'\n    }\n  },\n  {\n    description:\
+    \ 'Invalid Transaction ID - single character',\n    auth: 'stape',\n    mockData:\
+    \ {\n      conversionEventMode: 'single',\n      transactionId: 'a'\n    }\n \
+    \ },\n  {\n    description: 'Invalid Transaction ID - \"123\"',\n    auth: 'stape',\n\
+    \    mockData: {\n      conversionEventMode: 'single',\n      transactionId: '123'\n\
+    \    }\n  },\n  /* Commented out because one more test will make all the test\
+    \ suite timeout.\n  {\n    description: 'Invalid Transaction ID - \"123\"',\n\
+    \    auth: 'stape',\n    mockData: {\n      conversionEventMode: 'single',\n \
+    \     transactionId: '1234'\n    }\n  },\n  */\n  {\n    description: 'Invalid\
+    \ Transaction ID - \"null\"',\n    auth: 'stape',\n    mockData: {\n      conversionEventMode:\
+    \ 'single',\n      transactionId: 'null'\n    }\n  },\n  {\n    description: 'Invalid\
+    \ Transaction ID - \"undefined\"',\n    auth: 'stape',\n    mockData: {\n    \
+    \  conversionEventMode: 'single',\n      transactionId: 'undefined'\n    }\n \
+    \ },\n  {\n    description: 'Invalid Transaction ID - \"none\"',\n    auth: 'stape',\n\
+    \    mockData: {\n      conversionEventMode: 'single',\n      transactionId: 'none'\n\
+    \    }\n  },\n  {\n    description: 'Invalid Transaction ID - \"transactionId\"\
+    ',\n    auth: 'stape',\n    mockData: {\n      conversionEventMode: 'single',\n\
+    \      transactionId: 'transactionId'\n    }\n  },\n  /* Commented out because\
+    \ one more test will make all the test suite timeout.\n  {\n    description: 'Invalid\
+    \ Transaction ID - \"transaction_id\"',\n    auth: 'stape',\n    mockData: {\n\
+    \      conversionEventMode: 'single',\n      transactionId: 'transaction_id'\n\
+    \    }\n  },\n  */\n  {\n    description: 'Invalid Transaction ID - single character\
+    \ in multiple event mode',\n    auth: 'stape',\n    mockData: {\n      conversionEventMode:\
+    \ 'multiple',\n      conversionEvents: [\n        assign({}, conversionEventBaseMock,\
+    \ {\n          transactionId: 'x'\n        })\n      ]\n    }\n  },\n  {\n   \
+    \ description: 'Invalid Destination ID fields - productDestinationId is the string\
     \ \"null\"',\n    auth: 'stape',\n    mockData: {\n      conversionEventMode:\
     \ 'single',\n      stapeAuthDestinationsList: [\n        {\n          product:\
     \ 'GOOGLE_ADS',\n          operatingAccountId: '123-213-123',\n          linkedAccountId:\
@@ -3248,8 +3271,8 @@ scenarios:
     \        accountType: 'GOOGLE_ADS',\n          accountId: '11'\n        },\n \
     \       linkedAccount: { accountType: 'GOOGLE_ADS', accountId: '22' }\n      }\n\
     \    ],\n    consent: {\n      adUserData: 'CONSENT_GRANTED',\n      adPersonalization:\
-    \ 'CONSENT_DENIED'\n    },\n    events: [\n      {\n        transactionId: 'transaction_id',\n\
-    \        currency: 'BRL',\n        conversionValue: 123.45,\n        eventTimestamp:\
+    \ 'CONSENT_DENIED'\n    },\n    events: [\n      {\n        transactionId: 'transaction_id\
+    \ 123',\n        currency: 'BRL',\n        conversionValue: 123.45,\n        eventTimestamp:\
     \ '2025-05-22T20:30:30+00:00',\n        lastUpdatedTimestamp: '2014-10-02T15:01:23Z',\n\
     \        eventSource: 'WEB',\n        userData: {\n          userIdentifiers:\
     \ [\n            {\n              emailAddress:\n                'ddffdce54594d729a13068951750239a1943c295a5f89349b5cf69744d4a1ba2'\n\
@@ -3470,7 +3493,7 @@ scenarios:
     \         accountId: '11'\n        },\n        linkedAccount: { accountType: 'GOOGLE_ADS',\
     \ accountId: '22' }\n      }\n    ],\n    consent: {\n      adUserData: 'CONSENT_GRANTED',\n\
     \      adPersonalization: 'CONSENT_DENIED'\n    },\n    events: [\n      {\n \
-    \       transactionId: 'Transaction ID',\n        eventTimestamp: '2014-10-02T15:01:23Z',\n\
+    \       transactionId: 'Transaction ID 123',\n        eventTimestamp: '2014-10-02T15:01:23Z',\n\
     \        lastUpdatedTimestamp: '2014-10-02T15:01:23Z',\n        currency: 'BRL',\n\
     \        conversionValue: 123.45,\n        eventSource: 'WEB',\n        userData:\
     \ {\n          userIdentifiers: [\n            {\n              emailAddress:\n\
@@ -3647,7 +3670,7 @@ setup: "const Promise = require('Promise');\nconst JSON = require('JSON');\ncons
   \ true,\n      gcpWrappedKeyType: 'XCHACHA20_POLY1305',\n      gcpWrappedKeyEncryptedDek:\
   \ '123',\n      gcpWrappedKeyKekUri: '123',\n      gcpWrappedKeyWipProvider: '123',\n\
   \      conversionEventMode: 'single',\n    \n      autoMapConversionInformation:\
-  \ true,\n      transactionId: 'Transaction ID',\n      eventTimestamp: '2014-10-02T15:01:23Z',\n\
+  \ true,\n      transactionId: 'Transaction ID 123',\n      eventTimestamp: '2014-10-02T15:01:23Z',\n\
   \      lastUpdatedTimestamp: '2014-10-02T15:01:23Z',\n      currency: 'BRL',\n \
   \     conversionValue: '123.45',\n      eventSource: 'WEB',\n    \n      autoMapUserData:\
   \ true,\n      userDataEmailAddresses: 'google.google.google@gmail.com',\n     \
@@ -3704,38 +3727,38 @@ setup: "const Promise = require('Promise');\nconst JSON = require('JSON');\ncons
   \    value: 123.45,\n    currency: 'BRL',\n    user_data: {\n      email: { 0: 'test1@example.net',\
   \ 1: 'test2@example.org' },\n      phone_number: '+55 (19) 99999-9999',\n      address:\
   \ {\n        first_name: 'test',\n        last_name: 'test',\n        postal_code:\
-  \ '10001',\n        country: 'BR'\n      }\n    },\n    transaction_id: 'transaction_id',\n\
-  \    items: [\n      {\n        item_id: 'SKU_12345',\n        item_name: 'Stan\
-  \ and Friends Tee',\n        affiliation: 'Google Merchandise Store',\n        coupon:\
-  \ 'SUMMER_FUN',\n        discount: 2.22,\n        index: 0,\n        item_brand:\
+  \ '10001',\n        country: 'BR'\n      }\n    },\n    transaction_id: 'transaction_id\
+  \ 123',\n    items: [\n      {\n        item_id: 'SKU_12345',\n        item_name:\
+  \ 'Stan and Friends Tee',\n        affiliation: 'Google Merchandise Store',\n  \
+  \      coupon: 'SUMMER_FUN',\n        discount: 2.22,\n        index: 0,\n     \
+  \   item_brand: 'Google',\n        item_category: 'Apparel|iajsdiajsd|oasodiasd',\n\
+  \        item_list_id: 'related_products',\n        item_list_name: 'Related Products',\n\
+  \        item_variant: 'green',\n        location_id: 'ChIJIQBpAG2ahYAR_6128GcTUEo',\n\
+  \        price: 10.01,\n        quantity: 3,\n        item_group_id: 'abc'\n   \
+  \   },\n      {\n        item_id: 'SKU_12346',\n        item_name: \"Google Grey\
+  \ Women's (Tee)\",\n        affiliation: 'Google Merchandise Store',\n        coupon:\
+  \ 'SUMMER_FUN',\n        discount: 3.33,\n        index: 1,\n        item_brand:\
   \ 'Google',\n        item_category: 'Apparel|iajsdiajsd|oasodiasd',\n        item_list_id:\
   \ 'related_products',\n        item_list_name: 'Related Products',\n        item_variant:\
-  \ 'green',\n        location_id: 'ChIJIQBpAG2ahYAR_6128GcTUEo',\n        price:\
-  \ 10.01,\n        quantity: 3,\n        item_group_id: 'abc'\n      },\n      {\n\
-  \        item_id: 'SKU_12346',\n        item_name: \"Google Grey Women's (Tee)\"\
-  ,\n        affiliation: 'Google Merchandise Store',\n        coupon: 'SUMMER_FUN',\n\
-  \        discount: 3.33,\n        index: 1,\n        item_brand: 'Google',\n   \
-  \     item_category: 'Apparel|iajsdiajsd|oasodiasd',\n        item_list_id: 'related_products',\n\
-  \        item_list_name: 'Related Products',\n        item_variant: 'gray',\n  \
-  \      location_id: 'ChIJIQBpAG2ahYAR_6128GcTUEo',\n        price: 21.01,\n    \
-  \    promotion_id: 'P_12345',\n        promotion_name: 'Summer Sale',\n        quantity:\
-  \ 2,\n        item_group_id: 'xyz'\n      }\n    ]\n  }, objToBeMerged || {}));\n\
-  };\n\nmock('sendHttpRequest', (requestUrl, callback, requestOptions, requestBody)\
-  \ => {\n  if (typeof callback === 'function') {\n    callback(200);\n  } else {\n\
-  \    requestBody = requestOptions;\n    requestOptions = callback;\n    return Promise.create((resolve,\
-  \ reject) => {\n      resolve({ statusCode: 200 });\n    });  \n  }\n});\n\nmock('getRequestHeader',\
-  \ (header) => {\n  if (header === 'trace-id') return 'expectedTraceId';\n  else\
-  \ if (header === 'x-gtm-identifier') return 'expectedXGtmIdentifier';\n  else if\
-  \ (header === 'x-gtm-default-domain') return 'expectedXGtmDefaultDomain';\n  else\
-  \ if (header === 'x-gtm-api-key') return 'expectedXGtmApiKey';\n});\n\nmock('getGoogleAuth',\
-  \ 'googleAuthToken');\n\nmock('getTimestampMillis', 1747945830456);\n\nconst multipleConversionEventsMock\
-  \ = [\n  {\n    destinationReference: '3',\n    transactionId: 'Transaction ID 1',\n\
-  \    eventTimestamp: '2014-10-02T15:01:23Z',\n    lastUpdatedTimestamp: '2014-10-02T15:01:23Z',\n\
-  \    currency: 'BRL',\n    conversionValue: 123.45,\n    eventSource: 'WEB',\n \
-  \   userData: {\n      userIdentifiers: [\n        {\n          emailAddress:\n\
-  \            'test1@example.net'\n        },\n        {\n          phoneNumber:\n\
-  \            '+55199999999'\n        },\n        {\n          address: {\n     \
-  \       givenName:\n              '9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08',\n\
+  \ 'gray',\n        location_id: 'ChIJIQBpAG2ahYAR_6128GcTUEo',\n        price: 21.01,\n\
+  \        promotion_id: 'P_12345',\n        promotion_name: 'Summer Sale',\n    \
+  \    quantity: 2,\n        item_group_id: 'xyz'\n      }\n    ]\n  }, objToBeMerged\
+  \ || {}));\n};\n\nmock('sendHttpRequest', (requestUrl, callback, requestOptions,\
+  \ requestBody) => {\n  if (typeof callback === 'function') {\n    callback(200);\n\
+  \  } else {\n    requestBody = requestOptions;\n    requestOptions = callback;\n\
+  \    return Promise.create((resolve, reject) => {\n      resolve({ statusCode: 200\
+  \ });\n    });  \n  }\n});\n\nmock('getRequestHeader', (header) => {\n  if (header\
+  \ === 'trace-id') return 'expectedTraceId';\n  else if (header === 'x-gtm-identifier')\
+  \ return 'expectedXGtmIdentifier';\n  else if (header === 'x-gtm-default-domain')\
+  \ return 'expectedXGtmDefaultDomain';\n  else if (header === 'x-gtm-api-key') return\
+  \ 'expectedXGtmApiKey';\n});\n\nmock('getGoogleAuth', 'googleAuthToken');\n\nmock('getTimestampMillis',\
+  \ 1747945830456);\n\nconst multipleConversionEventsMock = [\n  {\n    destinationReference:\
+  \ '3',\n    transactionId: 'Transaction ID 1',\n    eventTimestamp: '2014-10-02T15:01:23Z',\n\
+  \    lastUpdatedTimestamp: '2014-10-02T15:01:23Z',\n    currency: 'BRL',\n    conversionValue:\
+  \ 123.45,\n    eventSource: 'WEB',\n    userData: {\n      userIdentifiers: [\n\
+  \        {\n          emailAddress:\n            'test1@example.net'\n        },\n\
+  \        {\n          phoneNumber:\n            '+55199999999'\n        },\n   \
+  \     {\n          address: {\n            givenName:\n              '9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08',\n\
   \            familyName:\n              '9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08',\n\
   \            regionCode: 'US',\n            postalCode: '10001'\n          }\n \
   \       }\n      ]\n    },\n    adIdentifiers: {\n      gclid: 'gclid',\n      gbraid:\
