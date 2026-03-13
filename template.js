@@ -26,7 +26,7 @@ const toBase64 = require('toBase64');
 /*==============================================================================
 ==============================================================================*/
 
-const apiVersion = '1';
+const API_VERSION = '1';
 const eventData = getAllEventData();
 const useOptimisticScenario = isUIFieldTrue(data.useOptimisticScenario);
 
@@ -113,7 +113,7 @@ function handlePageViewEvent(data, eventData) {
       Name: 'GoogleConversionEvent',
       Type: 'Message',
       EventName: 'PageviewEvent',
-      Message: 'Cookie was not set.',
+      Message: '⚠️ [WARNING] Cookie was not set.',
       Reason: 'Session attributes base64 cookie is bigger than 4000 characters.'
     });
     data.gtmOnFailure();
@@ -910,6 +910,19 @@ function validateMappedData(mappedData) {
     return 'Timestamp format is invalid.';
   }
 
+  const isTransactionIdInvalid = conversionEvents.some((event) => {
+    return (
+      event.transactionId &&
+      (event.transactionId.length === 1 ||
+        ['123', '1234', 'null', 'undefined', 'none', 'transactionId', 'transaction_id'].indexOf(
+          event.transactionId
+        ) !== -1)
+    );
+  });
+  if (isTransactionIdInvalid) {
+    return 'Transaction ID value is invalid.';
+  }
+
   const destinations = mappedData.destinations;
   const destinationsLengthLimit = 10;
   if (destinations.length > destinationsLengthLimit) {
@@ -946,7 +959,7 @@ function handleConversionEvent(data, eventData) {
       Name: 'GoogleConversionEvent',
       Type: 'Message',
       EventName: 'ConversionEvent',
-      Message: 'Request was not sent.',
+      Message: '🛑 [ERROR] Request was not sent.',
       Reason: invalidOrMissingFields
     });
 
@@ -954,7 +967,7 @@ function handleConversionEvent(data, eventData) {
     return true;
   }
 
-  sendRequest(data, mappedData, apiVersion);
+  sendRequest(data, mappedData, API_VERSION);
 }
 
 /*==============================================================================
