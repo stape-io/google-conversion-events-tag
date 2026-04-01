@@ -1028,7 +1028,7 @@ ___TEMPLATE_PARAMETERS___
                   }
                 ],
                 "simpleValueType": true,
-                "help": "If enabled, the tag will attempt to automatically map parameters from the Event Data.\n\u003cbr/\u003e\u003cbr/\u003e\nAny value you manually enter in a field below will always override the auto-mapped value.\n\u003cbr/\u003e\u003cbr/\u003e\nDefault mappings:\n\u003cul\u003e\n\u003cli\u003eItems: \u003ci\u003eeventData.items\u003c/i\u003e\u003c/li\u003e\n\u003c/ul\u003e",
+                "help": "If enabled, the tag will attempt to automatically map parameters from the Event Data.\n\u003cbr/\u003e\u003cbr/\u003e\nAny value you manually enter in a field below will always override the auto-mapped value.\n\u003cbr/\u003e\u003cbr/\u003e\nDefault mappings:\n\u003cul\u003e\n\u003cli\u003eItems: \u003ci\u003eeventData.items\u003c/i\u003e (it only auto-maps items that have an \u003ci\u003eItem ID\u003ci\u003e)\u003c/li\u003e\n\u003c/ul\u003e",
                 "defaultValue": true,
                 "subParams": [
                   {
@@ -1050,23 +1050,23 @@ ___TEMPLATE_PARAMETERS___
               {
                 "type": "TEXT",
                 "name": "cartDataMerchantId",
-                "displayName": "Merchant Center ID",
+                "displayName": "Merchant Center Account ID",
                 "simpleValueType": true,
-                "help": "The Merchant Center ID associated with the items.\n\u003cbr/\u003e\u003cbr/\u003e\n\u003ca href\u003d\"https://support.google.com/paymentscenter/answer/7163092?hl\u003den\"\u003eLearn more\u003c/a\u003e."
+                "help": "The Merchant Center Account ID.\n\u003cbr/\u003e\u003cbr/\u003e\nThis is located in the top-left corner under your account name. \n\u003cbr/\u003e\nAlternatively, you can find it in the URL as the value for the \u003ci\u003ea\u003d{Account ID}\u003c/i\u003e parameter."
               },
               {
                 "type": "TEXT",
                 "name": "cartDataMerchantFeedLabel",
                 "displayName": "Merchant Center Feed Label",
                 "simpleValueType": true,
-                "help": "The Merchant Center feed label associated with the feed of the items.\n\u003cbr/\u003e\u003cbr/\u003e\nYou can find it as a URL parameter in the Merchant Center URL:  \u003ci\u003efeedLabel\u003d\u003cb\u003eDK\u003c/b\u003e\u003c/i\u003e."
+                "help": "The Merchant Center feed label associated with the feed of the items.\n\u003cbr/\u003e\u003cbr/\u003e\nYou can find it in the URL while editing a product in Merchant Center (e.g., \u003ci\u003efeedLabel\u003dDK\u003c/i\u003e). \n\u003cbr/\u003e\nAlternatively, add the \u003cb\u003eFeed Label\u003c/b\u003e column to your product table overview to see this value directly."
               },
               {
                 "type": "TEXT",
                 "name": "cartDataMerchantFeedLanguageCode",
                 "displayName": "Merchant Center Feed Language Code",
                 "simpleValueType": true,
-                "help": "The language code in ISO 639-1 associated with the Merchant Center feed of the items.where your items are uploaded.\n\u003cbr/\u003e\u003cbr/\u003e\nYou can find it as a URL parameter in the Merchant Center URL: \u003ci\u003elanguage\u003d\u003cb\u003eda\u003c/b\u003e\u003c/i\u003e."
+                "help": "The language code in ISO 639-1 associated with the Merchant Center feed of the items.where your items are uploaded.\n\u003cbr/\u003e\u003cbr/\u003e\nYou can find it in the URL while editing a product in Merchant Center (e.g., \u003ci\u003elanguage\u003dda\u003c/i\u003e). \n\u003cbr/\u003e\nAlternatively, add the \u003cb\u003eFeed Language\u003c/b\u003e column to your product table overview to see this value directly."
               },
               {
                 "type": "TEXT",
@@ -1080,7 +1080,7 @@ ___TEMPLATE_PARAMETERS___
                 "name": "cartDataItems",
                 "displayName": "Items",
                 "simpleValueType": true,
-                "help": "The list of items associated with the event. Each item is an object in the list with the following properties: \u003ci\u003eitemId\u003c/i\u003e, \u003ci\u003emerchantProductId\u003c/i\u003e, \u003ci\u003equantity\u003c/i\u003e and \u003ci\u003eunitPrice\u003c/i\u003e.\n\u003cbr/\u003e\n\u003ca href\u003d\"https://developers.google.com/data-manager/api/reference/rest/v1/events/ingest#item\"\u003eLearn more\u003c/a\u003e."
+                "help": "The list of items associated with the event.\n\u003cbr/\u003e\nEach item is an object in the list with the following properties: \n\u003cul\u003e\n\u003cli\u003e\u003ci\u003eitemId\u003c/i\u003e\u003c/li\u003e\n\u003cli\u003e\u003ci\u003emerchantProductId\u003c/i\u003e (\u003cb\u003erequired\u003c/b\u003e). If an item does not have it, it won\u0027t be included in the array.\u003c/li\u003e\n\u003cli\u003e\u003ci\u003equantity\u003c/i\u003e\u003c/li\u003e\n\u003cli\u003e\u003ci\u003eunitPrice\u003c/i\u003e\u003c/li\u003e\n\u003c/ul\u003e\n\u003cbr/\u003e\n\u003ca href\u003d\"https://developers.google.com/data-manager/api/reference/rest/v1/events/ingest#item\"\u003eLearn more\u003c/a\u003e."
               }
             ]
           },
@@ -1821,17 +1821,19 @@ function addCartData(data, eventData, conversionEvent) {
   if (isUIFieldTrue(data.autoMapCartData)) {
     if (getType(eventData.items) === 'array' && eventData.items.length > 0) {
       const itemIdKey = data.itemIdKey ? data.itemIdKey : 'item_id';
-      cartData.items = eventData.items.map((i) => {
-        const item = {};
-        if (i[itemIdKey]) {
+      const cartDataItems = eventData.items
+        .filter((i) => i[itemIdKey])
+        .map((i) => {
+          const item = {};
           const itemId = makeString(i[itemIdKey]);
           item.merchantProductId = itemId;
           item.itemId = itemId;
-        }
-        if (i.quantity) item.quantity = makeString(i.quantity);
-        if (isValidValue(i.price)) item.unitPrice = makeNumber(i.price);
-        return item;
-      });
+          if (i.quantity) item.quantity = makeString(i.quantity);
+          if (isValidValue(i.price)) item.unitPrice = makeNumber(i.price);
+          return item;
+        });
+
+      if (cartDataItems.length > 0) cartData.items = cartDataItems;
     }
   }
 
@@ -1850,14 +1852,18 @@ function addCartData(data, eventData, conversionEvent) {
   }
 
   if (getType(data.cartDataItems) === 'array' && data.cartDataItems.length > 0) {
-    cartData.items = data.cartDataItems.map((i) => {
-      const item = {};
-      if (i.merchantProductId) item.merchantProductId = makeString(i.merchantProductId);
-      if (i.itemId) item.itemId = makeString(i.itemId);
-      if (i.quantity) item.quantity = makeString(i.quantity);
-      if (isValidValue(i.unitPrice)) item.unitPrice = makeNumber(i.unitPrice);
-      return item;
-    });
+    const cartDataItems = data.cartDataItems
+      .filter((i) => i.merchantProductId)
+      .map((i) => {
+        const item = {};
+        item.merchantProductId = makeString(i.merchantProductId);
+        if (i.itemId) item.itemId = makeString(i.itemId);
+        if (i.quantity) item.quantity = makeString(i.quantity);
+        if (isValidValue(i.unitPrice)) item.unitPrice = makeNumber(i.unitPrice);
+        return item;
+      });
+
+    if (cartDataItems.length > 0) cartData.items = cartDataItems;
   }
 
   if (hasProps(cartData)) conversionEvent.cartData = cartData;
@@ -2180,11 +2186,8 @@ function sendRequest(data, mappedData, apiVersion) {
       });
 
       if (!useOptimisticScenario) {
-        if (result.statusCode >= 200 && result.statusCode < 400) {
-          data.gtmOnSuccess();
-        } else {
-          data.gtmOnFailure();
-        }
+        if (result.statusCode >= 200 && result.statusCode < 400) return data.gtmOnSuccess();
+        return data.gtmOnFailure();
       }
     })
     .catch((result) => {
@@ -2196,7 +2199,7 @@ function sendRequest(data, mappedData, apiVersion) {
         Reason: JSON.stringify(result)
       });
 
-      if (!useOptimisticScenario) data.gtmOnFailure();
+      if (!useOptimisticScenario) return data.gtmOnFailure();
     });
 }
 
@@ -2270,6 +2273,17 @@ function validateMappedData(mappedData) {
   });
   if (isTransactionIdInvalid) {
     return 'Transaction ID value is invalid.';
+  }
+
+  const isMerchantProductIdAbsent = conversionEvents.some((event) => {
+    return (
+      getType(event.cartData) === 'object' &&
+      getType(event.cartData.items) === 'array' &&
+      event.cartData.items.some((item) => getType(item) === 'object' && !item.merchantProductId)
+    );
+  });
+  if (isMerchantProductIdAbsent) {
+    return 'Each item in cartData.items must have a merchantProductId.';
   }
 
   const destinations = mappedData.destinations;
@@ -3091,10 +3105,11 @@ scenarios:
   code: "const conversionEventBaseMock = JSON.parse(JSON.stringify(multipleConversionEventsMock[0]));\n\
     \n[\n  {\n    description: 'No conversion event is specified - undefined',\n \
     \   auth: 'stape',\n    mockData: {\n      conversionEventMode: 'multiple',\n\
-    \      conversionEvents: undefined\n    }\n  },\n  {\n    description: 'No conversion\
+    \      conversionEvents: undefined\n    }\n  },\n  /* Commented out because one\
+    \ more test will make all the test suite timeout.\n  {\n    description: 'No conversion\
     \ event is specified - empty array',\n    auth: 'stape',\n    mockData: {\n  \
     \    conversionEventMode: 'multiple',\n      conversionEvents: []\n    }\n  },\n\
-    \  {\n    description: 'No Ad Identifiers and User Data - both are explicitly\
+    \  */\n  {\n    description: 'No Ad Identifiers and User Data - both are explicitly\
     \ undefined',\n    auth: 'stape',\n    mockData: {\n      conversionEventMode:\
     \ 'multiple',\n      conversionEvents: [\n        assign({}, conversionEventBaseMock,\
     \ {\n          userData: undefined,\n          adIdentifiers: undefined\n    \
@@ -3179,22 +3194,22 @@ scenarios:
     \ 'single',\n      lastUpdatedTimestamp: 'undefinedZ'\n    }\n  },\n  {\n    description:\
     \ 'Invalid Transaction ID - single character',\n    auth: 'stape',\n    mockData:\
     \ {\n      conversionEventMode: 'single',\n      transactionId: 'a'\n    }\n \
-    \ },\n  {\n    description: 'Invalid Transaction ID - \"123\"',\n    auth: 'stape',\n\
+    \ },\n  /* Commented out because one more test will make all the test suite timeout.\n\
+    \  {\n    description: 'Invalid Transaction ID - \"123\"',\n    auth: 'stape',\n\
     \    mockData: {\n      conversionEventMode: 'single',\n      transactionId: '123'\n\
-    \    }\n  },\n  /* Commented out because one more test will make all the test\
-    \ suite timeout.\n  {\n    description: 'Invalid Transaction ID - \"123\"',\n\
-    \    auth: 'stape',\n    mockData: {\n      conversionEventMode: 'single',\n \
-    \     transactionId: '1234'\n    }\n  },\n  */\n  {\n    description: 'Invalid\
-    \ Transaction ID - \"null\"',\n    auth: 'stape',\n    mockData: {\n      conversionEventMode:\
+    \    }\n  },\n  {\n    description: 'Invalid Transaction ID - \"1234\"',\n   \
+    \ auth: 'stape',\n    mockData: {\n      conversionEventMode: 'single',\n    \
+    \  transactionId: '1234'\n    }\n  },\n  */\n  {\n    description: 'Invalid Transaction\
+    \ ID - \"null\"',\n    auth: 'stape',\n    mockData: {\n      conversionEventMode:\
     \ 'single',\n      transactionId: 'null'\n    }\n  },\n  {\n    description: 'Invalid\
     \ Transaction ID - \"undefined\"',\n    auth: 'stape',\n    mockData: {\n    \
     \  conversionEventMode: 'single',\n      transactionId: 'undefined'\n    }\n \
-    \ },\n  {\n    description: 'Invalid Transaction ID - \"none\"',\n    auth: 'stape',\n\
+    \ },\n  /* Commented out because one more test will make all the test suite timeout.\n\
+    \  {\n    description: 'Invalid Transaction ID - \"none\"',\n    auth: 'stape',\n\
     \    mockData: {\n      conversionEventMode: 'single',\n      transactionId: 'none'\n\
-    \    }\n  },\n  {\n    description: 'Invalid Transaction ID - \"transactionId\"\
+    \    }\n  },\n\n  {\n    description: 'Invalid Transaction ID - \"transactionId\"\
     ',\n    auth: 'stape',\n    mockData: {\n      conversionEventMode: 'single',\n\
-    \      transactionId: 'transactionId'\n    }\n  },\n  /* Commented out because\
-    \ one more test will make all the test suite timeout.\n  {\n    description: 'Invalid\
+    \      transactionId: 'transactionId'\n    }\n  },\n  {\n    description: 'Invalid\
     \ Transaction ID - \"transaction_id\"',\n    auth: 'stape',\n    mockData: {\n\
     \      conversionEventMode: 'single',\n      transactionId: 'transaction_id'\n\
     \    }\n  },\n  */\n  {\n    description: 'Invalid Transaction ID - single character\
@@ -3221,30 +3236,27 @@ scenarios:
     \ 'single',\n      stapeAuthDestinationsList: [\n        {\n          product:\
     \ 'GOOGLE_ADS',\n          operatingAccountId: '123-213-123',\n          loginAccountId:\
     \ 'undefined',\n          productDestinationId: '123-213-123'\n        }\n   \
-    \   ]\n    }\n  }\n].forEach((scenario) => {\n  const copyMockData = setAllMockDataByEventType('conversion',\
-    \ scenario.auth, scenario.mockData);\n  \n  runCode(copyMockData);\n\n  assertApi('sendHttpRequest').wasNotCalled();\n\
+    \   ]\n    }\n  },\n  {\n    description: 'Cart Data missing merchantProductId\
+    \ in an item',\n    auth: 'own',\n    mockData: {\n      conversionEventMode:\
+    \ 'multiple',\n      conversionEvents: [\n        assign({}, conversionEventBaseMock,\
+    \ {\n          cartData: {\n            items: [{ quantity: '2' }]\n         \
+    \ }\n        })\n      ]\n    }\n  }\n].forEach((scenario) => {\n  const copyMockData\
+    \ = setAllMockDataByEventType('conversion', scenario.auth, scenario.mockData);\n\
+    \  \n  runCode(copyMockData);\n\n  assertApi('sendHttpRequest').wasNotCalled();\n\
     \  assertApi('gtmOnSuccess').wasNotCalled();\n  assertApi('gtmOnFailure').wasCalled();\n\
     });"
-- name: '[Conversion] Request URL is successfully built and sent'
-  code: "[\n  {\n    authMethod: 'stape',\n    expectedRequestUrl: 'https://expectedXGtmIdentifier.expectedXGtmDefaultDomain/stape-api/expectedXGtmApiKey/v2/data-manager/events/ingest'\n\
-    \  },\n  {\n    authMethod: 'own',\n    expectedRequestUrl: 'https://datamanager.googleapis.com/v'\
-    \ + expectedDataManagerApiVersion + '/events:ingest'\n  }\n].forEach((scenario)\
-    \ => {\n  const copyMockData = setAllMockDataByEventType('conversion', scenario.authMethod);\n\
-    \    \n  mock('sendHttpRequest', (requestUrl, requestOptions, requestBody) =>\
-    \ {\n    assertThat(requestUrl).isEqualTo(scenario.expectedRequestUrl);\n    return\
-    \ Promise.create((resolve, reject) => {\n      resolve({ statusCode: 200 });\n\
-    \    });\n  });\n  \n  runCode(copyMockData);\n\n  callLater(() => {\n    assertApi('gtmOnSuccess').wasCalled();\n\
-    \    assertApi('gtmOnFailure').wasNotCalled();\n  });\n});"
-- name: '[Conversion] Request Options are successfully built and sent'
-  code: "[\n  {\n    authMethod: 'stape',\n    expectedRequestOptions: {\n      method:\
-    \ 'POST',\n      headers: {\n        'Content-Type': 'application/json',\n   \
-    \     'x-datamanager-api-version': expectedDataManagerApiVersion\n      },\n \
-    \     timeout: 20000\n    }\n  },\n  {\n    authMethod: 'own',\n    expectedRequestOptions:\
+- name: '[Conversion] Request URL and Request Options are successfully built and sent'
+  code: "[\n  {\n    authMethod: 'stape',\n    expectedRequestUrl: 'https://expectedXGtmIdentifier.expectedXGtmDefaultDomain/stape-api/expectedXGtmApiKey/v2/data-manager/events/ingest',\n\
+    \    expectedRequestOptions: {\n      method: 'POST',\n      headers: {\n    \
+    \    'Content-Type': 'application/json',\n        'x-datamanager-api-version':\
+    \ expectedDataManagerApiVersion\n      },\n      timeout: 20000\n    }\n  },\n\
+    \  {\n    authMethod: 'own',\n    expectedRequestUrl: 'https://datamanager.googleapis.com/v'\
+    \ + expectedDataManagerApiVersion + '/events:ingest',\n    expectedRequestOptions:\
     \ {\n      method: 'POST',\n      headers: {\n        'Content-Type': 'application/json'\n\
     \      },\n      authorization: 'googleAuthToken'\n    }\n  }\n].forEach((scenario)\
     \ => {\n  const copyMockData = setAllMockDataByEventType('conversion', scenario.authMethod);\n\
     \  \n  mock('sendHttpRequest', (requestUrl, requestOptions, requestBody) => {\n\
-    \    assertThat(requestOptions).isEqualTo(scenario.expectedRequestOptions);\n\
+    \    assertThat(requestUrl).isEqualTo(scenario.expectedRequestUrl);\n    assertThat(requestOptions).isEqualTo(scenario.expectedRequestOptions);\n\
     \    return Promise.create((resolve, reject) => {\n      resolve({ statusCode:\
     \ 200 });\n    });\n  });\n  \n  runCode(copyMockData);\n\n  callLater(() => {\n\
     \    assertApi('gtmOnSuccess').wasCalled();\n    assertApi('gtmOnFailure').wasNotCalled();\n\

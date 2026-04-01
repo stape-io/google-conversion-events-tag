@@ -472,17 +472,19 @@ function addCartData(data, eventData, conversionEvent) {
   if (isUIFieldTrue(data.autoMapCartData)) {
     if (getType(eventData.items) === 'array' && eventData.items.length > 0) {
       const itemIdKey = data.itemIdKey ? data.itemIdKey : 'item_id';
-      cartData.items = eventData.items.map((i) => {
-        const item = {};
-        if (i[itemIdKey]) {
+      const cartDataItems = eventData.items
+        .filter((i) => i[itemIdKey])
+        .map((i) => {
+          const item = {};
           const itemId = makeString(i[itemIdKey]);
           item.merchantProductId = itemId;
           item.itemId = itemId;
-        }
-        if (i.quantity) item.quantity = makeString(i.quantity);
-        if (isValidValue(i.price)) item.unitPrice = makeNumber(i.price);
-        return item;
-      });
+          if (i.quantity) item.quantity = makeString(i.quantity);
+          if (isValidValue(i.price)) item.unitPrice = makeNumber(i.price);
+          return item;
+        });
+
+      if (cartDataItems.length > 0) cartData.items = cartDataItems;
     }
   }
 
@@ -501,14 +503,18 @@ function addCartData(data, eventData, conversionEvent) {
   }
 
   if (getType(data.cartDataItems) === 'array' && data.cartDataItems.length > 0) {
-    cartData.items = data.cartDataItems.map((i) => {
-      const item = {};
-      if (i.merchantProductId) item.merchantProductId = makeString(i.merchantProductId);
-      if (i.itemId) item.itemId = makeString(i.itemId);
-      if (i.quantity) item.quantity = makeString(i.quantity);
-      if (isValidValue(i.unitPrice)) item.unitPrice = makeNumber(i.unitPrice);
-      return item;
-    });
+    const cartDataItems = data.cartDataItems
+      .filter((i) => i.merchantProductId)
+      .map((i) => {
+        const item = {};
+        item.merchantProductId = makeString(i.merchantProductId);
+        if (i.itemId) item.itemId = makeString(i.itemId);
+        if (i.quantity) item.quantity = makeString(i.quantity);
+        if (isValidValue(i.unitPrice)) item.unitPrice = makeNumber(i.unitPrice);
+        return item;
+      });
+
+    if (cartDataItems.length > 0) cartData.items = cartDataItems;
   }
 
   if (hasProps(cartData)) conversionEvent.cartData = cartData;
@@ -831,11 +837,8 @@ function sendRequest(data, mappedData, apiVersion) {
       });
 
       if (!useOptimisticScenario) {
-        if (result.statusCode >= 200 && result.statusCode < 400) {
-          data.gtmOnSuccess();
-        } else {
-          data.gtmOnFailure();
-        }
+        if (result.statusCode >= 200 && result.statusCode < 400) return data.gtmOnSuccess();
+        return data.gtmOnFailure();
       }
     })
     .catch((result) => {
@@ -847,7 +850,7 @@ function sendRequest(data, mappedData, apiVersion) {
         Reason: JSON.stringify(result)
       });
 
-      if (!useOptimisticScenario) data.gtmOnFailure();
+      if (!useOptimisticScenario) return data.gtmOnFailure();
     });
 }
 
@@ -921,6 +924,17 @@ function validateMappedData(mappedData) {
   });
   if (isTransactionIdInvalid) {
     return 'Transaction ID value is invalid.';
+  }
+
+  const isMerchantProductIdAbsent = conversionEvents.some((event) => {
+    return (
+      getType(event.cartData) === 'object' &&
+      getType(event.cartData.items) === 'array' &&
+      event.cartData.items.some((item) => getType(item) === 'object' && !item.merchantProductId)
+    );
+  });
+  if (isMerchantProductIdAbsent) {
+    return 'Each item in cartData.items must have a merchantProductId.';
   }
 
   const destinations = mappedData.destinations;
