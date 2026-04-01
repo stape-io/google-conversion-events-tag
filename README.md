@@ -104,6 +104,9 @@ This section provides more context about the customer.
 #### Cart Data
 This section allows for sending product-level details for e-commerce transactions.
 -   **Parameters**: `Merchant Center ID`, `Feed Label`, `Feed Language Code`, `Transaction Discount`, and a list of `Items` with their ID, quantity, and price.
+    -   **Auto-mapping**: If enabled, the tag will automatically pull `Items` from Event Data.
+
+> Note: it's **required** to send at least the **Item ID** for each item.
 
 ---
 
