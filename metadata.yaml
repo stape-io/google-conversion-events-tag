@@ -1,6 +1,8 @@
 homepage: 'https://stape.io/'
 documentation: 'https://github.com/stape-io/google-conversion-events-tag'
 versions:
+  - sha: 12fe5eb701027ae4f23c58659ae32872b793df2a
+    changeNotes: Fixed getUrl() typo and added ecommerce.items fallback.
   - sha: aff1538dd5c750230eec35f6fbba310e0aa48a4c
     changeNotes: Added validation and filtering for cart data items without merchantProductId.
   - sha: 28643f5e0736dcb2ebd8db00cb2cce5756774d88
