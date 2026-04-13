@@ -271,10 +271,11 @@ function getAddressFromEventData(eventData) {
 
 function addConversionInformation(data, eventData, conversionEvent) {
   const getValueFromItems = (eventData) => {
-    if (getType(eventData.items) !== 'array' || eventData.items.length === 0) return;
+    const items = getItems(eventData);
+    if (getType(items) !== 'array' || items.length === 0) return;
 
     let valueFromItems = 0;
-    eventData.items.forEach((i) => {
+    items.forEach((i) => {
       if (!isValidValue(i.price)) return;
       const itemPrice = makeNumber(i.price);
       const itemQuantity = makeInteger(i.quantity);
@@ -466,13 +467,28 @@ function addUserProperties(data, conversionEvent) {
   return conversionEvent;
 }
 
+function getItems(eventData) {
+  if (getType(eventData.items) === 'array' && eventData.items.length) {
+    return eventData.items;
+  } else if (
+    getType(eventData.ecommerce) === 'object' &&
+    getType(eventData.ecommerce.items) === 'array' &&
+    eventData.ecommerce.items.length
+  ) {
+    return eventData.ecommerce.items;
+  }
+
+  return;
+}
+
 function addCartData(data, eventData, conversionEvent) {
   const cartData = {};
 
   if (isUIFieldTrue(data.autoMapCartData)) {
-    if (getType(eventData.items) === 'array' && eventData.items.length > 0) {
+    const items = getItems(eventData);
+    if (getType(items) === 'array' && items.length > 0) {
       const itemIdKey = data.itemIdKey ? data.itemIdKey : 'item_id';
-      const cartDataItems = eventData.items
+      const cartDataItems = items
         .filter((i) => i[itemIdKey])
         .map((i) => {
           const item = {};
@@ -991,7 +1007,7 @@ function handleConversionEvent(data, eventData) {
 function shouldExitEarly(data, eventData) {
   if (!isConsentGivenOrNotRequired(data, eventData)) return true;
 
-  const url = getUrl(data);
+  const url = getUrl(eventData);
   if (url && url.lastIndexOf('https://gtm-msr.appspot.com/', 0) === 0) return true;
 
   return false;
