@@ -636,7 +636,7 @@ ___TEMPLATE_PARAMETERS___
                   }
                 ],
                 "simpleValueType": true,
-                "help": "If enabled, the tag will attempt to automatically map parameters from the Event Data.\n\u003cbr/\u003e\u003cbr/\u003e\nAny value you manually enter in a field below will always override the auto-mapped value.\n\u003cbr/\u003e\u003cbr/\u003e\nDefault mappings:\n\u003cul\u003e\n\u003cli\u003eTransaction/Order ID: \u003ci\u003eeventData.transaction_id\u003c/i\u003e\u003c/li\u003e\n\u003cli\u003eCurrency: \u003ci\u003eeventData.currency\u003c/i\u003e\n\u003cli\u003eConversion Value: \u003ci\u003eeventData.value\u003c/i\u003e \u003e Sum of \u003ci\u003eeventData.items Price * Quantity\u003c/i\u003e\u003c/li\u003e\n\u003c/ul\u003e",
+                "help": "If enabled, the tag will attempt to automatically map parameters from the Event Data.\n\u003cbr/\u003e\u003cbr/\u003e\nAny value you manually enter in a field below will always override the auto-mapped value.\n\u003cbr/\u003e\u003cbr/\u003e\nDefault mappings:\n\u003cul\u003e\n\u003cli\u003eTransaction/Order ID: \u003ci\u003eeventData.transaction_id\u003c/i\u003e\u003c/li\u003e\n\u003cli\u003eCurrency: \u003ci\u003eeventData.currency\u003c/i\u003e\n\u003cli\u003eConversion Value:\n\u003cul\u003e\n\u003cli\u003e\u003ci\u003eeventData.value\u003c/i\u003e\u003c/li\u003e\n\u003cli\u003eSum of \u003ci\u003eeventData.items\u003c/i\u003e or \u003ci\u003eeventData.ecommerce.items\u003c/i\u003e Price * Quantity\u003c/li\u003e\n\u003c/ul\u003e\n\u003c/ul\u003e",
                 "defaultValue": true
               },
               {
@@ -726,7 +726,7 @@ ___TEMPLATE_PARAMETERS___
               {
                 "type": "SELECT",
                 "name": "autoMapUserData",
-                "displayName": "Auto-map Conversion Information",
+                "displayName": "Auto-map User Data Information",
                 "macrosInSelect": true,
                 "selectItems": [
                   {
@@ -739,7 +739,7 @@ ___TEMPLATE_PARAMETERS___
                   }
                 ],
                 "simpleValueType": true,
-                "help": "If enabled, the tag will attempt to automatically map parameters from the Event Data.\n\u003cbr/\u003e\u003cbr/\u003e\nAny value you manually enter in a field below will always override the auto-mapped value.\n\u003cbr/\u003e\u003cbr/\u003e\nDefault mappings:\n\u003cul\u003e\n\u003cli\u003eEmail: \u003ci\u003eeventData.email\u003c/i\u003e \u003e \u003ci\u003eeventData.email_address\u003c/i\u003e \u003e \u003ci\u003eeventData.user_data.email\u003c/i\u003e \u003e \u003ci\u003eeventData.user_data.email_address\u003c/i\u003e \u003e \u003ci\u003eeventData.user_data.sha256_email_address\u003c/i\u003e\u003c/li\u003e\n\u003cli\u003ePhone: \u003ci\u003eeventData.phone\u003c/i\u003e \u003e \u003ci\u003eeventData.phone_number\u003c/i\u003e \u003e \u003ci\u003eeventData.user_data.phone\u003c/i\u003e \u003e \u003ci\u003eeventData.user_data.phone_number\u003c/i\u003e \u003e \u003ci\u003eeventData.user_data.sha256_phone_number\u003c/i\u003e\u003c/li\u003e\n\u003cli\u003eUser Given Name: \u003ci\u003eeventData.user_data.address.first_name\u003c/i\u003e \u003e \u003ci\u003eeventData.user_data.address.sha256_first_name\u003c/i\u003e\u003c/li\u003e\n\u003cli\u003eUser Family Name: \u003ci\u003eeventData.user_data.address.last_name\u003c/i\u003e \u003e \u003ci\u003eeventData.user_data.address.sha256_last_name\u003c/i\u003e\u003c/li\u003e\n\u003cli\u003eUser Address Region: \u003ci\u003eeventData.user_data.address.country\u003c/i\u003e\u003c/li\u003e\n\u003cli\u003eUser Address Postal Code: \u003ci\u003eeventData.user_data.address.postal_code\u003c/i\u003e\u003c/li\u003e\n\n\u003c/ul\u003e",
+                "help": "If enabled, the tag will attempt to automatically map parameters from the Event Data.\n\u003cbr/\u003e\u003cbr/\u003e\nAny value you manually enter in a field below will always override the auto-mapped value.\n\u003cbr/\u003e\u003cbr/\u003e\nDefault mappings:\n\u003cul\u003e\n\u003cli\u003eEmail:\n\u003cul\u003e\n\u003cli\u003e\u003ci\u003eeventData.email\u003c/i\u003e\u003c/li\u003e\n\u003cli\u003e\u003ci\u003eeventData.email_address\u003c/i\u003e\u003c/li\u003e\n\u003cli\u003e\u003ci\u003eeventData.user_data.email\u003c/i\u003e\u003c/li\u003e\n\u003cli\u003e\u003ci\u003eeventData.user_data.email_address\u003c/i\u003e\u003c/li\u003e\n\u003cli\u003e\u003ci\u003eeventData.user_data.sha256_email_address\u003c/i\u003e\u003c/li\u003e\n\u003c/ul\u003e\n\u003c/li\u003e\n\u003cli\u003ePhone:\n\u003cul\u003e\n\u003cli\u003e\u003ci\u003eeventData.phone\u003c/i\u003e\u003c/li\u003e\n\u003cli\u003e\u003ci\u003eeventData.phone_number\u003c/i\u003e\u003c/li\u003e\n\u003cli\u003e\u003ci\u003eeventData.user_data.phone\u003c/i\u003e\u003c/li\u003e\n\u003cli\u003e\u003ci\u003eeventData.user_data.phone_number\u003c/i\u003e\u003c/li\u003e\n\u003cli\u003e\u003ci\u003eeventData.user_data.sha256_phone_number\u003c/i\u003e\u003c/li\u003e\n\u003c/ul\u003e\n\u003c/li\u003e\n\u003cli\u003eUser Given Name:\n\u003cul\u003e\n\u003cli\u003e\u003ci\u003eeventData.user_data.address.first_name\u003c/i\u003e\u003c/li\u003e\n\u003cli\u003e\u003ci\u003eeventData.user_data.address.sha256_first_name\u003c/i\u003e\u003c/li\u003e\n\u003c/ul\u003e\n\u003c/li\u003e\n\u003cli\u003eUser Family Name:\n\u003cul\u003e\n\u003cli\u003e\u003ci\u003eeventData.user_data.address.last_name\u003c/i\u003e\u003c/li\u003e\n\u003cli\u003e\u003ci\u003eeventData.user_data.address.sha256_last_name\u003c/i\u003e\u003c/li\u003e\n\u003c/ul\u003e\n\u003c/li\u003e\n\u003cli\u003eUser Address Region:\n\u003cul\u003e\n\u003cli\u003e\u003ci\u003eeventData.user_data.address.country\u003c/i\u003e\u003c/li\u003e\n\u003c/ul\u003e\n\u003c/li\u003e\n\u003cli\u003eUser Address Postal Code:\n\u003cul\u003e\n\u003cli\u003e\u003ci\u003eeventData.user_data.address.postal_code\u003c/i\u003e\u003c/li\u003e\n\u003c/ul\u003e\n\u003c/li\u003e\n\u003c/ul\u003e",
                 "defaultValue": true
               },
               {
@@ -1028,7 +1028,7 @@ ___TEMPLATE_PARAMETERS___
                   }
                 ],
                 "simpleValueType": true,
-                "help": "If enabled, the tag will attempt to automatically map parameters from the Event Data.\n\u003cbr/\u003e\u003cbr/\u003e\nAny value you manually enter in a field below will always override the auto-mapped value.\n\u003cbr/\u003e\u003cbr/\u003e\nDefault mappings:\n\u003cul\u003e\n\u003cli\u003eItems: \u003ci\u003eeventData.items\u003c/i\u003e (it only auto-maps items that have an \u003ci\u003eItem ID\u003ci\u003e)\u003c/li\u003e\n\u003c/ul\u003e",
+                "help": "If enabled, the tag will attempt to automatically map parameters from the Event Data.\n\u003cbr/\u003e\u003cbr/\u003e\nAny value you manually enter in a field below will always override the auto-mapped value.\n\u003cbr/\u003e\u003cbr/\u003e\nDefault mappings:\n\u003cul\u003e\n\u003cli\u003eItems: \u003ci\u003eeventData.items\u003c/i\u003e and \u003ci\u003eeventData.ecommerce.items\u003c/i\u003e  (it only auto-maps items that have an \u003ci\u003eItem ID\u003ci\u003e)\u003c/li\u003e\n\u003c/ul\u003e",
                 "defaultValue": true,
                 "subParams": [
                   {
@@ -1620,10 +1620,11 @@ function getAddressFromEventData(eventData) {
 
 function addConversionInformation(data, eventData, conversionEvent) {
   const getValueFromItems = (eventData) => {
-    if (getType(eventData.items) !== 'array' || eventData.items.length === 0) return;
+    const items = getItems(eventData);
+    if (getType(items) !== 'array' || items.length === 0) return;
 
     let valueFromItems = 0;
-    eventData.items.forEach((i) => {
+    items.forEach((i) => {
       if (!isValidValue(i.price)) return;
       const itemPrice = makeNumber(i.price);
       const itemQuantity = makeInteger(i.quantity);
@@ -1815,13 +1816,28 @@ function addUserProperties(data, conversionEvent) {
   return conversionEvent;
 }
 
+function getItems(eventData) {
+  if (getType(eventData.items) === 'array' && eventData.items.length) {
+    return eventData.items;
+  } else if (
+    getType(eventData.ecommerce) === 'object' &&
+    getType(eventData.ecommerce.items) === 'array' &&
+    eventData.ecommerce.items.length
+  ) {
+    return eventData.ecommerce.items;
+  }
+
+  return;
+}
+
 function addCartData(data, eventData, conversionEvent) {
   const cartData = {};
 
   if (isUIFieldTrue(data.autoMapCartData)) {
-    if (getType(eventData.items) === 'array' && eventData.items.length > 0) {
+    const items = getItems(eventData);
+    if (getType(items) === 'array' && items.length > 0) {
       const itemIdKey = data.itemIdKey ? data.itemIdKey : 'item_id';
-      const cartDataItems = eventData.items
+      const cartDataItems = items
         .filter((i) => i[itemIdKey])
         .map((i) => {
           const item = {};
@@ -2340,7 +2356,7 @@ function handleConversionEvent(data, eventData) {
 function shouldExitEarly(data, eventData) {
   if (!isConsentGivenOrNotRequired(data, eventData)) return true;
 
-  const url = getUrl(data);
+  const url = getUrl(eventData);
   if (url && url.lastIndexOf('https://gtm-msr.appspot.com/', 0) === 0) return true;
 
   return false;
@@ -3818,6 +3834,10 @@ setup: "const Promise = require('Promise');\nconst JSON = require('JSON');\ncons
 
 
 ___NOTES___
+
+2026-04-13 - Change Notes:
+  - Auto-map items from eventData.ecommerce.items as a fallback when eventData.items is not present.
+  - Fix typo in getUrl() invocation on shouldExitEarly().
 
 Created on 7/9/2025, 6:32:40 PM
 
