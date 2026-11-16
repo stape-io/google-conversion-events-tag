@@ -261,13 +261,36 @@ function getAddressFromEventData(eventData) {
   const regionCode = eventDataUserDataAddress.country;
 
   if (firstName && lastName && postalCode && regionCode) {
-    return {
+    const address = {
       givenName: makeString(firstName),
       familyName: makeString(lastName),
       postalCode: makeString(postalCode),
       regionCode: makeString(regionCode)
     };
+    return addGoogleAnalyticsAddressFields(address, {
+      administrativeArea: eventDataUserDataAddress.region,
+      city: eventDataUserDataAddress.city,
+      addressLine: eventDataUserDataAddress.street
+    });
   }
+}
+
+// Ref: https://developers.google.com/data-manager/api/devguides/concepts/formatting#address_format
+function addGoogleAnalyticsAddressFields(address, fields) {
+  ['administrativeArea', 'city', 'addressLine'].forEach((key) => {
+    const value = fields[key];
+    if (!isValidValue(value)) return;
+    if (isSHA256HexHashed(value) || isSHA256Base64Hashed(value)) {
+      address[key] = makeString(value);
+      return;
+    }
+    const normalizedValue = replaceAll(makeString(value), '[!-/:-@\\[-`{-~]', '')
+      .trim()
+      .toLowerCase();
+    if (normalizedValue) address[key] = normalizedValue;
+  });
+
+  return address;
 }
 
 function addConversionInformation(data, eventData, conversionEvent) {
@@ -367,6 +390,14 @@ function addUserData(data, eventData, conversionEvent) {
         postalCode: makeString(data.userDataAddressPostalCode)
       };
     }
+
+    if (address && data.googleAnalyticsAdditionalAddressList) {
+      const googleAnalyticsAddressFields = {};
+      data.googleAnalyticsAdditionalAddressList.forEach((d) => {
+        googleAnalyticsAddressFields[d.name] = d.value;
+      });
+      addGoogleAnalyticsAddressFields(address, googleAnalyticsAddressFields);
+    }
   }
 
   if (emailAddresses || phoneNumbers || address) {
@@ -420,10 +451,13 @@ function addAdIdentifiers(data, eventData, conversionEvent) {
   if (data.adIdentifiersMatchId) adIdentifiers.matchId = data.adIdentifiersMatchId;
   if (data.adIdentifiersImpressionId) adIdentifiers.impressionId = data.adIdentifiersImpressionId;
   if (getType(data.adIdentifiersEncryptedUserId) === 'array') {
-    adIdentifiers.encryptedUserId = data.adIdentifiersEncryptedUserId;
+    adIdentifiers.encryptedUserIds = data.adIdentifiersEncryptedUserId;
   }
   if (data.adIdentifiersMobileDeviceId) {
     adIdentifiers.mobileDeviceId = data.adIdentifiersMobileDeviceId;
+  }
+  if (data.adIdentifiersLeadId) {
+    adIdentifiers.leadId = data.adIdentifiersLeadId;
   }
 
   if (isUIFieldTrue(data.autoMapAdIdentifiersSessionAttributes)) {
@@ -733,28 +767,39 @@ function addAdditionalEventParameters(data, conversionEvent) {
   return conversionEvent;
 }
 
-function addConversionEventsData(data, eventData, mappedData) {
-  if (data.conversionEventMode === 'single') {
-    const conversionEvent = {};
+function addCallInfoData(data, conversionEvent) {
+  const callInfo = {};
 
-    addConversionInformation(data, eventData, conversionEvent);
-    addUserData(data, eventData, conversionEvent);
-    addAdIdentifiers(data, eventData, conversionEvent);
-    addEventDeviceInformation(data, eventData, conversionEvent);
-    addUserProperties(data, conversionEvent);
-    addCartData(data, eventData, conversionEvent, mappedData.destinations);
-    addCustomVariables(data, conversionEvent);
-    addEventLocation(data, conversionEvent);
-    addAdditionalEventParameters(data, conversionEvent);
-
-    mappedData.events = [conversionEvent];
-  } else if (
-    data.conversionEventMode === 'multiple' &&
-    getType(data.conversionEvents) === 'array' &&
-    data.conversionEvents.length > 0
-  ) {
-    mappedData.events = data.conversionEvents;
+  if (data.callInfoParametersList) {
+    data.callInfoParametersList.forEach((d) => {
+      if (!isValidValue(d.value)) return;
+      callInfo[d.name] =
+        d.name === 'startTimestamp' ? getConversionDateTime(d.value) : makeString(d.value);
+    });
   }
+
+  if (hasProps(callInfo)) conversionEvent.callInfo = callInfo;
+
+  return conversionEvent;
+}
+
+function addConversionEventsData(data, eventData, mappedData) {
+  if (data.conversionEventMode === 'multiple') return mappedData; // Support removed in Nov 2026.
+
+  const conversionEvent = {};
+
+  addConversionInformation(data, eventData, conversionEvent);
+  addUserData(data, eventData, conversionEvent);
+  addAdIdentifiers(data, eventData, conversionEvent);
+  addEventDeviceInformation(data, eventData, conversionEvent);
+  addUserProperties(data, conversionEvent);
+  addCartData(data, eventData, conversionEvent, mappedData.destinations);
+  addCustomVariables(data, conversionEvent);
+  addEventLocation(data, conversionEvent);
+  addAdditionalEventParameters(data, conversionEvent);
+  addCallInfoData(data, conversionEvent);
+
+  mappedData.events = [conversionEvent];
 
   return mappedData;
 }
@@ -846,7 +891,7 @@ function hashDataIfNeeded(mappedData) {
       } else if (key === 'address') {
         if (getType(userIdentifier.address) !== 'object') return;
 
-        const addressKeysToHash = ['givenName', 'familyName'];
+        const addressKeysToHash = ['givenName', 'familyName', 'addressLine'];
         addressKeysToHash.forEach((nameKey) => {
           const value = userIdentifier.address[nameKey];
           if (!value) return;
@@ -1087,8 +1132,10 @@ function validateMappedData(mappedData) {
 
   const rfc3339Regex = '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}.+';
   const isTimestampFormatInvalid = conversionEvents.some((event) => {
-    return ['eventTimestamp', 'lastUpdatedTimestamp'].some((key) => {
-      return event[key] && (getType(event[key]) !== 'string' || !event[key].match(rfc3339Regex));
+    const timestamps = [event.eventTimestamp, event.lastUpdatedTimestamp];
+    if (getType(event.callInfo) === 'object') timestamps.push(event.callInfo.startTimestamp);
+    return timestamps.some((timestamp) => {
+      return timestamp && (getType(timestamp) !== 'string' || !timestamp.match(rfc3339Regex));
     });
   });
   if (isTimestampFormatInvalid) {
@@ -1245,85 +1292,65 @@ function hashData(value) {
 }
 
 function getConversionDateTime(timestamp) {
-  if (!timestamp) return convertTimestampToRFC(getTimestampMillis());
+  if (!timestamp) return convertTimestampToISO(getTimestampMillis());
 
-  let timestampInt = makeInteger(timestamp);
+  const timestampInt = makeInteger(timestamp);
   if (getType(timestampInt) === 'number' && timestampInt > 0) {
-    const timestampString = makeString(timestamp);
     // This will be false only in 2286, when timestamps in seconds starts to have 11 digits.
-    timestampInt = timestampString.length === 10 ? timestamp * 1000 : timestamp;
-    return convertTimestampToRFC(timestampInt);
+    const isInSeconds = makeString(timestamp).length === 10;
+    return convertTimestampToISO(isInSeconds ? timestampInt * 1000 : timestampInt);
   }
 
   return timestamp;
 }
 
-function convertTimestampToRFC(timestamp) {
-  const secToMs = function (s) {
-    return s * 1000;
+function convertTimestampToISO(timestamp) {
+  const msPerDay = 86400000;
+  const isLeapYear = (y) => (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
+  const pad = (value, length) => {
+    let result = makeString(value);
+    while (result.length < length) result = '0' + result;
+    return result;
   };
-  const minToMs = function (m) {
-    return m * secToMs(60);
-  };
-  const hoursToMs = function (h) {
-    return h * minToMs(60);
-  };
-  const daysToMs = function (d) {
-    return d * hoursToMs(24);
-  };
-  const format = function (value) {
-    return value >= 10 ? value.toString() : '0' + value;
-  };
-  const fourYearsInMs = daysToMs(365 * 4 + 1);
-  let year = 1970 + Math.floor(timestamp / fourYearsInMs) * 4;
-  timestamp = timestamp % fourYearsInMs;
 
-  while (true) {
-    const isLeapYear = !(year % 4);
-    const nextTimestamp = timestamp - daysToMs(isLeapYear ? 366 : 365);
-    if (nextTimestamp < 0) {
-      break;
-    }
-    timestamp = nextTimestamp;
-    year = year + 1;
+  let days = Math.floor(timestamp / msPerDay);
+  let msOfDay = timestamp - days * msPerDay;
+
+  let year = 1970;
+  while (days >= (isLeapYear(year) ? 366 : 365)) {
+    days = days - (isLeapYear(year) ? 366 : 365);
+    year++;
   }
 
-  const daysByMonth =
-    year % 4 === 0
-      ? [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-      : [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-
+  const daysInMonth = [31, isLeapYear(year) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
   let month = 0;
-  for (let i = 0; i < daysByMonth.length; i++) {
-    const msInThisMonth = daysToMs(daysByMonth[i]);
-    if (timestamp > msInThisMonth) {
-      timestamp = timestamp - msInThisMonth;
-    } else {
-      month = i + 1;
-      break;
-    }
+  while (days >= daysInMonth[month]) {
+    days = days - daysInMonth[month];
+    month++;
   }
-  const date = Math.ceil(timestamp / daysToMs(1));
-  timestamp = timestamp - daysToMs(date - 1);
-  const hours = Math.floor(timestamp / hoursToMs(1));
-  timestamp = timestamp - hoursToMs(hours);
-  const minutes = Math.floor(timestamp / minToMs(1));
-  timestamp = timestamp - minToMs(minutes);
-  const sec = Math.floor(timestamp / secToMs(1));
+
+  const hours = Math.floor(msOfDay / 3600000);
+  msOfDay = msOfDay - hours * 3600000;
+  const minutes = Math.floor(msOfDay / 60000);
+  msOfDay = msOfDay - minutes * 60000;
+  const seconds = Math.floor(msOfDay / 1000);
+  const milliseconds = msOfDay - seconds * 1000;
 
   return (
     year +
     '-' +
-    format(month) +
+    pad(month + 1, 2) +
     '-' +
-    format(date) +
+    pad(days + 1, 2) +
     'T' +
-    format(hours) +
+    pad(hours, 2) +
     ':' +
-    format(minutes) +
+    pad(minutes, 2) +
     ':' +
-    format(sec) +
-    '+00:00'
+    pad(seconds, 2) +
+    '.' +
+    pad(milliseconds, 3) +
+    'Z'
   );
 }
 

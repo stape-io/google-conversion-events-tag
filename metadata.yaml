@@ -1,6 +1,8 @@
 homepage: 'https://stape.io/'
 documentation: 'https://github.com/stape-io/google-conversion-events-tag'
 versions:
+  - sha: 515d3f75b93bcf5012fc931243858a8f2dfb051b
+    changeNotes: 'Added support for Google Ads call conversions, Lead ID and GA4 address fields (Data Manager API v1.8 and v1.9). Fixed Encrypted User ID and midnight timestamp conversion. BREAKING CHANGE: removed the Multiple Conversion Events mode.'
   - sha: ee54d375668412ca58aebfd4776dacf9f7a2fe73
     changeNotes: 'Added support for sending Google Analytics (GA4) events when using Own Google Credentials as auth method. BREAKING CHANGE: removed the Experimental Fields section.'
   - sha: 3e5cd25357af8e69d52b6bfdba2af59fce6fb2c2

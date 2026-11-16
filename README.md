@@ -2,7 +2,7 @@
 
 The **Google Data Manager API Conversion Events Tag** for Google Tag Manager Server-Side allows you to send conversion events directly to Google's advertising platforms (like Google Ads) using the [Data Manager API](https://developers.google.com/data-manager/api). This server-to-server integration ensures robust and accurate tracking of conversions, independent of client-side restrictions.
 
-The tag is designed to handle both single and multiple conversion event uploads in a single request, with comprehensive support for user data, consent information, ad identifiers, and custom variables.
+The tag sends one conversion event per execution, with comprehensive support for user data, consent information, ad identifiers, call information, and custom variables.
 
 ## How to use the Google Data Manager API Conversion Events Tag
 
@@ -26,12 +26,11 @@ The tag is designed to handle both single and multiple conversion event uploads 
     1.  `Pageview`
     2.  `Conversion`
         1.  Set up your **Destination Accounts and Conversion Events**, specifying the Advertising Accounts Customer IDs and the corresponding Conversion Event IDs you want to send data to.
-        2.  Choose your **Conversion Event Mode**: `Single` to configure one event's data through the UI, or `Multiple` to manually provide a pre-formatted array of events.
-        3.  Configure the **Conversion Information**, **User Data**, and other relevant parameter groups. The tag can auto-map many of these fields from a standard GA4 or e-commerce data layer.
+        2.  Configure the **Conversion Information**, **User Data**, and other relevant parameter groups. The tag can auto-map many of these fields from a standard GA4 or e-commerce data layer.
             > ❗ If using Enhanced Conversions (user email address, user phone number etc.), ensure you do the following in Google Ads (_Goals > Conversions > Settings_) or CM360. These settings must be active for the destination account and its manager (MCC) account, if applicable:
             >    1.  Accept the [Customer Data Terms](https://support.google.com/adspolicy/answer/7475709).
             >    2.  Enable **Enhanced Conversions** and **Enhanced Conversions for Leads**.
-        4.  Add a trigger to fire the tag on the appropriate server-side events (e.g., a `page_view` event or a `purchase` event).
+        3.  Add a trigger to fire the tag on the appropriate server-side events (e.g., a `page_view` event or a `purchase` event).
 
 ## Event Types
 
@@ -70,13 +69,6 @@ This is where you define which advertising accounts and specific conversion acti
 
 ---
 
-#### Conversion Event Mode
-You can send data in two ways:
--   **Single Conversion Event**: Configure the parameters for a single conversion directly in the tag's UI fields.
--   **Multiple Conversion Events**: Provide a complete, pre-formatted JSON array containing data for up to 2000 conversion events. This is useful for batch uploads.
-
----
-
 #### Conversion Information
 This section contains the core details of the conversion.
 -   **Parameters**: Includes `Event Source`, `Transaction/Order ID`, `Event Timestamp`, `Currency`, and `Conversion Value`.
@@ -90,6 +82,7 @@ This section contains the core details of the conversion.
 This section is crucial for matching the conversion to a user. You can provide multiple identifiers to improve match rates.
 -   **Identifiers**: Includes `Email Address(es)`, `Phone Number(s)`, and `User Address` (First Name, Last Name, Region, Postal Code).
     -   **Auto-mapping**: If enabled, the tag will automatically pull user data from common event data keys (e.g., `user_data.email`).
+-   **Google Analytics Additional Address Data** (`Own Google Credentials` only): optional `Administrative Area` (state/province), `City` and `Address Line` (street and number) for Google Analytics (GA4) destinations. They're sent only together with the User Address. When auto-mapping is enabled, they're pulled from `user_data.address.region`, `user_data.address.city` and `user_data.address.street`. [Learn more](https://developers.google.com/data-manager/api/reference/rest/v1/UserData#AddressInfo).
 -   **Hashing & Normalization**: The tag automatically normalizes and SHA-256 hashes user identifiers if they are provided in plain text, following Google's formatting guidelines.
 
 ---
@@ -99,6 +92,7 @@ This section allows you to send click identifiers for attribution. It's as impor
 -   **Click IDs**: `gclid`, `gbraid`, `wbraid` and `dclid` (for Floodlight). `gclid` can also be used for Google Analytics (GA4) events sent as an additional data source. [Learn more](https://developers.google.com/data-manager/api/devguides/events/analytics/online).
     -   **Auto-mapping**: If enabled, the tag will automatically pull Click IDs from, in this order, Event Data > URL Parameter > Server Cookie > JavaScript Cookie.
 -   **Other Floodlight-specific Identifiers** (`Own Google Credentials` only): `Match ID`, `Impression ID`, and `Encrypted User ID`.
+-   **Other Identifiers**: `Mobile Device ID` and `Lead ID` (the Google-generated ID issued when a user submits a lead form).
 -   **Landing Page Parameters and Session Attributes**: `Landing Page User Agent`, `Landing Page IP Address` and `Session Attributes`
     -   **Auto-mapping**: If enabled, the tag will automatically pull Session Attributes from, in this order: `session_attributes` Event Data value > `_dm_session_attributes` Common Cookie value > `_dm_session_attributes` cookie set by the Pageview event of this tag.
 
@@ -224,11 +218,19 @@ This section lets you send any [GA4 event parameters](https://developers.google.
 
 ---
 
+#### Call Info
+This section is used to send Google Ads [call conversions](https://support.google.com/google-ads/answer/6275629).
+-   **Parameters**: `Start Timestamp`, the time the phone call that led to the conversion started. It's required when Call Info is sent, and accepts RFC 3339 or Unix timestamps (in seconds or milliseconds).
+
+> Note: for call conversions, the conversion action must be of type `UPLOAD_CALLS` (_Call from Ads_ in the Google Ads UI), the **Event Timestamp** must not be earlier than the Start Timestamp, the **User Data** must include the caller's phone number, and **User Data Encryption** must stay disabled. Setting the **Event Source** to `PHONE` is recommended. [Learn more](https://developers.google.com/data-manager/api/devguides/events/google-ads/call/send-events).
+
+---
+
 ### Advanced Options
 
 * **Validate Only**: If `true`, the request is validated by the API but not executed. This is useful for debugging.
 * **Use Optimistic Scenario**: If `true`, the tag fires `gtmOnSuccess()` immediately without waiting for a response from the API. This speeds up container response time but may hide downstream errors.
-* **Request-level Consent**: Apply `adUserData` and `adPersonalization` consent statuses to all users in the request. This can be overridden at the user level when using the "Multiple Users" mode.
+* **Request-level Consent**: Apply `adUserData` and `adPersonalization` consent statuses to the conversion event in the request.
 * **Consent Settings**: Prevent the tag from firing unless the necessary ad storage consent is granted by the user.
 
 ## Useful Resources
